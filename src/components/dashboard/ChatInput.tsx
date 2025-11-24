@@ -93,22 +93,22 @@ export const ChatInput = ({
   onAttachmentClick,
   getSendButtonClass
 }: ChatInputProps) => {
-  // Create preview URL for images
-  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  // Create preview URL for all file types
+  const [filePreviewUrl, setFilePreviewUrl] = React.useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   
   React.useEffect(() => {
-    if (selectedFile && selectedFile.type.startsWith('image/')) {
+    if (selectedFile) {
       const url = URL.createObjectURL(selectedFile);
-      setImagePreview(url);
+      setFilePreviewUrl(url);
       
       // Cleanup: revoke object URL when file changes or component unmounts
       return () => {
         URL.revokeObjectURL(url);
-        setImagePreview(null);
+        setFilePreviewUrl(null);
       };
     } else {
-      setImagePreview(null);
+      setFilePreviewUrl(null);
     }
   }, [selectedFile]);
   
@@ -210,9 +210,9 @@ export const ChatInput = ({
             >
               {/* Image Thumbnail or File Icon */}
               <div className="relative">
-                {isImageFile && imagePreview ? (
+                {isImageFile && filePreviewUrl ? (
                   <div className="file-thumbnail">
-                    <img src={imagePreview} alt={selectedFile.name} className="file-thumbnail-image" />
+                    <img src={filePreviewUrl} alt={selectedFile.name} className="file-thumbnail-image" />
                     {/* Hover overlay with eye icon */}
                     <div className="file-thumbnail-overlay">
                       <Eye className="w-4 h-4 text-white" />
@@ -248,7 +248,7 @@ export const ChatInput = ({
             open={isPreviewOpen}
             onOpenChange={setIsPreviewOpen}
             file={selectedFile}
-            previewUrl={imagePreview}
+            previewUrl={filePreviewUrl}
           />
           
           {/* Text Input Area */}
