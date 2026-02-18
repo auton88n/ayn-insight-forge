@@ -18,7 +18,6 @@ import {
   ProfileIllustration,
   EngineeringIllustration,
   ComplianceIllustration,
-  ChartAnalyzerIllustration,
 } from './TutorialIllustrations';
 
 interface TutorialPageProps {
@@ -46,7 +45,6 @@ const illustrations: Record<string, React.FC> = {
   'profile': ProfileIllustration,
   'engineering': EngineeringIllustration,
   'compliance': ComplianceIllustration,
-  'chart-analyzer': ChartAnalyzerIllustration,
 };
 
 export const TutorialPage = ({

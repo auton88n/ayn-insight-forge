@@ -45,8 +45,6 @@ const Compliance = lazy(() => import("./pages/CompliancePage"));
 const AIGradingDesigner = lazy(() => import("./pages/AIGradingDesigner"));
 const CivilEngineering = lazy(() => import("./pages/services/CivilEngineering"));
 const Pricing = lazy(() => import("./pages/Pricing"));
-const ChartAnalyzerPage = lazy(() => import("./pages/ChartAnalyzerPage"));
-const Performance = lazy(() => import("./pages/Performance"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
 const SubscriptionCanceled = lazy(() => import("./pages/SubscriptionCanceled"));
 const Terms = lazy(() => import("./pages/Terms"));
@@ -98,8 +96,6 @@ const AnimatedRoutes = () => {
       <Route path="/compliance" element={<Suspense fallback={<PageLoader />}><PageTransition><Compliance /></PageTransition></Suspense>} />
       <Route path="/engineering/grading" element={<Suspense fallback={<PageLoader />}><PageTransition><AIGradingDesigner /></PageTransition></Suspense>} />
       <Route path="/services/civil-engineering" element={<Suspense fallback={<PageLoader />}><PageTransition><CivilEngineering /></PageTransition></Suspense>} />
-      <Route path="/chart-analyzer" element={<Suspense fallback={<PageLoader />}><PageTransition><ChartAnalyzerPage /></PageTransition></Suspense>} />
-      <Route path="/performance" element={<Suspense fallback={<PageLoader />}><PageTransition><Performance /></PageTransition></Suspense>} />
       <Route path="/approval-result" element={<PageTransition><ApprovalResult /></PageTransition>} />
       <Route path="/subscription-success" element={<PageTransition><SubscriptionSuccess /></PageTransition>} />
       <Route path="/subscription-canceled" element={<PageTransition><SubscriptionCanceled /></PageTransition>} />
