@@ -1,121 +1,186 @@
 
-# Remove All Trading Chart Analyzer Features
+# Critical Fix: Complete User Registration System
 
-## What Will Be Removed
+## Current State (Verified by Database Audit)
 
-This is a large cleanup across the full stack. Here is everything identified:
+Live database shows 16 users total with the following gaps:
 
----
-
-## Frontend Files to Delete
-
-### Pages
-- `src/pages/ChartAnalyzerPage.tsx` — the entire Chart Analyzer page
-- `src/pages/Performance.tsx` — AYN's paper trading performance page
-
-### Components (src/components/dashboard/)
-- `ChartAnalyzerResults.tsx`
-- `ChartAnalysisSidebar.tsx`
-- `ChartCoachSidebar.tsx`
-- `ChartCoachChat.tsx`
-- `ChartCompareView.tsx`
-- `ChartHistoryDetail.tsx`
-- `ChartHistoryList.tsx`
-- `ChartHistoryStats.tsx`
-- `ChartHistoryTab.tsx`
-- `ChartUnifiedChat.tsx`
-
-### Components (src/components/trading/)
-- `AIDecisionLog.tsx`
-- `ActivityTimeline.tsx`
-- `LivePositionChart.tsx`
-- `PerformanceDashboard.tsx`
-- The entire `src/components/trading/` folder
-
-### Hooks (src/hooks/)
-- `useChartAnalyzer.ts`
-- `useChartCoach.ts`
-- `useChartHistory.ts`
-- `useLivePrices.ts`
-
-### Types
-- `src/types/chartAnalyzer.types.ts`
-
----
-
-## Frontend Files to Modify
-
-### `src/App.tsx`
-- Remove `ChartAnalyzerPage` and `Performance` lazy imports
-- Remove `/chart-analyzer` and `/performance` routes
-
-### `src/components/dashboard/Sidebar.tsx`
-- Remove the "Charts" button card (the amber `BarChart3` button that navigates to `/chart-analyzer`)
-- Remove the `BarChart3` and `Activity` icon imports if unused
-
-### `src/constants/apiEndpoints.ts`
-- Remove the `ANALYZE_TRADING_CHART: 'analyze-trading-chart'` entry
-
-### `src/constants/routes.ts`
-- Remove `CHART_ANALYZER: '/chart-analyzer'`
-
-### `src/types/tutorial.types.ts`
-- Remove the `chart-analyzer` entry from `TUTORIAL_STEPS`
-
-### `src/components/tutorial/TutorialPage.tsx`
-- Remove `ChartAnalyzerIllustration` import and its mapping entry
-
-### `src/components/tutorial/TutorialIllustrations.tsx`
-- Remove the `ChartAnalyzerIllustration` export function
-
-### `src/hooks/useBubbleAnimation.ts`
-- Remove `chartAnalysis` parameter references that import from `chartAnalyzer.types`
-
-### `supabase/functions/ayn-unified/index.ts`
-- Remove the `chart_analyses` query from the parallel data-fetch
-- Remove the `ayn_account_state` + `ayn_paper_trades` queries and the `accountPerformance` context block
-- Remove `EXECUTE_TRADE` parsing logic and autonomous trade execution block
-- Remove the `marketScanner.ts` import and all scanner-related code
-- Remove the `wantsAutonomousTrading` detection and scan injection logic
-- Remove the chart history context injection (`chartSection`)
-
----
-
-## Edge Functions to Delete
-
-The following edge functions are exclusively trading/chart related and will be fully removed:
-
-| Function | Purpose |
+| Check | Count |
 |---|---|
-| `analyze-trading-chart` | Core chart analysis AI (with full trading knowledge base) |
-| `ayn-calculate-metrics` | Computes Sharpe ratio, profit factor etc. |
-| `ayn-close-trade` | Closes paper trades |
-| `ayn-daily-snapshot` | Daily P&L snapshots |
-| `ayn-kill-switch` | Emergency stop for trading |
-| `ayn-monitor-trades` | 5-minute cron that runs TP/SL exits |
-| `ayn-open-trade` | Opens paper trades |
-| `get-klines` | Fetches Pionex candlestick data |
-| `ws-relay` | WebSocket relay for live prices |
+| Total users | 16 |
+| Have a role | 15 (1 missing) |
+| Have a subscription | 4 (**12 missing**) |
+| Have AI limits | 8 (**8 missing**) |
+| Have a name | 16 (all good) |
 
-> **Note:** `ayn-unified` is kept but cleaned — it powers the main AYN chat and only the trading-specific code blocks inside it are removed.
+The root cause is confirmed: the `handle_new_user()` trigger only inserts 3 rows (`profiles`, `user_settings`, `access_grants`) and completely skips `user_roles`, `user_subscriptions`, and `user_ai_limits`.
 
 ---
 
-## What Stays Untouched
+## Important Corrections to the Proposed SQL
 
-- Main dashboard chat (`CenterStageLayout`, `DashboardContainer`)
-- Engineering tools, compliance, AI grading
-- Authentication, settings, pricing, support
-- All other edge functions (admin, engineering, email, etc.)
-- The `ayn-unified` edge function (cleaned of trading code)
-- Tutorial system (just removing the chart-analyzer step)
+The SQL in the request has **two columns that do not exist** in the actual database schema and would cause the migration to fail:
+
+- `user_subscriptions` has **no `start_date` column** — it only has `created_at` (auto-populated)
+- `user_ai_limits` has **no `reset_date` column** — it uses `daily_reset_at` and `monthly_reset_at` (both auto-populated with defaults)
+
+Also, the `user_roles` table has a **composite unique key on `(user_id, role)`**, not on `user_id` alone — so `ON CONFLICT (user_id)` would fail. The correct conflict target is `ON CONFLICT (user_id, role)`.
+
+The plan below uses the corrected SQL.
 
 ---
 
-## Technical Notes
+## What Will Be Done
 
-- `marketScanner.ts` inside `ayn-unified/` will be deleted since it's only used for trading
-- The `useBubbleAnimation.ts` hook references `ChartAnalysisResult` type — the relevant parameter will be removed
-- The sidebar "Charts" quick-access button will be replaced by removing the entire third button slot (leaving Engineering + Compliance as a 2-column grid)
-- No database schema changes are needed — the trading tables (`ayn_paper_trades`, `ayn_account_state`, etc.) can remain in the DB safely; only the code that reads/writes them is removed
+### Part 1 — Fix the Trigger (prevents all future registration failures)
 
+Replace the existing `handle_new_user()` function with a complete version that:
+1. Inserts profile with `contact_person` and `company_name` from signup metadata
+2. Inserts `user_settings` (unchanged)
+3. Inserts `access_grants` (unchanged)
+4. **NEW:** Inserts `user_roles` with default `'user'` role
+5. **NEW:** Inserts `user_subscriptions` with `'free'` tier and `'active'` status
+6. **NEW:** Inserts `user_ai_limits` using column defaults (no manual values needed — defaults cover everything)
+7. Wraps everything in a `EXCEPTION WHEN OTHERS` block so a failure in one insert never blocks the user from being created
+
+### Part 2 — Backfill Existing Users (fixes the 15 broken accounts right now)
+
+Four targeted INSERT statements to fill the gaps for existing users:
+1. Add missing `user_roles` rows (1 user affected)
+2. Add missing `user_subscriptions` rows (12 users affected)
+3. Add missing `user_ai_limits` rows (8 users affected)
+4. Update blank profile names using metadata stored in `auth.users`
+
+### Part 3 — Verification
+
+A single SELECT query that should show all counts equal `total_users` after the fix.
+
+---
+
+## Technical Details
+
+### Corrected Trigger SQL
+
+```sql
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- 1. Profile with signup metadata
+  INSERT INTO public.profiles (user_id, contact_person, company_name)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    NEW.raw_user_meta_data->>'company_name'
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    contact_person = COALESCE(EXCLUDED.contact_person, profiles.contact_person),
+    company_name   = COALESCE(EXCLUDED.company_name, profiles.company_name);
+
+  -- 2. User settings
+  INSERT INTO public.user_settings (user_id, has_accepted_terms)
+  VALUES (NEW.id, false)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  -- 3. Access grant (active immediately, free tier)
+  INSERT INTO public.access_grants (user_id, is_active, monthly_limit, requires_approval)
+  VALUES (NEW.id, true, 5, false)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  -- 4. Default role (composite unique key: user_id + role)
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, 'user')
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  -- 5. Free tier subscription (no start_date column — created_at is auto)
+  INSERT INTO public.user_subscriptions (user_id, subscription_tier, status)
+  VALUES (NEW.id, 'free', 'active')
+  ON CONFLICT (user_id) DO NOTHING;
+
+  -- 6. AI limits (all defaults are correct — daily_messages:10, daily_engineering:3)
+  INSERT INTO public.user_ai_limits (user_id)
+  VALUES (NEW.id)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'handle_new_user error for user %: %', NEW.id, SQLERRM;
+  RETURN NEW;
+END;
+$$;
+
+-- Re-attach trigger
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+```
+
+### Corrected Backfill SQL
+
+```sql
+-- 1. Missing user roles (1 user)
+INSERT INTO public.user_roles (user_id, role)
+SELECT p.user_id, 'user'
+FROM public.profiles p
+LEFT JOIN public.user_roles ur ON ur.user_id = p.user_id
+WHERE ur.user_id IS NULL
+ON CONFLICT (user_id, role) DO NOTHING;
+
+-- 2. Missing subscriptions (12 users)
+INSERT INTO public.user_subscriptions (user_id, subscription_tier, status)
+SELECT p.user_id, 'free', 'active'
+FROM public.profiles p
+LEFT JOIN public.user_subscriptions us ON us.user_id = p.user_id
+WHERE us.user_id IS NULL
+ON CONFLICT (user_id) DO NOTHING;
+
+-- 3. Missing AI limits (8 users)
+INSERT INTO public.user_ai_limits (user_id)
+SELECT p.user_id
+FROM public.profiles p
+LEFT JOIN public.user_ai_limits ual ON ual.user_id = p.user_id
+WHERE ual.user_id IS NULL
+ON CONFLICT (user_id) DO NOTHING;
+
+-- 4. Fill in blank profile names from auth metadata
+UPDATE public.profiles p
+SET
+  contact_person = COALESCE(NULLIF(p.contact_person, ''), au.raw_user_meta_data->>'full_name', au.email),
+  company_name   = COALESCE(NULLIF(p.company_name, ''), au.raw_user_meta_data->>'company_name')
+FROM auth.users au
+WHERE au.id = p.user_id
+  AND (p.contact_person IS NULL OR p.contact_person = ''
+    OR p.company_name IS NULL OR p.company_name = '');
+```
+
+### Verification SQL
+
+```sql
+SELECT
+  COUNT(*)                                                        AS total_users,
+  COUNT(ur.user_id)                                               AS have_role,
+  COUNT(us.user_id)                                               AS have_subscription,
+  COUNT(ual.user_id)                                              AS have_limits,
+  COUNT(CASE WHEN p.contact_person IS NOT NULL THEN 1 END)        AS have_name
+FROM public.profiles p
+LEFT JOIN public.user_roles         ur  ON ur.user_id  = p.user_id
+LEFT JOIN public.user_subscriptions us  ON us.user_id  = p.user_id
+LEFT JOIN public.user_ai_limits     ual ON ual.user_id = p.user_id;
+-- All 5 counts should be equal after running the backfill
+```
+
+---
+
+## Implementation Steps
+
+1. Run Part 1 (trigger fix) in Supabase SQL Editor
+2. Run Part 2 (backfill) immediately after
+3. Run Part 3 (verification) — all counts must match `total_users`
+4. Create a new test account via the signup form and verify all 6 rows are created
+5. Log in with the test account and confirm it reaches the dashboard without errors
+
+No frontend code changes are needed — this is a pure database migration.
