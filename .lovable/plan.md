@@ -1,85 +1,121 @@
 
-# Fix: Balance Must Reflect Capital Deployed in Open Positions
+# Remove All Trading Chart Analyzer Features
 
-## Two Separate Issues
+## What Will Be Removed
 
-### Issue 1: Balance Shows $10,000 When $5,000 Is Deployed (Real Bug)
-
-The `ayn-open-trade` edge function inserts a trade row but **never deducts the position size from `current_balance`** in `ayn_account_state`. The `update_ayn_account_state` trigger only fires when a trade is CLOSED. So the balance stays at $10,000 even though $5,000 is tied up in TAO_USDT.
-
-The fix has two parts:
-
-**Part A — Deduct on open:** After inserting the trade in `ayn-open-trade`, immediately update `ayn_account_state` to reduce `current_balance` by `positionSizeDollars`:
-
-```typescript
-// After successful trade insert:
-await supabase
-  .from('ayn_account_state')
-  .update({
-    current_balance: balance - positionSizeDollars,
-    updated_at: new Date().toISOString(),
-  })
-  .eq('id', '00000000-0000-0000-0000-000000000001');
-```
-
-**Part B — Return on close:** In `ayn-close-trade`, after closing the trade, update `current_balance` to add back the position capital plus the net P&L:
-
-```typescript
-// After computing totalPnlDollars:
-const { data: acct } = await supabase
-  .from('ayn_account_state')
-  .select('current_balance')
-  .eq('id', '00000000-0000-0000-0000-000000000001')
-  .single();
-
-const newBalance = Number(acct.current_balance) + positionDollars + totalPnlDollars;
-
-await supabase
-  .from('ayn_account_state')
-  .update({ current_balance: newBalance, updated_at: new Date().toISOString() })
-  .eq('id', '00000000-0000-0000-0000-000000000001');
-```
-
-**Part C — Fix current state in DB:** The TAO_USDT trade is currently OPEN with $5,000 deployed but balance still reads $10,000. We need a one-time SQL fix:
-
-```sql
-UPDATE ayn_account_state
-SET current_balance = 10000 - 5000
-WHERE id = '00000000-0000-0000-0000-000000000001';
-```
-This sets it to $5,000 to match reality right now.
-
-**Part D — Update the existing DB trigger** so it does NOT override `current_balance` on close (the trigger currently recalculates `current_balance` from `starting_balance + total_pnl_dollars`, which would be wrong now that we're tracking deployed capital separately). The trigger should be modified to only update the stats columns (win_rate, total_trades, etc.) and not touch `current_balance` — the close function will manage that directly.
+This is a large cleanup across the full stack. Here is everything identified:
 
 ---
 
-### Issue 2: Advanced Metrics All Show 0 (Expected, But Needs Context)
+## Frontend Files to Delete
 
-The closed IO_USDT trade was a $0 P&L breakeven close (entered at $0.114, manually closed at $0.114). So `ayn-calculate-metrics` correctly computes:
-- Sharpe: 0 (average return = 0)
-- Profit Factor: 0 (no winning trades)
-- Expectancy: $0
+### Pages
+- `src/pages/ChartAnalyzerPage.tsx` — the entire Chart Analyzer page
+- `src/pages/Performance.tsx` — AYN's paper trading performance page
 
-This is **accurate data** — metrics only become meaningful after 5-10+ trades. However, the UI can be improved to show a "Not enough data" message when fewer than 5 closed trades exist instead of just showing red zeros.
+### Components (src/components/dashboard/)
+- `ChartAnalyzerResults.tsx`
+- `ChartAnalysisSidebar.tsx`
+- `ChartCoachSidebar.tsx`
+- `ChartCoachChat.tsx`
+- `ChartCompareView.tsx`
+- `ChartHistoryDetail.tsx`
+- `ChartHistoryList.tsx`
+- `ChartHistoryStats.tsx`
+- `ChartHistoryTab.tsx`
+- `ChartUnifiedChat.tsx`
+
+### Components (src/components/trading/)
+- `AIDecisionLog.tsx`
+- `ActivityTimeline.tsx`
+- `LivePositionChart.tsx`
+- `PerformanceDashboard.tsx`
+- The entire `src/components/trading/` folder
+
+### Hooks (src/hooks/)
+- `useChartAnalyzer.ts`
+- `useChartCoach.ts`
+- `useChartHistory.ts`
+- `useLivePrices.ts`
+
+### Types
+- `src/types/chartAnalyzer.types.ts`
 
 ---
 
-## Files to Change
+## Frontend Files to Modify
 
-| File | Change |
+### `src/App.tsx`
+- Remove `ChartAnalyzerPage` and `Performance` lazy imports
+- Remove `/chart-analyzer` and `/performance` routes
+
+### `src/components/dashboard/Sidebar.tsx`
+- Remove the "Charts" button card (the amber `BarChart3` button that navigates to `/chart-analyzer`)
+- Remove the `BarChart3` and `Activity` icon imports if unused
+
+### `src/constants/apiEndpoints.ts`
+- Remove the `ANALYZE_TRADING_CHART: 'analyze-trading-chart'` entry
+
+### `src/constants/routes.ts`
+- Remove `CHART_ANALYZER: '/chart-analyzer'`
+
+### `src/types/tutorial.types.ts`
+- Remove the `chart-analyzer` entry from `TUTORIAL_STEPS`
+
+### `src/components/tutorial/TutorialPage.tsx`
+- Remove `ChartAnalyzerIllustration` import and its mapping entry
+
+### `src/components/tutorial/TutorialIllustrations.tsx`
+- Remove the `ChartAnalyzerIllustration` export function
+
+### `src/hooks/useBubbleAnimation.ts`
+- Remove `chartAnalysis` parameter references that import from `chartAnalyzer.types`
+
+### `supabase/functions/ayn-unified/index.ts`
+- Remove the `chart_analyses` query from the parallel data-fetch
+- Remove the `ayn_account_state` + `ayn_paper_trades` queries and the `accountPerformance` context block
+- Remove `EXECUTE_TRADE` parsing logic and autonomous trade execution block
+- Remove the `marketScanner.ts` import and all scanner-related code
+- Remove the `wantsAutonomousTrading` detection and scan injection logic
+- Remove the chart history context injection (`chartSection`)
+
+---
+
+## Edge Functions to Delete
+
+The following edge functions are exclusively trading/chart related and will be fully removed:
+
+| Function | Purpose |
 |---|---|
-| `supabase/functions/ayn-open-trade/index.ts` | Deduct `positionSizeDollars` from `current_balance` after trade insert |
-| `supabase/functions/ayn-close-trade/index.ts` | Add back `positionDollars + totalPnlDollars` to `current_balance` after close |
-| `src/components/trading/PerformanceDashboard.tsx` | Show "Not enough data (min. 5 trades)" for advanced metrics when `total_trades < 5` |
-| Database (one-time SQL) | `UPDATE ayn_account_state SET current_balance = 5000 WHERE id = '...'` to fix current stale $10,000 value |
+| `analyze-trading-chart` | Core chart analysis AI (with full trading knowledge base) |
+| `ayn-calculate-metrics` | Computes Sharpe ratio, profit factor etc. |
+| `ayn-close-trade` | Closes paper trades |
+| `ayn-daily-snapshot` | Daily P&L snapshots |
+| `ayn-kill-switch` | Emergency stop for trading |
+| `ayn-monitor-trades` | 5-minute cron that runs TP/SL exits |
+| `ayn-open-trade` | Opens paper trades |
+| `get-klines` | Fetches Pionex candlestick data |
+| `ws-relay` | WebSocket relay for live prices |
 
-## What You'll See After
+> **Note:** `ayn-unified` is kept but cleaned — it powers the main AYN chat and only the trading-specific code blocks inside it are removed.
 
-- Account Balance shows **$5,000** (remaining cash after deploying $5,000 into TAO_USDT)
-- When TAO_USDT closes with a profit of say $200, balance goes to **$5,200 + $5,000 returned = $10,200**
-- Advanced Metrics section shows a small note: "Metrics available after 5+ closed trades"
-- Once more trades close, real Sharpe/Profit Factor numbers appear
+---
 
-## No Edge Cases Missed
+## What Stays Untouched
 
-- If `ayn-monitor-trades` auto-closes via stop-loss/TP, it also calls the same close path — that function already does a `balance` update via the DB trigger. We need to apply the same fix to `ayn-monitor-trades` as well for Part B.
+- Main dashboard chat (`CenterStageLayout`, `DashboardContainer`)
+- Engineering tools, compliance, AI grading
+- Authentication, settings, pricing, support
+- All other edge functions (admin, engineering, email, etc.)
+- The `ayn-unified` edge function (cleaned of trading code)
+- Tutorial system (just removing the chart-analyzer step)
+
+---
+
+## Technical Notes
+
+- `marketScanner.ts` inside `ayn-unified/` will be deleted since it's only used for trading
+- The `useBubbleAnimation.ts` hook references `ChartAnalysisResult` type — the relevant parameter will be removed
+- The sidebar "Charts" quick-access button will be replaced by removing the entire third button slot (leaving Engineering + Compliance as a 2-column grid)
+- No database schema changes are needed — the trading tables (`ayn_paper_trades`, `ayn_account_state`, etc.) can remain in the DB safely; only the code that reads/writes them is removed
+
