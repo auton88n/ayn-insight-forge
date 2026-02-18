@@ -68,12 +68,6 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     icon: 'ClipboardCheck',
   },
   {
-    id: 'chart-analyzer',
-    title: 'Chart Analyzer',
-    description: 'Analyze stock and crypto charts with AI-powered pattern detection, support/resistance levels, entry/exit signals, and market sentiment scoring.',
-    icon: 'BarChart3',
-  },
-  {
     id: 'navigation',
     title: 'Your Sidebar',
     description: 'Access chat history, start new conversations, and search past chats.',
