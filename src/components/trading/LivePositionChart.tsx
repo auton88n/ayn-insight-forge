@@ -189,6 +189,9 @@ export default function LivePositionChart({ ticker, entryPrice, stopLoss, tp1, t
         built.chart.timeScale().fitContent();
         const last = data.klines[data.klines.length - 1];
         currentCandleRef.current = { ...last };
+        // Seed livePrice from the last known kline close so low-volume
+        // pairs always show a price even before WS trades arrive
+        setLivePrice(last.close as number);
       }
     } catch (e: any) {
       console.warn('[LivePositionChart] klines fetch error (non-fatal):', e);
