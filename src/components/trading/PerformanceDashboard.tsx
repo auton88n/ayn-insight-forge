@@ -304,6 +304,29 @@ export default function PerformanceDashboard({ onNavigateToHistory }: Performanc
   const openTickers = useMemo(() => openTrades.map(t => t.ticker), [openTrades]);
   const { prices: livePrices, connected: pricesConnected } = useLivePrices(openTickers);
 
+  // Kline-seeded fallback prices for low-volume tickers where WS trades are sparse
+  const [klinePrices, setKlinePrices] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (openTrades.length === 0) return;
+    openTrades.forEach(async (trade) => {
+      // Only fetch if WS hasn't delivered a price yet
+      if (livePrices[trade.ticker]?.price !== undefined) return;
+      try {
+        const { data } = await supabase.functions.invoke('get-klines', {
+          body: { symbol: trade.ticker, interval: '1m', limit: 1 },
+        });
+        if (data?.klines?.length > 0) {
+          const lastClose = data.klines[data.klines.length - 1].close as number;
+          setKlinePrices(prev => ({ ...prev, [trade.ticker]: lastClose }));
+        }
+      } catch {
+        // non-fatal
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openTrades, livePrices]);
+
   const killSwitch = circuitBreakers.find(b => b.breaker_type === 'KILL_SWITCH');
   const isKillSwitchActive = killSwitch?.is_tripped === true;
 
@@ -660,7 +683,7 @@ export default function PerformanceDashboard({ onNavigateToHistory }: Performanc
                   key={trade.id}
                   trade={trade}
                   onClose={handleCloseTrade}
-                  livePrice={livePrices[trade.ticker]?.price}
+                  livePrice={livePrices[trade.ticker]?.price ?? klinePrices[trade.ticker]}
                 />
               ))}
             </div>
