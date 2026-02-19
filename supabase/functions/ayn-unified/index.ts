@@ -6,7 +6,7 @@ import { buildSystemPrompt } from "./systemPrompts.ts";
 import { sanitizeUserPrompt, detectInjectionAttempt, INJECTION_GUARD } from "../_shared/sanitizePrompt.ts";
 import { activateMaintenanceMode } from "../_shared/maintenanceGuard.ts";
 import { uploadImageToStorage } from "../_shared/storageUpload.ts";
-
+import { analyzeKlines, calculateEnhancedScore, fetchKlines, fetchFundingRates } from "./marketScanner.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,7 +49,13 @@ const FALLBACK_CHAINS: Record<string, LLMModel[]> = {
   image: [
     { id: 'lovable-gemini-image', provider: 'lovable', model_id: 'google/gemini-2.5-flash-image', display_name: 'Gemini Image' }
   ],
+  'trading-coach': [
+    { id: 'lovable-gemini-3-flash', provider: 'lovable', model_id: 'google/gemini-3-flash-preview', display_name: 'Gemini 3 Flash' },
+    { id: 'lovable-gemini-flash', provider: 'lovable', model_id: 'google/gemini-2.5-flash', display_name: 'Gemini 2.5 Flash' },
+    { id: 'lovable-gemini-flash-lite', provider: 'lovable', model_id: 'google/gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite' }
+  ],
 };
+
 // Generate image using Lovable AI (DALL-E 3 primary, Gemini fallback)
 async function generateImage(prompt: string): Promise<{ imageUrl: string; revisedPrompt: string }> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -782,10 +788,59 @@ serve(async (req) => {
       }
     }
 
-    // PARALLEL DB OPERATIONS
-    const [limitCheck, userContext] = await Promise.all([
+    // PARALLEL DB OPERATIONS - Critical for 30K user scale (saves 200-300ms)
+    // Performance keywords to detect if user is asking about paper trading account
+    const performanceKeywords = [
+      'performance', 'win rate', 'balance', 'trades', 'p&l', 'profit', 'loss',
+      'portfolio', 'how are you doing', "how's your account", 'paper trading',
+      'track record', 'open positions', 'how many trades', 'account'
+    ];
+    const isPerformanceQuery = intent === 'trading-coach';
+
+    // Autonomous trading detection (with typo-tolerant matching)
+    const autonomousTradingKeywords = [
+      'find best token', 'scan market', 'look for trade', 'find opportunity',
+      'paper testing', 'pepar testing', 'peper testing', 'papar testing',
+      'start trading', 'trade for me', 'what should i buy',
+      'find best setup', 'hunt for trades', 'scan for opportunities',
+      'do paper testing', 'find winning trade', 'find me a trade',
+      'scan pairs', 'best crypto', 'what to buy', 'best token',
+      'chose the best', 'choose the best', 'pick the best', 'pick a token',
+      'make money', 'making money', 'open a trade', 'execute trade',
+      'ابحث عن', 'تداول لي', 'افضل عملة',
+    ];
+    const msgLower = lastMessage.toLowerCase();
+    const wantsAutonomousTrading = intent === 'trading-coach' &&
+      autonomousTradingKeywords.some(kw => msgLower.includes(kw));
+
+    const [limitCheck, userContext, chartHistory, accountPerformance, scanResults] = await Promise.all([
       isInternalCall ? Promise.resolve({ allowed: true }) : checkUserLimit(supabase, userId, intent),
       isInternalCall ? Promise.resolve({}) : getUserContext(supabase, userId),
+      supabase.from('chart_analyses')
+        .select('ticker, asset_type, timeframe, prediction_signal, confidence, sentiment_score, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      // Fetch real paper trading data when relevant
+      isPerformanceQuery ? (async () => {
+        try {
+          const [accountRes, openRes, recentRes] = await Promise.all([
+            supabase.from('ayn_account_state').select('*').maybeSingle(),
+            supabase.from('ayn_paper_trades').select('*').in('status', ['OPEN', 'PARTIAL_CLOSE']),
+            supabase.from('ayn_paper_trades').select('*').in('status', ['CLOSED_WIN', 'CLOSED_LOSS', 'STOPPED_OUT']).order('exit_time', { ascending: false }).limit(5),
+          ]);
+          return {
+            account: accountRes.data,
+            openPositions: openRes.data || [],
+            recentTrades: recentRes.data || [],
+          };
+        } catch (err) {
+          console.error('[ayn-unified] Failed to fetch account performance:', err);
+          return null;
+        }
+      })() : Promise.resolve(null),
+      // Scan market for autonomous trading
+      wantsAutonomousTrading ? scanMarketOpportunities() : Promise.resolve(null)
     ]);
 
     // Check user limits
@@ -809,12 +864,322 @@ serve(async (req) => {
       );
     }
 
+    // Build chart history context for AYN
+    const chartSection = chartHistory?.data?.length
+      ? `\n\nUSER'S RECENT CHART ANALYSES (reference when they ask about their trading history):\n${chartHistory.data.map((c: Record<string, unknown>) =>
+          `- ${c.ticker || 'Unknown'} (${c.asset_type || 'N/A'}): ${c.prediction_signal} signal, ${c.confidence}% confidence, ${c.timeframe} timeframe (${new Date(c.created_at as string).toLocaleDateString()})`
+        ).join('\n')}`
+      : '';
+
+    // Inject real paper trading performance data into context if available
+    let performanceContext = '';
+    if (accountPerformance?.account) {
+      const acct = accountPerformance.account;
+      const openPos = accountPerformance.openPositions;
+      const recentTrades = accountPerformance.recentTrades;
+      
+      performanceContext = `\n\nREAL PAPER TRADING DATA (FROM DATABASE — USE THIS, DO NOT FABRICATE):
+Balance: $${Number(acct.current_balance).toFixed(2)}
+Starting: $${Number(acct.starting_balance).toFixed(2)}
+Total P&L: $${Number(acct.total_pnl_dollars).toFixed(2)} (${Number(acct.total_pnl_percent).toFixed(2)}%)
+Total Trades: ${acct.total_trades}
+Win Rate: ${Number(acct.win_rate).toFixed(1)}%
+Winning: ${acct.winning_trades} | Losing: ${acct.losing_trades}
+Open Positions: ${openPos.length}${openPos.length > 0 ? '\n' + openPos.map((t: Record<string, unknown>) => `  - ${t.ticker} ${t.signal} @ $${t.entry_price} (size: $${Number(t.position_size_dollars).toFixed(2)})`).join('\n') : ''}
+Recent Closed Trades: ${recentTrades.length}${recentTrades.length > 0 ? '\n' + recentTrades.map((t: Record<string, unknown>) => `  - ${t.ticker} ${t.signal}: entry $${t.entry_price} → exit $${t.exit_price} | P&L: $${Number(t.pnl_dollars as number).toFixed(2)} (${Number(t.pnl_percent as number).toFixed(2)}%) | ${t.status}`).join('\n') : ''}`;
+      
+      console.log('[ayn-unified] Injected real performance data into trading context');
+    } else if (isPerformanceQuery) {
+      // Performance query but no account data found
+      performanceContext = `\n\nREAL PAPER TRADING DATA — INJECTED FROM DATABASE:
+Balance: $10,000.00 | Starting: $10,000.00 | P&L: $0.00 (0.00%)
+Total Trades: 0 | Win Rate: N/A
+Open Positions: NONE
+Closed Trades: NONE
+STATUS: Account launched. Zero trades executed.
+
+MANDATORY RESPONSE FOR THIS STATE:
+Your answer MUST say: "My paper trading account is live with $10,000. No trades yet — I'm being selective and waiting for a 65%+ confidence setup."
+DO NOT DEVIATE. DO NOT ADD FICTIONAL TRADES. DO NOT ADD FICTIONAL PRICES. DO NOT INVENT BALANCES OTHER THAN $10,000.`;
+      
+      console.log('[ayn-unified] No account data found, injected default state');
+    }
+
+    // Inject market scan results for autonomous trading
+    let scanContext = '';
+    if (scanResults && scanResults.opportunities.length > 0) {
+      scanContext = `\n\nMARKET SCAN RESULTS (LIVE FROM PIONEX API — USE THIS DATA):
+Scanned: ${scanResults.scannedPairs} pairs
+Top Opportunities: ${scanResults.opportunities.length}
+
+${scanResults.opportunities.map((opp: any, i: number) => `${i + 1}. ${opp.ticker}
+   Score: ${opp.score}/100
+   Price: $${opp.price}
+   24h Change: ${opp.priceChange24h > 0 ? '+' : ''}${opp.priceChange24h.toFixed(2)}%
+   Volume: $${(opp.volume24h / 1e6).toFixed(1)}M
+   Signals: ${opp.signals.join(', ')}`).join('\n\n')}
+
+You are AUTHORIZED to pick the best one and open a trade. Include EXECUTE_TRADE JSON at the end of your response.`;
+      console.log(`[ayn-unified] Injected scan results: ${scanResults.opportunities.length} opportunities from ${scanResults.scannedPairs} pairs`);
+    } else if (wantsAutonomousTrading) {
+      scanContext = `\n\nMARKET SCAN RESULTS: Scanned ${scanResults?.scannedPairs || 'all'} pairs. NO opportunities scored above threshold.
+You MUST tell the user: "I scanned ${scanResults?.scannedPairs || 'the market'} pairs — no high-conviction setups right now. I won't force a trade."
+DO NOT fabricate or invent any trade. DO NOT make up prices. DO NOT suggest a specific coin with a specific price. Just report the scan result honestly.`;
+      console.log('[ayn-unified] Market scan found no qualifying opportunities');
+    } else if (intent === 'trading-coach') {
+      // ANTI-FABRICATION: When NOT in autonomous mode, prevent the AI from inventing trades
+      scanContext += `\n\nCRITICAL ANTI-FABRICATION RULE:
+You do NOT have live market data right now. DO NOT invent specific prices, entry points, or trade recommendations with made-up numbers.
+If the user asks you to trade or pick a token, tell them to say "do paper testing" or "find best token" so you can scan real Pionex market data first.
+NEVER say "I'm buying X at $Y" unless you have MARKET SCAN RESULTS above with real prices from Pionex.
+You may discuss trading concepts, strategy, and education freely — just don't fabricate specific prices.`;
+    }
 
     // Build system prompt with user message for language detection AND user memories
-    let systemPrompt = buildSystemPrompt(intent, language, context, lastMessage, userContext) + INJECTION_GUARD;
+    let systemPrompt = buildSystemPrompt(intent, language, context, lastMessage, userContext) + performanceContext + chartSection + scanContext + INJECTION_GUARD;
 
+    // === FIRECRAWL + LIVE PIONEX INTEGRATION FOR TRADING COACH ===
+    if (intent === 'trading-coach') {
+      const { scrapeUrl: urlToScrape, searchQuery, ticker: ctxTicker, assetType: ctxAssetType, timeframe: ctxTimeframe } = context;
+
+      const firecrawlTasks: Promise<void>[] = [];
+
+      // --- Ticker detection from user message ---
+      const CRYPTO_MAP: Record<string, string> = {
+        'bitcoin': 'BTC', 'btc': 'BTC',
+        'ethereum': 'ETH', 'eth': 'ETH', 'ether': 'ETH',
+        'solana': 'SOL', 'sol': 'SOL',
+        'xrp': 'XRP', 'ripple': 'XRP',
+        'dogecoin': 'DOGE', 'doge': 'DOGE',
+        'cardano': 'ADA', 'ada': 'ADA',
+        'polkadot': 'DOT', 'dot': 'DOT',
+        'avalanche': 'AVAX', 'avax': 'AVAX',
+        'chainlink': 'LINK', 'link': 'LINK',
+        'polygon': 'POL', 'matic': 'POL', 'pol': 'POL',
+        'litecoin': 'LTC', 'ltc': 'LTC',
+        'uniswap': 'UNI', 'uni': 'UNI',
+        'shiba': 'SHIB', 'shib': 'SHIB',
+        'tron': 'TRX', 'trx': 'TRX',
+        'cosmos': 'ATOM', 'atom': 'ATOM',
+        'near': 'NEAR', 'near protocol': 'NEAR',
+        'aptos': 'APT', 'apt': 'APT',
+        'sui': 'SUI',
+        'arbitrum': 'ARB', 'arb': 'ARB',
+        'optimism': 'OP', 'op': 'OP',
+        'filecoin': 'FIL', 'fil': 'FIL',
+        'pepe': 'PEPE',
+        'bonk': 'BONK',
+        'render': 'RENDER',
+        'injective': 'INJ', 'inj': 'INJ',
+        'sei': 'SEI',
+        'celestia': 'TIA', 'tia': 'TIA',
+        'jupiter': 'JUP', 'jup': 'JUP',
+        'bnb': 'BNB', 'binance coin': 'BNB',
+        'ton': 'TON', 'toncoin': 'TON',
+      };
+
+      function detectTickerFromMessage(msg: string): string | null {
+        const lower = msg.toLowerCase();
+        // Check longer names first to avoid partial matches
+        const sorted = Object.entries(CRYPTO_MAP).sort((a, b) => b[0].length - a[0].length);
+        for (const [name, symbol] of sorted) {
+          // Use word boundary matching
+          const regex = new RegExp(`\\b${name}\\b`, 'i');
+          if (regex.test(lower)) return symbol;
+        }
+        return null;
+      }
+
+      const mentionedSymbol = detectTickerFromMessage(lastMessage);
+      const cleanCtxTicker = ctxTicker ? ctxTicker.replace(/\/USDT|\/USD|\/BUSD/i, '').toUpperCase() : null;
+      
+      // Determine which tickers to fetch
+      const tickersToFetch = new Set<string>();
+      if (cleanCtxTicker && ctxAssetType === 'crypto' && ctxTicker !== 'UNKNOWN') {
+        tickersToFetch.add(cleanCtxTicker);
+      }
+      if (mentionedSymbol && mentionedSymbol !== cleanCtxTicker) {
+        tickersToFetch.add(mentionedSymbol);
+      }
+
+      // Anti-hallucination guard
+      systemPrompt += `\n\nCRITICAL RULE: NEVER fabricate, guess, or hallucinate any price, market data, or statistics. If you do NOT have live data for a specific coin or asset provided below, you MUST say "I don't have live data for that coin right now." Do NOT make up numbers.`;
+
+      // Fetch live Pionex data for all detected tickers
+      for (const ticker of tickersToFetch) {
+        firecrawlTasks.push((async () => {
+          try {
+            const apiKey = Deno.env.get('PIONEX_API_KEY');
+            const apiSecret = Deno.env.get('PIONEX_API_SECRET');
+            if (!apiKey || !apiSecret) return;
+
+            const symbol = `${ticker}_USDT`;
+            console.log('[DEBUG ayn-unified] Ticker mapping:', ticker, '->', symbol);
+            const intervalMap: Record<string, string> = {
+              '1m': '1M', '5m': '5M', '15m': '15M', '30m': '30M',
+              '1H': '60M', '4H': '4H', '8H': '8H', '12H': '12H',
+              'Daily': '1D', 'Weekly': '1D', 'Monthly': '1D', 'unknown': '60M',
+            };
+            const interval = intervalMap[ctxTimeframe || 'unknown'] || '60M';
+
+            async function signReq(qs: string): Promise<string> {
+              const enc = new TextEncoder();
+              const key = await crypto.subtle.importKey('raw', enc.encode(apiSecret!), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+              const sig = await crypto.subtle.sign('HMAC', key, enc.encode(qs));
+              return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            const ts = Date.now().toString();
+            const baseUrl = 'https://api.pionex.com';
+
+            // Fetch ticker 24h stats
+            const tickerPath = `/api/v1/market/tickers?symbol=${symbol}&timestamp=${ts}`;
+            const tickerSig = await signReq(tickerPath);
+            const tickerRes = await fetch(`${baseUrl}${tickerPath}`, {
+              headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': tickerSig },
+            });
+
+            let liveBlock = '';
+            if (tickerRes.ok) {
+              const tickerData = await tickerRes.json();
+              console.log('[DEBUG ayn-unified] Raw ticker response for', symbol, ':', JSON.stringify(tickerData).slice(0, 500));
+              const t = tickerData?.data?.tickers?.[0];
+              if (t) {
+                const price = parseFloat(t.close || t.last || '0');
+                console.log('[DEBUG ayn-unified] Price extracted:', price, 'from fields close:', t.close, 'last:', t.last, 'open:', t.open);
+                const open = parseFloat(t.open || '0');
+                const change = open > 0 ? ((price - open) / open * 100).toFixed(2) : 'N/A';
+                liveBlock = `\n\n📊 LIVE MARKET DATA for ${ticker} (Pionex, just fetched):\nSymbol: ${symbol}\nCurrent Price: ${price}\n24h Change: ${change}%\n24h High: ${t.high || 'N/A'}\n24h Low: ${t.low || 'N/A'}\n24h Volume: ${t.amount ? parseFloat(t.amount).toLocaleString() + ' USDT' : 'N/A'}\n\nUse this live data to give accurate answers about ${ticker}. Reference these numbers when the user asks about ${ticker}.`;
+              }
+            } else {
+              await tickerRes.text();
+            }
+
+            // Fetch last 10 candles
+            const klinesPath = `/api/v1/market/klines?symbol=${symbol}&interval=${interval}&limit=10&timestamp=${ts}`;
+            const klinesSig = await signReq(klinesPath);
+            const klinesRes = await fetch(`${baseUrl}${klinesPath}`, {
+              headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': klinesSig },
+            });
+
+            if (klinesRes.ok) {
+              const klinesData = await klinesRes.json();
+              console.log('[DEBUG ayn-unified] Raw klines response for', symbol, ':', JSON.stringify(klinesData).slice(0, 500));
+              const klines = klinesData?.data?.klines || [];
+              if (klines.length > 0) {
+                const candles = klines.slice(-5).map((k: any) => `O:${k.open} H:${k.high} L:${k.low} C:${k.close}`).join(' | ');
+                liveBlock += `\nRecent ${interval} candles for ${ticker}: ${candles}`;
+              }
+            } else {
+              await klinesRes.text();
+            }
+
+            if (liveBlock) {
+              systemPrompt += liveBlock;
+              console.log(`[ayn-unified] Injected live Pionex data for ${symbol}`);
+            }
+          } catch (err) {
+            console.warn(`[ayn-unified] Pionex fetch error for ${ticker}:`, err);
+          }
+        })());
+      }
+
+      if (urlToScrape && typeof urlToScrape === 'string') {
+        firecrawlTasks.push((async () => {
+          try {
+            const { scrapeUrl: scrapeUrlFn } = await import("../_shared/firecrawlHelper.ts");
+            const { sanitizeForPrompt, FIRECRAWL_CONTENT_GUARD } = await import("../_shared/sanitizeFirecrawl.ts");
+            const scraped = await scrapeUrlFn(urlToScrape);
+            if (scraped.success && scraped.markdown) {
+              const title = scraped.metadata?.title || 'Article';
+              const safeContent = sanitizeForPrompt(scraped.markdown, 3000);
+              systemPrompt += `\n\n${FIRECRAWL_CONTENT_GUARD}\nARTICLE CONTENT (user shared this URL - "${title}"):\n${safeContent}`;
+              console.log(`[ayn-unified] Scraped URL for trading coach: ${urlToScrape.substring(0, 60)}`);
+            }
+          } catch (err) {
+            console.error('[ayn-unified] Firecrawl scrape error:', err);
+          }
+        })());
+      }
+
+      // Backend fallback: generate searchQuery if frontend didn't send one but we have context
+      let effectiveSearchQuery = (searchQuery && typeof searchQuery === 'string') ? searchQuery : null;
+      if (!effectiveSearchQuery && mentionedSymbol) {
+        // Check if the message is asking a market/price question
+        const marketQuestion = /\b(price|buy|sell|hold|dump|pump|crash|surge|news|happening|analysis|forecast|prediction|why|should|worth|bullish|bearish)\b/i;
+        if (marketQuestion.test(lastMessage) || lastMessage.includes('?')) {
+          effectiveSearchQuery = `${mentionedSymbol} crypto latest price analysis today`;
+          console.log(`[ayn-unified] Backend fallback search query: "${effectiveSearchQuery}"`);
+        }
+      }
+
+      if (effectiveSearchQuery) {
+        firecrawlTasks.push((async () => {
+          try {
+            const { searchWeb } = await import("../_shared/firecrawlHelper.ts");
+            const { sanitizeForPrompt, FIRECRAWL_CONTENT_GUARD } = await import("../_shared/sanitizeFirecrawl.ts");
+            const results = await searchWeb(effectiveSearchQuery!, { limit: 5 });
+            if (results.success && results.data?.length) {
+              const newsLines = results.data.map((r: { title: string; description: string; url: string }) =>
+                `- ${sanitizeForPrompt(r.title, 200)}: ${sanitizeForPrompt(r.description, 300)} (${r.url})`
+              ).join('\n');
+              systemPrompt += `\n\n${FIRECRAWL_CONTENT_GUARD}\nLIVE MARKET NEWS (from web search for "${effectiveSearchQuery}"):\n${newsLines}\n\nUse this info naturally. Cite sources when relevant. Never reveal you used Firecrawl or web search tools.`;
+              console.log(`[ayn-unified] Web search for trading coach: "${effectiveSearchQuery}" - ${results.data.length} results`);
+            }
+          } catch (err) {
+            console.error('[ayn-unified] Firecrawl search error:', err);
+          }
+        })());
+      }
+
+      if (firecrawlTasks.length > 0) {
+        await Promise.all(firecrawlTasks);
+      }
+    }
 
     // Handle image generation intent (LAB mode)
+    if (intent === 'image') {
+      try {
+        const { imageUrl: rawImageUrl, revisedPrompt } = await generateImage(lastMessage);
+        
+        // Upload to storage for permanent URL
+        const imageUrl = await uploadImageIfDataUrl(rawImageUrl, userId);
+        
+        // Log usage
+        try {
+          await supabase.from('llm_usage_logs').insert({
+            user_id: userId,
+            intent_type: 'image',
+            was_fallback: false
+          });
+        } catch (logError) {
+          console.error('Failed to log image usage:', logError);
+        }
+
+        return new Response(JSON.stringify({
+          content: revisedPrompt,
+          imageUrl,
+          revisedPrompt,
+          model: 'Gemini Image',
+          wasFallback: false,
+          intent: 'image'
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (imageError) {
+        console.error('[ayn-unified] Image generation failed:', imageError);
+        return new Response(JSON.stringify({
+          content: "sorry, couldn't generate that image right now. try describing it differently?",
+          error: imageError instanceof Error ? imageError.message : 'Image generation failed',
+          intent: 'image'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // Handle document generation intent
     if (intent === 'document') {
       try {
         console.log('[ayn-unified] Document generation requested');
@@ -1141,8 +1506,8 @@ serve(async (req) => {
       }
     }
 
-    // Call with fallback
-    const effectiveStream = stream;
+    // Call with fallback — force non-streaming for autonomous trading (need to parse EXECUTE_TRADE)
+    const effectiveStream = wantsAutonomousTrading ? false : stream;
     const { response, modelUsed, wasFallback } = await callWithFallback(
       intent,
       fullMessages,
@@ -1165,6 +1530,60 @@ serve(async (req) => {
 
     // Non-streaming response
     let responseContent = (response as { content: string }).content;
+    
+    // === AUTO-EXECUTE TRADE: Parse EXECUTE_TRADE from AI response ===
+    const tradeMatch = responseContent.match(/EXECUTE_TRADE:\s*(\{[\s\S]*?\})\s*$/m);
+    let tradeResult = null;
+    if (tradeMatch) {
+      try {
+        const tradeParams = JSON.parse(tradeMatch[1]);
+        // Enrich with scan context if AI didn't include marketContext
+        if (!tradeParams.marketContext && scanResults?.opportunities?.length > 0) {
+          const matchedOpp = scanResults.opportunities.find((o: any) => o.ticker === tradeParams.ticker);
+          if (matchedOpp) {
+            tradeParams.marketContext = {
+              score: matchedOpp.score,
+              signals: matchedOpp.signals,
+              volume24h: matchedOpp.volume24h,
+              priceChange24h: matchedOpp.priceChange24h,
+            };
+          }
+        }
+        console.log('[AUTO-TRADE] AI wants to execute:', JSON.stringify(tradeParams));
+        
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const tradeRes = await fetch(`${supabaseUrl}/functions/v1/ayn-open-trade`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tradeParams),
+        });
+        
+        if (tradeRes.ok) {
+          tradeResult = await tradeRes.json();
+          if (tradeResult.opened) {
+            // Remove the raw EXECUTE_TRADE line and append confirmation
+            responseContent = responseContent.replace(/EXECUTE_TRADE:\s*\{[\s\S]*?\}\s*$/m, '').trim();
+            responseContent += `\n\n✅ Position opened successfully. Trade ID: ${tradeResult.trade?.id?.substring(0, 8) || 'confirmed'}\nTracking live on Performance tab.`;
+            console.log('[AUTO-TRADE] ✅ Trade opened:', tradeResult.summary);
+          } else {
+            responseContent = responseContent.replace(/EXECUTE_TRADE:\s*\{[\s\S]*?\}\s*$/m, '').trim();
+            responseContent += `\n\n⚠️ Trade not opened: ${tradeResult.reason}`;
+            console.log('[AUTO-TRADE] Trade skipped:', tradeResult.reason);
+          }
+        } else {
+          const errText = await tradeRes.text();
+          console.error('[AUTO-TRADE] Trade function error:', errText);
+          responseContent = responseContent.replace(/EXECUTE_TRADE:\s*\{[\s\S]*?\}\s*$/m, '').trim();
+          responseContent += `\n\n⚠️ Could not execute trade right now. Try again.`;
+        }
+      } catch (e) {
+        console.error('[AUTO-TRADE] Failed to parse/execute:', e);
+        responseContent = responseContent.replace(/EXECUTE_TRADE:\s*\{[\s\S]*?\}\s*$/m, '').trim();
+      }
+    }
 
     // === SAFETY NET: Intercept hallucinated tool calls ===
     if (responseContent && /["']?action["']?\s*:\s*["']generate_image["']/.test(responseContent)) {
@@ -1199,6 +1618,8 @@ serve(async (req) => {
       intent,
       emotion: detectedEmotion,
       userEmotion,
+      ...(scanResults?.opportunities ? { scanResults: scanResults.opportunities } : {}),
+      ...(tradeResult?.opened ? { tradeOpened: true, tradeId: tradeResult.trade?.id } : {})
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

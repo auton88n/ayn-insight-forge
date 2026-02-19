@@ -31,6 +31,7 @@ export interface ResponseBubble {
   isVisible: boolean;
   position: { x: number; y: number };
   attachment?: ResponseBubbleAttachment;
+  chartAnalysis?: import('@/types/chartAnalyzer.types').ChartAnalysisResult;
 }
 
 export interface SuggestionBubble {
@@ -58,7 +59,7 @@ interface UseBubbleAnimationReturn {
     endPosition: { x: number; y: number }
   ) => void;
   completeSuggestionAbsorption: () => void;
-  emitResponseBubble: (content: string, type: BubbleType, attachment?: ResponseBubbleAttachment) => void;
+  emitResponseBubble: (content: string, type: BubbleType, attachment?: ResponseBubbleAttachment, chartAnalysis?: import('@/types/chartAnalyzer.types').ChartAnalysisResult) => void;
   clearResponseBubbles: () => void;
   dismissBubble: (id: string) => void;
   emitSuggestion: (content: string, emoji?: string) => void;
@@ -154,7 +155,7 @@ export const useBubbleAnimation = (): UseBubbleAnimationReturn => {
     }, 200);
   }, []);
 
-  const emitResponseBubble = useCallback((content: string, type: BubbleType, attachment?: ResponseBubbleAttachment) => {
+  const emitResponseBubble = useCallback((content: string, type: BubbleType, attachment?: ResponseBubbleAttachment, chartAnalysis?: import('@/types/chartAnalyzer.types').ChartAnalysisResult) => {
     const id = `response-${Date.now()}-${bubbleIdRef.current++}`;
     
     const newBubble: ResponseBubble = {
@@ -164,6 +165,7 @@ export const useBubbleAnimation = (): UseBubbleAnimationReturn => {
       isVisible: true,
       position: { x: 0, y: 0 },
       attachment,
+      chartAnalysis,
     };
 
     // Replace all previous bubbles - each AYN response is complete, not a continuation

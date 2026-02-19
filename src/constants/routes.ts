@@ -10,6 +10,7 @@ export const ROUTES = {
   PRICING: '/pricing',
   ENGINEERING: '/engineering',
   
+  CHART_ANALYZER: '/chart-analyzer',
   COMPLIANCE: '/compliance',
   ENGINEERING_GRADING: '/engineering/grading',
   ADMIN: '/admin',

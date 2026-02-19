@@ -69,6 +69,9 @@ export const API_ENDPOINTS = {
   AI_COMPREHENSIVE_TESTER: 'ai-comprehensive-tester',
   RUN_REAL_TESTS: 'run-real-tests',
   
+  // Trading
+  ANALYZE_TRADING_CHART: 'analyze-trading-chart',
+  
   // Health
   HEALTH: 'health',
 } as const;
