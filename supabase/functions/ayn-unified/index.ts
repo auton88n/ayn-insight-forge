@@ -526,6 +526,7 @@ async function checkUserLimit(supabase: ReturnType<typeof createClient>, userId:
 
 // Scan Pionex market for autonomous trading opportunities (enhanced with technical indicators)
 async function scanMarketOpportunities(): Promise<{ opportunities: any[]; scannedPairs: number } | null> {
+  console.log('[SCANNER] scanMarketOpportunities started');
   const apiKey = Deno.env.get('PIONEX_API_KEY');
   const apiSecret = Deno.env.get('PIONEX_API_SECRET');
   if (!apiKey || !apiSecret) {
@@ -587,26 +588,38 @@ async function scanMarketOpportunities(): Promise<{ opportunities: any[]; scanne
       }
     }
 
-    console.log(`[SCAN] Phase 1: ${phase1Candidates.length} candidates for kline analysis`);
+    const tickerList = phase1Candidates.map((c: { symbol: string }) => c.symbol);
+    console.log(`[SCANNER] Scanning ${phase1Candidates.length} tickers:`, tickerList.join(', '));
 
     // ── Phase 2: fetch klines and score with technical indicators ─────────────
     const opportunities: any[] = [];
+
+    const getKlineTime = (k: any) => (k && typeof k === 'object' && 'time' in k ? k.time : k?.[0]);
 
     for (const candidate of phase1Candidates) {
       const klines = await fetchKlines(candidate.symbol, '60M', 100, apiKey, apiSecret);
 
       let score: number;
       let signals: string[];
+      let lastCandleTimeMs: number | null = null;
 
       if (!klines || klines.length < 20) {
         // Fallback: use basic score if klines unavailable
         score = 50 + (candidate.priceChange > 0 && candidate.priceChange <= 15 ? 15 : 0)
                + (candidate.volume > 1000000 ? 8 : 0);
         signals = [`Momentum ${candidate.priceChange.toFixed(1)}%`, candidate.volume > 1000000 ? 'High liquidity' : ''];
+        if (klines?.length) {
+          const sorted = [...klines].sort((a, b) => getKlineTime(a) - getKlineTime(b));
+          const t = getKlineTime(sorted[sorted.length - 1]);
+          if (typeof t === 'number') lastCandleTimeMs = t;
+        }
       } else {
         const technicals = analyzeKlines(klines, candidate.price, []);
         score = calculateEnhancedScore(candidate.priceChange, candidate.volume, technicals);
         signals = technicals.summary;
+        const sorted = [...klines].sort((a, b) => getKlineTime(a) - getKlineTime(b));
+        const t = getKlineTime(sorted[sorted.length - 1]);
+        if (typeof t === 'number') lastCandleTimeMs = t;
       }
 
       if (score >= 70) {
@@ -617,6 +630,7 @@ async function scanMarketOpportunities(): Promise<{ opportunities: any[]; scanne
           volume24h: candidate.volume,
           priceChange24h: candidate.priceChange,
           signals,
+          lastCandleTimeMs,
         });
       }
     }
@@ -626,6 +640,15 @@ async function scanMarketOpportunities(): Promise<{ opportunities: any[]; scanne
     // Funding rates: Pionex REST does not expose a public funding-rate endpoint (404), so skipped.
 
     const top = opportunities.slice(0, 3);
+    if (top.length > 0) {
+      const lastMs = top[0].lastCandleTimeMs;
+      if (typeof lastMs === 'number') {
+        const ageSec = (Date.now() - lastMs) / 1000;
+        console.log(`[SCANNER] Top ticker last candle age: ${ageSec.toFixed(0)}s`);
+      } else {
+        console.log('[SCANNER] Top ticker last candle age: unknown (no kline time)');
+      }
+    }
     console.log(`[SCAN] Phase 2: ${opportunities.length} qualified opportunities (score≥70), returning top ${top.length}`);
     return { opportunities: top, scannedPairs: tickers.length };
   } catch (err) {
