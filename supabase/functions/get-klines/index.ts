@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
     }
 
     const pionexInterval = INTERVAL_MAP[interval] ?? '1MIN';
+    // Use current time for request signing only; do NOT set endTime — we want latest candles
     const timestamp = Date.now().toString();
     const path = `/api/v1/market/klines?symbol=${symbol}&interval=${pionexInterval}&limit=${limit}&timestamp=${timestamp}`;
     const signature = await signPionexRequest(path, apiSecret);
@@ -52,6 +53,8 @@ Deno.serve(async (req) => {
       headers: {
         'PIONEX-KEY': apiKey,
         'PIONEX-SIGNATURE': signature,
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
       },
     });
 
@@ -75,6 +78,17 @@ Deno.serve(async (req) => {
     }
 
     const rawKlines: PionexKline[] = data?.data?.klines ?? [];
+
+    // Log last candle time to verify data is current (not stale/delayed)
+    if (rawKlines.length > 0) {
+      const sorted = [...rawKlines].sort((a, b) => a.time - b.time);
+      const lastCandle = sorted[sorted.length - 1];
+      const nowMs = Date.now();
+      const ageMs = nowMs - lastCandle.time;
+      console.log(
+        `[get-klines] Last candle time: ${lastCandle.time} ms (${new Date(lastCandle.time).toISOString()}), server now: ${nowMs} ms, age: ${(ageMs / 1000).toFixed(0)}s`
+      );
+    }
 
     // Map Pionex kline objects { time, open, high, low, close, volume }
     // to { time (seconds), open, high, low, close }

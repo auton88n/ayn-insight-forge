@@ -304,48 +304,8 @@ export function calculateEnhancedScore(
   return score;
 }
 
-// ── Phase 3.5: Funding Rate Fetch ─────────────────────────────────────────────
-export async function fetchFundingRates(
-  apiKey: string,
-  apiSecret: string
-): Promise<Record<string, number>> {
-  try {
-    const enc = new TextEncoder();
-    const ts = Date.now().toString();
-    const path = `/api/v1/perpetual/public/fundingRate`;
-    const queryStr = `timestamp=${ts}`;
-    const message = `GET\n${path}\n${queryStr}`;
-    const key = await crypto.subtle.importKey(
-      'raw', enc.encode(apiSecret),
-      { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-    );
-    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-    const signature = Array.from(new Uint8Array(sig))
-      .map(b => b.toString(16).padStart(2, '0')).join('');
-
-    const res = await fetch(`https://api.pionex.com${path}?${queryStr}`, {
-      headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': signature },
-    });
-
-    if (!res.ok) {
-      console.warn(`[SCANNER] Funding rates fetch failed: ${res.status}`);
-      return {};
-    }
-
-    const data = await res.json();
-    const rates: Record<string, number> = {};
-    const list = data?.data?.list ?? data?.data ?? [];
-    for (const item of list) {
-      if (item.symbol && item.fundingRate != null) {
-        rates[item.symbol] = parseFloat(item.fundingRate);
-      }
-    }
-    return rates;
-  } catch (e) {
-    console.warn('[SCANNER] Funding rate fetch error:', e);
-    return {};
-  }
-}
+// Funding rates: Pionex REST API does not expose a public funding-rate endpoint
+// (perpetual/public/fundingRate returns 404). Removed to avoid 404 on every scan.
 
 export async function fetchKlines(
   symbol: string,
@@ -354,8 +314,12 @@ export async function fetchKlines(
   apiKey: string,
   apiSecret: string
 ): Promise<any[] | null> {
+  console.log(`[SCANNER] fetchKlines called: symbol=${symbol} interval=${interval} limit=${limit}`);
+
+  let res: Response;
   try {
     const enc = new TextEncoder();
+    // Timestamp for request signing only; do NOT pass endTime — we want latest candles
     const ts = Date.now().toString();
     const path = `/api/v1/market/klines`;
     const queryStr = `symbol=${symbol}&interval=${interval}&limit=${limit}&timestamp=${ts}`;
@@ -367,19 +331,58 @@ export async function fetchKlines(
     const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
     const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-    const res = await fetch(`https://api.pionex.com${path}?${queryStr}`, {
-      headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': signature },
+    res = await fetch(`https://api.pionex.com${path}?${queryStr}`, {
+      headers: {
+        'PIONEX-KEY': apiKey,
+        'PIONEX-SIGNATURE': signature,
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      },
     });
-
-    if (!res.ok) {
-      console.warn(`[SCANNER] Klines fetch failed for ${symbol}: ${res.status}`);
-      return null;
-    }
-
-    const data = await res.json();
-    return data?.data?.klines ?? data?.data ?? null;
-  } catch (e) {
-    console.warn(`[SCANNER] Klines error for ${symbol}:`, e);
+  } catch (fetchErr) {
+    console.warn(`[SCANNER] Klines fetch threw: symbol=${symbol}`, fetchErr);
     return null;
   }
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    console.warn(`[SCANNER] Klines fetch failed: symbol=${symbol} status=${res.status} body=${errBody.slice(0, 300)}`);
+    return null;
+  }
+
+  let data: any;
+  try {
+    data = await res.json();
+  } catch (parseErr) {
+    console.warn(`[SCANNER] Klines response JSON parse error: symbol=${symbol}`, parseErr);
+    return null;
+  }
+
+  const klines = data?.data?.klines ?? data?.data ?? null;
+
+  if (!Array.isArray(klines)) {
+    console.log(`[SCANNER] Klines not array or missing: symbol=${symbol} type=${typeof klines} keys=${data ? Object.keys(data).join(',') : 'no data'}`);
+    return null;
+  }
+  if (klines.length === 0) {
+    console.log(`[SCANNER] Klines empty: symbol=${symbol}`);
+    return klines;
+  }
+
+  // Log last candle timestamp to verify data is current (not stale/delayed)
+  const getTime = (k: any) => (k && typeof k === 'object' && 'time' in k ? k.time : k?.[0]);
+  const sorted = [...klines].sort((a, b) => getTime(a) - getTime(b));
+  const last = sorted[sorted.length - 1];
+  const lastTimeMs = getTime(last);
+  if (typeof lastTimeMs === 'number') {
+    const nowMs = Date.now();
+    const ageSec = (nowMs - lastTimeMs) / 1000;
+    console.log(
+      `[SCANNER] Last kline timestamp: ${lastTimeMs} ms (${new Date(lastTimeMs).toISOString()}), now: ${nowMs} ms, age: ${ageSec.toFixed(0)}s, symbol: ${symbol}`
+    );
+  } else {
+    console.log(`[SCANNER] Last kline has no time field: symbol=${symbol} sample=${JSON.stringify(last).slice(0, 120)}`);
+  }
+
+  return klines;
 }

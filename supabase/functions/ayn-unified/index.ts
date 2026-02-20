@@ -6,7 +6,7 @@ import { buildSystemPrompt } from "./systemPrompts.ts";
 import { sanitizeUserPrompt, detectInjectionAttempt, INJECTION_GUARD } from "../_shared/sanitizePrompt.ts";
 import { activateMaintenanceMode } from "../_shared/maintenanceGuard.ts";
 import { uploadImageToStorage } from "../_shared/storageUpload.ts";
-import { analyzeKlines, calculateEnhancedScore, fetchKlines, fetchFundingRates } from "./marketScanner.ts";
+import { analyzeKlines, calculateEnhancedScore, fetchKlines } from "./marketScanner.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -623,26 +623,7 @@ async function scanMarketOpportunities(): Promise<{ opportunities: any[]; scanne
 
     opportunities.sort((a, b) => b.score - a.score);
 
-    // ── Phase 3.5: Funding rate adjustment ──────────────────────────────────
-    try {
-      const fundingRates = await fetchFundingRates(apiKey, apiSecret);
-      if (Object.keys(fundingRates).length > 0) {
-        for (const opp of opportunities) {
-          const rate = fundingRates[opp.ticker];
-          if (rate == null) continue;
-          if (rate < -0.0001) {
-            opp.score += 8;
-            opp.signals.push(`Negative funding ${(rate * 100).toFixed(3)}% (bullish)`);
-          } else if (rate > 0.0005) {
-            opp.score -= 5;
-            opp.signals.push(`High funding ${(rate * 100).toFixed(3)}% (caution)`);
-          }
-        }
-        opportunities.sort((a, b) => b.score - a.score);
-      }
-    } catch (frErr) {
-      console.warn('[SCAN] Funding rate adjustment skipped:', frErr);
-    }
+    // Funding rates: Pionex REST does not expose a public funding-rate endpoint (404), so skipped.
 
     const top = opportunities.slice(0, 3);
     console.log(`[SCAN] Phase 2: ${opportunities.length} qualified opportunities (score≥70), returning top ${top.length}`);
