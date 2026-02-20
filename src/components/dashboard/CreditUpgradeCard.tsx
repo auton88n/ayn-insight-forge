@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Infinity, Zap, Crown, ArrowRight, Gift } from 'lucide-react';
+import { Sparkles, Infinity as InfinityIcon, Zap, Crown, ArrowRight, Gift } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -155,7 +155,7 @@ export const CreditUpgradeCard = ({
           "flex items-center gap-1.5"
         )}>
             <Crown className="w-3 h-3 text-amber-500" />
-            <Infinity className="w-3 h-3 text-primary" />
+            <InfinityIcon className="w-3 h-3 text-primary" />
             <span className="text-xs font-medium text-primary">Unlimited</span>
           </div> :
 

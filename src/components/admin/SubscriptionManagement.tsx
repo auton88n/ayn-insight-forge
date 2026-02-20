@@ -27,7 +27,7 @@ import {
    AlertCircle,
     Settings2,
     Building,
-    Infinity
+    Infinity as InfinityIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,7 +79,7 @@ const tierConfig: Record<string, { icon: React.ElementType; color: string; bg: s
   pro: { icon: Sparkles, color: 'text-purple-500', bg: 'bg-purple-500/10' },
   business: { icon: Crown, color: 'text-amber-500', bg: 'bg-amber-500/10' },
    enterprise: { icon: Building, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-   unlimited: { icon: Infinity, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+   unlimited: { icon: InfinityIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
 };
 
 export const SubscriptionManagement = () => {

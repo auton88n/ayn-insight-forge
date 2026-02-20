@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Sparkles, Zap, Infinity, Calendar } from 'lucide-react';
+import { Sparkles, Zap, Infinity as InfinityIcon, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, differenceInDays } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -107,6 +107,13 @@ export const UsageCard = ({
     };
   }, [currentUsage, limit, resetDate]);
 
+  // Determine status level for legend (must be before any early return)
+  const statusLevel = useMemo(() => {
+    if (!limit) return 'normal';
+    if (percentage >= 90) return 'low';
+    if (percentage >= 75) return 'warning';
+    return 'normal';
+  }, [percentage, limit]);
 
   if (compact) {
     return (
@@ -171,7 +178,7 @@ export const UsageCard = ({
               {isUnlimited ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10">
-                    <Infinity className="w-3 h-3 text-primary" />
+                    <InfinityIcon className="w-3 h-3 text-primary" />
                     <span className="text-xs font-medium text-primary">Unlimited</span>
                   </div>
                   {resetDate && (
@@ -208,14 +215,6 @@ export const UsageCard = ({
       </TooltipProvider>
     );
   }
-
-  // Determine status level for legend
-  const statusLevel = useMemo(() => {
-    if (!limit) return 'normal';
-    if (percentage >= 90) return 'low';
-    if (percentage >= 75) return 'warning';
-    return 'normal';
-  }, [percentage, limit]);
 
   // Full size card (non-compact)
   return (

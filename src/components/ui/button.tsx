@@ -41,6 +41,8 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, onClick, onMouseDown, onTouchStart, ...props }, ref) => {
+    const { createRipple, RippleContainer } = useRipple()
+
     // When asChild is true, render a clean Slot with no custom behavior
     if (asChild) {
       return (
@@ -51,8 +53,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         />
       )
     }
-
-    const { createRipple, RippleContainer } = useRipple()
 
     const handleInteraction = (event: React.MouseEvent<HTMLButtonElement> | React.TouchEvent<HTMLButtonElement>) => {
       hapticFeedback('light')

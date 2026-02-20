@@ -75,6 +75,27 @@ export const ProblemLocationDiagram: React.FC<ProblemLocationDiagramProps> = ({
     return { min, max, range: max - min };
   }, [parsedLocations]);
 
+  // Group overlapping markers (must be before any early return)
+  const groupedMarkers = useMemo(() => {
+    if (parsedLocations.length === 0) return [];
+    const groups: { x: number; problems: Problem[]; width: number }[] = [];
+    parsedLocations.forEach(loc => {
+      const xStart = ((loc.start - bounds.min) / bounds.range) * 100;
+      const xEnd = loc.end ? ((loc.end - bounds.min) / bounds.range) * 100 : xStart;
+      const width = Math.max(xEnd - xStart, 2);
+      const existingGroup = groups.find(g =>
+        Math.abs(g.x - xStart) < 3 || (xStart >= g.x && xStart <= g.x + g.width)
+      );
+      if (existingGroup) {
+        existingGroup.problems.push(loc.problem);
+        existingGroup.width = Math.max(existingGroup.width, width);
+      } else {
+        groups.push({ x: xStart, problems: [loc.problem], width });
+      }
+    });
+    return groups;
+  }, [parsedLocations, bounds]);
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return { fill: '#ef4444', stroke: '#dc2626' };
@@ -118,31 +139,6 @@ export const ProblemLocationDiagram: React.FC<ProblemLocationDiagramProps> = ({
   if (parsedLocations.length === 0) {
     return null;
   }
-
-  // Group overlapping markers
-  const groupedMarkers = useMemo(() => {
-    const groups: { x: number; problems: Problem[]; width: number }[] = [];
-    
-    parsedLocations.forEach(loc => {
-      const xStart = ((loc.start - bounds.min) / bounds.range) * 100;
-      const xEnd = loc.end ? ((loc.end - bounds.min) / bounds.range) * 100 : xStart;
-      const width = Math.max(xEnd - xStart, 2);
-      
-      // Check if overlaps with existing group
-      const existingGroup = groups.find(g => 
-        Math.abs(g.x - xStart) < 3 || (xStart >= g.x && xStart <= g.x + g.width)
-      );
-      
-      if (existingGroup) {
-        existingGroup.problems.push(loc.problem);
-        existingGroup.width = Math.max(existingGroup.width, width);
-      } else {
-        groups.push({ x: xStart, problems: [loc.problem], width });
-      }
-    });
-    
-    return groups;
-  }, [parsedLocations, bounds]);
 
   return (
     <motion.div
