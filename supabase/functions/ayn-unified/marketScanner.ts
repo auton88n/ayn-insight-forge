@@ -319,11 +319,13 @@ export async function fetchKlines(
   let res: Response;
   try {
     const enc = new TextEncoder();
-    // Timestamp for request signing only; do NOT pass endTime — we want latest candles
     const ts = Date.now().toString();
     const path = `/api/v1/market/klines`;
-    const queryStr = `symbol=${symbol}&interval=${interval}&limit=${limit}&timestamp=${ts}`;
-    const message = `GET\n${path}\n${queryStr}`;
+    const params: Record<string, string> = { interval, limit: String(limit), symbol, timestamp: ts };
+    // Sort params by key (ASCII) per Pionex docs
+    const sortedKeys = Object.keys(params).sort();
+    const queryStr = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+    const message = `GET${path}?${queryStr}`;
     const key = await crypto.subtle.importKey(
       'raw', enc.encode(apiSecret),
       { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']

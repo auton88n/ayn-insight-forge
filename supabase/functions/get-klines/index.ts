@@ -11,13 +11,27 @@ const INTERVAL_MAP: Record<string, string> = {
   '1h': '60M',
 };
 
-async function signPionexRequest(path: string, secret: string): Promise<string> {
+// Correct Pionex HMAC signing per API docs:
+// 1. Sort query params by ASCII key order
+// 2. Build PATH_URL = path?sorted_params
+// 3. Sign METHOD + PATH_URL (e.g. "GET/api/v1/market/klines?interval=60M&...")
+async function signPionexRequest(
+  method: string,
+  path: string,
+  params: Record<string, string>,
+  secret: string
+): Promise<{ signature: string; queryString: string }> {
+  const sortedKeys = Object.keys(params).sort();
+  const queryString = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+  const message = `${method}${path}?${queryString}`;
+
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
   );
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(path));
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+  const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return { signature, queryString };
 }
 
 Deno.serve(async (req) => {
@@ -44,12 +58,16 @@ Deno.serve(async (req) => {
     }
 
     const pionexInterval = INTERVAL_MAP[interval] ?? '1MIN';
-    // Use current time for request signing only; do NOT set endTime — we want latest candles
     const timestamp = Date.now().toString();
-    const path = `/api/v1/market/klines?symbol=${symbol}&interval=${pionexInterval}&limit=${limit}&timestamp=${timestamp}`;
-    const signature = await signPionexRequest(path, apiSecret);
 
-    const res = await fetch(`https://api.pionex.com${path}`, {
+    const { signature, queryString } = await signPionexRequest('GET', '/api/v1/market/klines', {
+      symbol,
+      interval: pionexInterval,
+      limit: String(limit),
+      timestamp,
+    }, apiSecret);
+
+    const res = await fetch(`https://api.pionex.com/api/v1/market/klines?${queryString}`, {
       headers: {
         'PIONEX-KEY': apiKey,
         'PIONEX-SIGNATURE': signature,
@@ -90,8 +108,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Map Pionex kline objects { time, open, high, low, close, volume }
-    // to { time (seconds), open, high, low, close }
+    // Map Pionex kline objects to { time (seconds), open, high, low, close }
     const klines = rawKlines
       .map((k) => ({
         time: Math.floor(k.time / 1000),

@@ -2472,6 +2472,42 @@ export type Database = {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          company_name: string | null
+          cover_letter: string | null
+          date_applied: string | null
+          id: string
+          job_title: string | null
+          job_url: string | null
+          notes: string | null
+          score: number | null
+          status: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          cover_letter?: string | null
+          date_applied?: string | null
+          id?: string
+          job_title?: string | null
+          job_url?: string | null
+          notes?: string | null
+          score?: number | null
+          status?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          cover_letter?: string | null
+          date_applied?: string | null
+          id?: string
+          job_title?: string | null
+          job_url?: string | null
+          notes?: string | null
+          score?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       llm_failures: {
         Row: {
           created_at: string | null

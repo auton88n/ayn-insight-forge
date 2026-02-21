@@ -536,17 +536,20 @@ async function scanMarketOpportunities(): Promise<{ opportunities: any[]; scanne
 
   try {
     const enc = new TextEncoder();
-    async function signReq(qs: string): Promise<string> {
+    async function signReq(method: string, path: string, params: Record<string, string>): Promise<{ signature: string; queryString: string }> {
+      const sortedKeys = Object.keys(params).sort();
+      const queryString = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+      const message = `${method}${path}?${queryString}`;
       const key = await crypto.subtle.importKey('raw', enc.encode(apiSecret!), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      const sig = await crypto.subtle.sign('HMAC', key, enc.encode(qs));
-      return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+      const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+      const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+      return { signature, queryString };
     }
 
     const ts = Date.now().toString();
-    const tickerPath = `/api/v1/market/tickers?timestamp=${ts}`;
-    const tickerSig = await signReq(tickerPath);
+    const { signature: tickerSig, queryString: tickerQs } = await signReq('GET', '/api/v1/market/tickers', { timestamp: ts });
 
-    const res = await fetch(`https://api.pionex.com${tickerPath}`, {
+    const res = await fetch(`https://api.pionex.com/api/v1/market/tickers?${tickerQs}`, {
       headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': tickerSig },
     });
 
