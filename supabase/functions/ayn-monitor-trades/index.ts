@@ -13,14 +13,25 @@ function calculateCosts(positionSizeDollars: number, shares: number, exitPrice: 
   return { entryFee, exitFee, slippage, total: entryFee + exitFee + slippage };
 }
 
-// Pionex HMAC signing (same pattern as analyze-trading-chart)
-async function signPionexRequest(path: string, secret: string): Promise<string> {
+// Correct Pionex HMAC signing per API docs:
+// Sign METHOD + PATH_URL with sorted query params
+async function signPionexRequest(
+  method: string,
+  path: string,
+  params: Record<string, string>,
+  secret: string
+): Promise<{ signature: string; queryString: string }> {
+  const sortedKeys = Object.keys(params).sort();
+  const queryString = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+  const message = `${method}${path}?${queryString}`;
+
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
   );
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(path));
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+  const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return { signature, queryString };
 }
 
 async function logError(supabase: any, component: string, errorType: string, operation: string, message: string, context: Record<string, unknown> = {}) {
@@ -43,14 +54,17 @@ async function getCurrentPrice(ticker: string): Promise<number | null> {
   const apiSecret = Deno.env.get('PIONEX_API_SECRET');
   if (!apiKey || !apiSecret) return null;
 
-  const cleanTicker = ticker.replace(/\/USDT|\/USD|\/BUSD/i, '').toUpperCase();
-  const symbol = `${cleanTicker}_USDT`;
+  // Handle both formats: "DEGO_USDT" (DB) and "DEGO/USDT" or "DEGO"
+  const symbol = ticker.includes('_USDT') ? ticker : `${ticker.replace(/\/USDT|\/USD|\/BUSD/i, '').toUpperCase()}_USDT`;
   const timestamp = Date.now().toString();
-  const tickerPath = `/api/v1/market/tickers?symbol=${symbol}&timestamp=${timestamp}`;
-  const signature = await signPionexRequest(tickerPath, apiSecret);
+
+  const { signature, queryString } = await signPionexRequest('GET', '/api/v1/market/tickers', {
+    symbol,
+    timestamp,
+  }, apiSecret);
 
   try {
-    const res = await fetch(`https://api.pionex.com${tickerPath}`, {
+    const res = await fetch(`https://api.pionex.com/api/v1/market/tickers?${queryString}`, {
       headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': signature },
     });
     if (!res.ok) {
