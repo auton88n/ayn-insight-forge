@@ -1,85 +1,95 @@
 
-# Fix: Balance Must Reflect Capital Deployed in Open Positions
 
-## Two Separate Issues
+# Fix: 4-Hour Kline Data Delay + Ticker Bug + Build Error
 
-### Issue 1: Balance Shows $10,000 When $5,000 Is Deployed (Real Bug)
+## Root Causes Identified
 
-The `ayn-open-trade` edge function inserts a trade row but **never deducts the position size from `current_balance`** in `ayn_account_state`. The `update_ayn_account_state` trigger only fires when a trade is CLOSED. So the balance stays at $10,000 even though $5,000 is tied up in TAO_USDT.
+### Issue 1: Incorrect Pionex HMAC Signing (Likely Cause of 4-Hour Delay)
 
-The fix has two parts:
+According to the [Pionex API documentation](https://pionex-doc.gitbook.io/apidocs/restful/general/authentication), the signing process requires:
 
-**Part A — Deduct on open:** After inserting the trade in `ayn-open-trade`, immediately update `ayn_account_state` to reduce `current_balance` by `positionSizeDollars`:
+1. Sort query parameters by ASCII key order
+2. Concatenate them with `&` after the PATH with `?` to form `PATH_URL`
+3. **Concatenate `METHOD` directly before `PATH_URL`** (no newlines)
+4. HMAC-SHA256 the result
 
-```typescript
-// After successful trade insert:
-await supabase
-  .from('ayn_account_state')
-  .update({
-    current_balance: balance - positionSizeDollars,
-    updated_at: new Date().toISOString(),
-  })
-  .eq('id', '00000000-0000-0000-0000-000000000001');
-```
+**Correct format:** `GET/api/v1/market/klines?interval=60M&limit=100&symbol=BTC_USDT&timestamp=1234567890`
 
-**Part B — Return on close:** In `ayn-close-trade`, after closing the trade, update `current_balance` to add back the position capital plus the net P&L:
+All three signing implementations in the codebase are wrong:
 
-```typescript
-// After computing totalPnlDollars:
-const { data: acct } = await supabase
-  .from('ayn_account_state')
-  .select('current_balance')
-  .eq('id', '00000000-0000-0000-0000-000000000001')
-  .single();
+| File | Current signing format | Problem |
+|---|---|---|
+| `get-klines/index.ts` | Signs `/api/v1/market/klines?symbol=...&timestamp=...` | Missing `GET` prefix; params not sorted by key |
+| `marketScanner.ts` (`fetchKlines`) | Signs `GET\n/path\n{query}` | Uses newlines instead of direct concatenation; params not sorted |
+| `ayn-monitor-trades` | Signs `/api/v1/market/tickers?symbol=...&timestamp=...` | Missing `GET` prefix; params not sorted |
+| `ayn-unified` (`scanMarketOpportunities`) | Signs `/api/v1/market/tickers?timestamp=...` | Missing `GET` prefix |
 
-const newBalance = Number(acct.current_balance) + positionDollars + totalPnlDollars;
+The API may still return data (market endpoints might be semi-public), but incorrect signing could cause the API to return cached/stale data rather than the freshest candles, explaining the consistent 4-hour lag.
 
-await supabase
-  .from('ayn_account_state')
-  .update({ current_balance: newBalance, updated_at: new Date().toISOString() })
-  .eq('id', '00000000-0000-0000-0000-000000000001');
-```
+### Issue 2: Ticker Format Bug in `ayn-monitor-trades`
 
-**Part C — Fix current state in DB:** The TAO_USDT trade is currently OPEN with $5,000 deployed but balance still reads $10,000. We need a one-time SQL fix:
+The `getCurrentPrice()` function at line 46-47 uses regex `/\/USDT|\/USD|\/BUSD/i` to strip suffixes. Since database tickers use underscores (e.g., `DEGO_USDT`), the regex never matches, producing `DEGO_USDT_USDT` -- a nonexistent pair. The monitor has never successfully fetched a price for any open trade.
 
-```sql
-UPDATE ayn_account_state
-SET current_balance = 10000 - 5000
-WHERE id = '00000000-0000-0000-0000-000000000001';
-```
-This sets it to $5,000 to match reality right now.
+### Issue 3: Build Error in `admin-notifications`
 
-**Part D — Update the existing DB trigger** so it does NOT override `current_balance` on close (the trigger currently recalculates `current_balance` from `starting_balance + total_pnl_dollars`, which would be wrong now that we're tracking deployed capital separately). The trigger should be modified to only update the stats columns (win_rate, total_trades, etc.) and not touch `current_balance` — the close function will manage that directly.
+Line 2 uses `npm:resend@2.0.0` which fails in the Deno bundler. Needs to be switched to an ESM import.
 
 ---
 
-### Issue 2: Advanced Metrics All Show 0 (Expected, But Needs Context)
+## Implementation Plan
 
-The closed IO_USDT trade was a $0 P&L breakeven close (entered at $0.114, manually closed at $0.114). So `ayn-calculate-metrics` correctly computes:
-- Sharpe: 0 (average return = 0)
-- Profit Factor: 0 (no winning trades)
-- Expectancy: $0
+### Step 1: Create a Shared Correct Signing Function
 
-This is **accurate data** — metrics only become meaningful after 5-10+ trades. However, the UI can be improved to show a "Not enough data" message when fewer than 5 closed trades exist instead of just showing red zeros.
+All Pionex API calls will use the same correct signing logic:
 
----
+```typescript
+async function signPionexRequest(
+  method: string,  // "GET" or "POST"
+  path: string,    // "/api/v1/market/klines"
+  params: Record<string, string>,  // { symbol: "BTC_USDT", interval: "60M", ... }
+  secret: string
+): Promise<{ signature: string; queryString: string }> {
+  // Sort params by key (ASCII ascending) -- Pionex requirement
+  const sortedKeys = Object.keys(params).sort();
+  const queryString = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+  const pathUrl = `${path}?${queryString}`;
+  const message = `${method}${pathUrl}`;  // e.g. "GET/api/v1/market/klines?interval=60M&..."
+  
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+  const signature = Array.from(new Uint8Array(sig))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+  return { signature, queryString };
+}
+```
 
-## Files to Change
+### Step 2: Fix Files
 
-| File | Change |
+| File | Changes |
 |---|---|
-| `supabase/functions/ayn-open-trade/index.ts` | Deduct `positionSizeDollars` from `current_balance` after trade insert |
-| `supabase/functions/ayn-close-trade/index.ts` | Add back `positionDollars + totalPnlDollars` to `current_balance` after close |
-| `src/components/trading/PerformanceDashboard.tsx` | Show "Not enough data (min. 5 trades)" for advanced metrics when `total_trades < 5` |
-| Database (one-time SQL) | `UPDATE ayn_account_state SET current_balance = 5000 WHERE id = '...'` to fix current stale $10,000 value |
+| **`supabase/functions/get-klines/index.ts`** | Replace `signPionexRequest` with the correct version using sorted params and `GET` prefix |
+| **`supabase/functions/ayn-unified/marketScanner.ts`** | Fix `fetchKlines` signing: remove `GET\n...\n...` format, use correct `GET/path?sorted_params` format |
+| **`supabase/functions/ayn-unified/index.ts`** | Fix `scanMarketOpportunities` signing for the tickers endpoint |
+| **`supabase/functions/ayn-monitor-trades/index.ts`** | Fix ticker parsing (line 46-47): detect `_USDT` format and use as-is; fix signing for tickers endpoint |
+| **`supabase/functions/admin-notifications/index.ts`** | Change `npm:resend@2.0.0` to `https://esm.sh/resend@2.0.0` |
 
-## What You'll See After
+### Step 3: Deploy and Verify
 
-- Account Balance shows **$5,000** (remaining cash after deploying $5,000 into TAO_USDT)
-- When TAO_USDT closes with a profit of say $200, balance goes to **$5,200 + $5,000 returned = $10,200**
-- Advanced Metrics section shows a small note: "Metrics available after 5+ closed trades"
-- Once more trades close, real Sharpe/Profit Factor numbers appear
+Deploy all 4 affected edge functions and check logs to confirm:
+- Last candle age is under 60-120 seconds (not 4 hours)
+- Monitor successfully fetches prices for open trades
+- Admin notifications build without errors
 
-## No Edge Cases Missed
+---
 
-- If `ayn-monitor-trades` auto-closes via stop-loss/TP, it also calls the same close path — that function already does a `balance` update via the DB trigger. We need to apply the same fix to `ayn-monitor-trades` as well for Part B.
+## Expected Outcome
+
+- Kline data will be fresh (under ~2 minutes old for 1-minute candles)
+- The 4-hour delay will be eliminated
+- Trade monitor will correctly fetch prices for all open positions (stop-loss and take-profit will actually trigger)
+- Admin notifications edge function will build successfully
+
