@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowUp, Upload, X, Loader2, BarChart3, Brain,
-  Sparkles, Plus, Clock,
+  ArrowUp, Upload, X, Loader2, BarChart3, Search, Brain,
+  CheckCircle2, Sparkles, Plus, Clock,
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
 import { cn } from '@/lib/utils';
+import { useChartAnalyzer } from '@/hooks/useChartAnalyzer';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 import { MessageFormatter } from '@/components/shared/MessageFormatter';
 import type { ChartAnalysisResult } from '@/types/chartAnalyzer.types';
@@ -22,6 +24,42 @@ type ChatMessage =
   | { type: 'ayn-loading'; step: string }
   | { type: 'ayn-text'; content: string }
   | { type: 'ayn-error'; content: string };
+
+// ─── Format analysis result as natural conversation ───
+function formatAnalysisAsText(r: ChartAnalysisResult): string {
+  const p = r.prediction;
+  const sig = p.tradingSignal;
+  const lines: string[] = [];
+
+  lines.push(`**${p.signal}** ${r.ticker} (${r.timeframe}) — ${p.confidence}% confidence`);
+  lines.push('');
+  lines.push(p.reasoning);
+
+  if (sig) {
+    lines.push('');
+    lines.push(`Entry: ${sig.entry.price} (${sig.entry.orderType})`);
+    lines.push(`Stop Loss: ${sig.stopLoss.price} (${sig.stopLoss.percentage}%)`);
+    sig.takeProfits.forEach(tp => {
+      lines.push(`TP${tp.level}: ${tp.price} (+${tp.percentage}%) — close ${tp.closePercent}%`);
+    });
+    lines.push(`R:R ${sig.riskReward} | Position ${sig.botConfig.positionSize}% | Leverage ${sig.botConfig.leverage}x`);
+    if (sig.invalidation?.condition) {
+      lines.push('');
+      lines.push(`Invalidation: ${sig.invalidation.condition}`);
+    }
+  }
+
+  lines.push('');
+  lines.push('*DYOR — signals require your own verification.*');
+  return lines.join('\n');
+}
+
+const ANALYSIS_STEPS = [
+  { key: 'uploading', label: 'Uploading chart...',    icon: Upload },
+  { key: 'analyzing', label: 'Analyzing chart...',    icon: BarChart3 },
+  { key: 'fetching-news', label: 'Fetching news...', icon: Search },
+  { key: 'predicting', label: 'Generating prediction...', icon: Brain },
+] as const;
 
 const QUICK_CHIPS = [
   "How to build a trading plan?",
@@ -53,6 +91,27 @@ const UserImageBubble = memo(({ imageUrl, content }: { imageUrl: string; content
   </div>
 ));
 UserImageBubble.displayName = 'UserImageBubble';
+
+const LoadingBubble = memo(({ currentStep }: { currentStep: string }) => (
+  <div className="flex justify-start">
+    <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-muted space-y-1.5">
+      {ANALYSIS_STEPS.map((s) => {
+        const Icon = s.icon;
+        const stepIdx = ANALYSIS_STEPS.findIndex(x => x.key === currentStep);
+        const thisIdx = ANALYSIS_STEPS.findIndex(x => x.key === s.key);
+        const isDone = stepIdx > thisIdx;
+        const isActive = currentStep === s.key;
+        return (
+          <div key={s.key} className={cn('flex items-center gap-2 text-sm transition-opacity', isActive ? 'opacity-100' : isDone ? 'opacity-50' : 'opacity-30')}>
+            {isDone ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : isActive ? <Loader2 className="h-4 w-4 animate-spin text-amber-500" /> : <Icon className="h-4 w-4" />}
+            <span>{s.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+));
+LoadingBubble.displayName = 'LoadingBubble';
 
 const AynTextBubble = memo(({ content }: { content: string }) => (
   <div className="flex justify-start">
@@ -110,7 +169,10 @@ export default function ChartUnifiedChat({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dragCounter = useRef(0);
 
-  const isBusy = coach.isLoading;
+  const analyzer = useChartAnalyzer();
+
+  const isAnalyzing = ['uploading', 'analyzing', 'fetching-news', 'predicting'].includes(analyzer.step);
+  const isBusy = isAnalyzing || coach.isLoading;
 
   // ─── Scroll to bottom ───
   const scrollToBottom = useCallback(() => {
@@ -118,6 +180,70 @@ export default function ChartUnifiedChat({
   }, []);
 
   useEffect(() => { scrollToBottom(); }, [messages.length, scrollToBottom]);
+
+  // ─── Watch analyzer step changes ───
+  useEffect(() => {
+    if (isAnalyzing) {
+      setMessages(prev => {
+        const withoutLoading = prev.filter(m => m.type !== 'ayn-loading');
+        return [...withoutLoading, { type: 'ayn-loading', step: analyzer.step }];
+      });
+    }
+  }, [analyzer.step, isAnalyzing]);
+
+  // ─── Watch for analysis result ───
+  useEffect(() => {
+    if (analyzer.result && analyzer.step === 'done') {
+      setLatestResult(analyzer.result);
+      const text = formatAnalysisAsText(analyzer.result);
+      setMessages(prev => {
+        const withoutLoading = prev.filter(m => m.type !== 'ayn-loading');
+        return [...withoutLoading, { type: 'ayn-text', content: text }];
+      });
+
+      // Frontend backup: record paper trade if actionable signal
+      const r = analyzer.result;
+      const sig = r.prediction;
+      const action = sig.signal;
+      const conf = sig.confidence;
+      const ts = sig.tradingSignal;
+      if ((action === 'BUY' || action === 'SELL' || action === 'BULLISH' || action === 'BEARISH') && conf >= 60 && ts) {
+        const entryPrice = ts.entry?.price;
+        const stopLoss = ts.stopLoss?.price;
+        if (entryPrice && stopLoss && entryPrice > 0 && stopLoss > 0) {
+          supabase.functions.invoke('ayn-open-trade', {
+            body: {
+              ticker: r.ticker,
+              timeframe: r.timeframe,
+              signal: action === 'BULLISH' ? 'BUY' : action === 'BEARISH' ? 'SELL' : action,
+              entryPrice,
+              stopLoss,
+              takeProfit1: ts.takeProfits?.[0]?.price || null,
+              takeProfit2: ts.takeProfits?.[1]?.price || null,
+              confidence: conf,
+              setupType: sig.patternBreakdown?.[0]?.name || null,
+              reasoning: sig.reasoning || '',
+              chartImageUrl: r.imageUrl || null,
+            },
+          }).then(res => {
+            if (res.data?.opened) {
+              toast.success('Trade recorded in paper account');
+            }
+          }).catch(() => {});
+        }
+      }
+    }
+  }, [analyzer.result, analyzer.step]);
+
+  // ─── Watch for analysis error ───
+  useEffect(() => {
+    if (analyzer.error && analyzer.step === 'error') {
+      setMessages(prev => {
+        const withoutLoading = prev.filter(m => m.type !== 'ayn-loading');
+        return [...withoutLoading, { type: 'ayn-error', content: analyzer.error! }];
+      });
+    }
+  }, [analyzer.error, analyzer.step]);
 
   // ─── Sync coach messages ───
   const prevCoachLenRef = useRef(coach.messages.length);
@@ -201,38 +327,33 @@ export default function ChartUnifiedChat({
     if (file) attachFile(file);
   }, [attachFile]);
 
-  // ─── Convert file to base64 ───
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
-
   // ─── Send ───
-  const handleSend = useCallback(async () => {
+  const handleSend = useCallback(() => {
     const text = input.trim();
     if (!text && !attachedFile) return;
     if (isBusy) return;
 
     if (attachedFile) {
-      // Convert to base64 and send as inline image message to trading-coach via ayn-unified
-      const base64Url = await fileToBase64(attachedFile);
-      const msgText = text || 'Analyze this chart';
-      setMessages(prev => [...prev, { type: 'user-image', imageUrl: base64Url, content: msgText }]);
+      // Convert to base64 for persistent image URL
+      const reader = new FileReader();
+      const file = attachedFile;
+      const msgText = text || undefined;
+      reader.onload = () => {
+        const base64Url = reader.result as string;
+        setMessages(prev => [...prev, { type: 'user-image', imageUrl: base64Url, content: msgText }]);
+        analyzer.reset();
+        analyzer.analyzeChart(file);
+      };
+      reader.readAsDataURL(file);
       clearAttachment();
       setInput('');
-      // Send to coach with image context — coach.sendMessage supports fileContext
-      coach.sendMessage(msgText, base64Url);
     } else {
       // Text-only chat flow
       setMessages(prev => [...prev, { type: 'user-text', content: text }]);
       coach.sendMessage(text);
       setInput('');
     }
-  }, [input, attachedFile, isBusy, coach, clearAttachment]);
+  }, [input, attachedFile, attachedPreview, isBusy, analyzer, coach, clearAttachment]);
 
   // ─── Textarea auto-resize ───
   useEffect(() => {
@@ -288,7 +409,7 @@ export default function ChartUnifiedChat({
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
           <BarChart3 className="h-4 w-4 text-white" />
         </div>
-        <span className="text-sm font-semibold">AYN Trading</span>
+        <span className="text-sm font-semibold">AYN Chart Analyzer</span>
       </div>
 
       {/* Messages area */}
@@ -323,6 +444,8 @@ export default function ChartUnifiedChat({
                   return <UserTextBubble key={i} content={msg.content} />;
                 case 'user-image':
                   return <UserImageBubble key={i} imageUrl={msg.imageUrl} content={msg.content} />;
+                case 'ayn-loading':
+                  return <LoadingBubble key={`loading-${i}`} currentStep={msg.step} />;
                 case 'ayn-text':
                   return <AynTextBubble key={i} content={msg.content} />;
                 case 'ayn-error':
@@ -428,7 +551,7 @@ export default function ChartUnifiedChat({
             )}
           </AnimatePresence>
 
-          {/* Row 2: Toolbar — 3-column grid */}
+          {/* Row 2: Toolbar — 3-column grid (matches AYN ChatInput) */}
           <div className="grid grid-cols-3 items-center px-2 py-1.5 border-t border-border/30 bg-muted/10">
             {/* Left: + New + Upload */}
             <div className="flex items-center gap-0.5">

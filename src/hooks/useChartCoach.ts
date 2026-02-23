@@ -237,7 +237,7 @@ export function useChartCoach(result?: ChartAnalysisResult) {
     setMessages([]);
   }, []);
 
-  const sendMessage = useCallback(async (userMessage: string, imageBase64?: string) => {
+  const sendMessage = useCallback(async (userMessage: string) => {
     const trimmed = userMessage.trim();
     if (!trimmed || isLoading) return;
 
@@ -258,11 +258,7 @@ export function useChartCoach(result?: ChartAnalysisResult) {
     }
 
     const emotionalState = detectEmotionalState(trimmed);
-    let fileContext = result ? buildFileContext(result, emotionalState) : `No chart analyzed yet.\nUser Emotional State: ${emotionalState}`;
-    // If an image was attached, append the base64 data so ayn-unified can use vision
-    if (imageBase64) {
-      fileContext = imageBase64;
-    }
+    const fileContext = result ? buildFileContext(result, emotionalState) : `No chart analyzed yet.\nUser Emotional State: ${emotionalState}`;
 
     const urls = trimmed.match(URL_REGEX);
     const searchQuery = detectSearchIntent(trimmed, result?.ticker);
