@@ -203,8 +203,7 @@ async function fetchPionexData(ticker: string, timeframe: string, assetType: str
   }
 
   // Map ticker to Pionex symbol format
-  const cleanTicker = ticker.replace(/\/USDT|\/USD|\/BUSD/i, '').toUpperCase();
-  const symbol = `${cleanTicker}_USDT`;
+  const symbol = ticker.includes('_USDT') ? ticker.toUpperCase() : `${ticker.replace(/\/USDT|\/USD|\/BUSD/i, '').toUpperCase()}_USDT`;
   console.log('[DEBUG chart-analyzer] Ticker mapping:', ticker, '->', cleanTicker, '->', symbol);
 
   // Map timeframe to Pionex interval
@@ -217,14 +216,18 @@ async function fetchPionexData(ticker: string, timeframe: string, assetType: str
   const interval = intervalMap[timeframe] || '60M';
 
   // HMAC-SHA256 signing helper
-  async function signRequest(queryString: string): Promise<string> {
+  async function signRequest(method: string, path: string, params: Record<string, string>): Promise<{ signature: string; queryString: string }> {
+    const sortedKeys = Object.keys(params).sort();
+    const queryString = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+    const message = `${method}${path}?${queryString}`;
     const encoder = new TextEncoder();
     const key = await crypto.subtle.importKey(
       'raw', encoder.encode(apiSecret!),
       { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
     );
-    const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(queryString));
-    return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+    const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return { signature, queryString };
   }
 
   try {
@@ -232,14 +235,11 @@ async function fetchPionexData(ticker: string, timeframe: string, assetType: str
     const timestamp = Date.now().toString();
 
     // Fetch klines (last 100 candles)
-    const klinesParams = `symbol=${symbol}&interval=${interval}&limit=100`;
-    const klinesPath = `/api/v1/market/klines?${klinesParams}&timestamp=${timestamp}`;
-    const klinesSignature = await signRequest(klinesPath);
-
-    const klinesRes = await fetch(`${baseUrl}${klinesPath}`, {
+    const klinesSigned = await signRequest('GET', '/api/v1/market/klines', { symbol, interval, limit: '100', timestamp });
+    const klinesRes = await fetch(`${baseUrl}/api/v1/market/klines?${klinesSigned.queryString}`, {
       headers: {
         'PIONEX-KEY': apiKey,
-        'PIONEX-SIGNATURE': klinesSignature,
+        'PIONEX-SIGNATURE': klinesSigned.signature,
       },
     });
 
@@ -253,14 +253,11 @@ async function fetchPionexData(ticker: string, timeframe: string, assetType: str
     console.log('[DEBUG chart-analyzer] Raw klines response:', JSON.stringify(klinesData).slice(0, 500));
 
     // Fetch ticker (24h stats)
-    const tickerParams = `symbol=${symbol}`;
-    const tickerPath = `/api/v1/market/tickers?${tickerParams}&timestamp=${timestamp}`;
-    const tickerSignature = await signRequest(tickerPath);
-
-    const tickerRes = await fetch(`${baseUrl}${tickerPath}`, {
+    const tickerSigned = await signRequest('GET', '/api/v1/market/tickers', { symbol, timestamp });
+    const tickerRes = await fetch(`${baseUrl}/api/v1/market/tickers?${tickerSigned.queryString}`, {
       headers: {
         'PIONEX-KEY': apiKey,
-        'PIONEX-SIGNATURE': tickerSignature,
+        'PIONEX-SIGNATURE': tickerSigned.signature,
       },
     });
 

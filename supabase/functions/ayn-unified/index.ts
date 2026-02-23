@@ -1029,21 +1029,24 @@ You may discuss trading concepts, strategy, and education freely — just don't 
             };
             const interval = intervalMap[ctxTimeframe || 'unknown'] || '60M';
 
-            async function signReq(qs: string): Promise<string> {
+            async function signReq(method: string, path: string, params: Record<string, string>): Promise<{ signature: string; queryString: string }> {
+              const sortedKeys = Object.keys(params).sort();
+              const queryString = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
+              const message = `${method}${path}?${queryString}`;
               const enc = new TextEncoder();
               const key = await crypto.subtle.importKey('raw', enc.encode(apiSecret!), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-              const sig = await crypto.subtle.sign('HMAC', key, enc.encode(qs));
-              return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+              const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+              const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+              return { signature, queryString };
             }
 
             const ts = Date.now().toString();
             const baseUrl = 'https://api.pionex.com';
 
             // Fetch ticker 24h stats
-            const tickerPath = `/api/v1/market/tickers?symbol=${symbol}&timestamp=${ts}`;
-            const tickerSig = await signReq(tickerPath);
-            const tickerRes = await fetch(`${baseUrl}${tickerPath}`, {
-              headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': tickerSig },
+            const tickerSigned = await signReq('GET', '/api/v1/market/tickers', { symbol, timestamp: ts });
+            const tickerRes = await fetch(`${baseUrl}/api/v1/market/tickers?${tickerSigned.queryString}`, {
+              headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': tickerSigned.signature },
             });
 
             let liveBlock = '';
