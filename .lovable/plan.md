@@ -1,95 +1,59 @@
 
 
-# Fix: 4-Hour Kline Data Delay + Ticker Bug + Build Error
+# Fix Pionex Signing Bugs + Sharpen Trading Prompt
 
-## Root Causes Identified
+## Part 1: Fix Pionex Signing in `ayn-unified/index.ts` (lines 1032-1044)
 
-### Issue 1: Incorrect Pionex HMAC Signing (Likely Cause of 4-Hour Delay)
+The `signReq` helper signs the raw path string (e.g., `/api/v1/market/tickers?symbol=X&timestamp=Y`) instead of signing `GET` + path with sorted params.
 
-According to the [Pionex API documentation](https://pionex-doc.gitbook.io/apidocs/restful/general/authentication), the signing process requires:
+**Fix:** Replace `signReq` to:
+1. Accept method + path + params as a Record
+2. Sort params by key alphabetically
+3. Sign `GET/api/v1/market/tickers?symbol=X&timestamp=Y` (method prepended, no newlines)
 
-1. Sort query parameters by ASCII key order
-2. Concatenate them with `&` after the PATH with `?` to form `PATH_URL`
-3. **Concatenate `METHOD` directly before `PATH_URL`** (no newlines)
-4. HMAC-SHA256 the result
+## Part 2: Fix Pionex Signing in `analyze-trading-chart/index.ts` (lines 220-228, 235-244, 256-258)
 
-**Correct format:** `GET/api/v1/market/klines?interval=60M&limit=100&symbol=BTC_USDT&timestamp=1234567890`
+Same bug -- `signRequest` signs the raw path without `GET` prefix and params aren't sorted.
 
-All three signing implementations in the codebase are wrong:
+**Ticker fix (lines 206-207):** Currently strips `/USDT` but not `_USDT`. Will add detection: if ticker already contains `_USDT`, use it directly.
 
-| File | Current signing format | Problem |
-|---|---|---|
-| `get-klines/index.ts` | Signs `/api/v1/market/klines?symbol=...&timestamp=...` | Missing `GET` prefix; params not sorted by key |
-| `marketScanner.ts` (`fetchKlines`) | Signs `GET\n/path\n{query}` | Uses newlines instead of direct concatenation; params not sorted |
-| `ayn-monitor-trades` | Signs `/api/v1/market/tickers?symbol=...&timestamp=...` | Missing `GET` prefix; params not sorted |
-| `ayn-unified` (`scanMarketOpportunities`) | Signs `/api/v1/market/tickers?timestamp=...` | Missing `GET` prefix |
+**Signing fix:** Replace `signRequest` with the correct implementation that prepends `GET` and sorts params.
 
-The API may still return data (market endpoints might be semi-public), but incorrect signing could cause the API to return cached/stale data rather than the freshest candles, explaining the consistent 4-hour lag.
+**Both call sites** (klines at line 235-237 and tickers at line 256-258) will be updated to pass params as a Record and use the corrected signer.
 
-### Issue 2: Ticker Format Bug in `ayn-monitor-trades`
+## Part 3: Sharpen Trading Prompt in `systemPrompts.ts`
 
-The `getCurrentPrice()` function at line 46-47 uses regex `/\/USDT|\/USD|\/BUSD/i` to strip suffixes. Since database tickers use underscores (e.g., `DEGO_USDT`), the regex never matches, producing `DEGO_USDT_USDT` -- a nonexistent pair. The monitor has never successfully fetched a price for any open trade.
+The trading-coach prompt (lines 160-380) will be updated:
 
-### Issue 3: Build Error in `admin-notifications`
+**Keep unchanged:**
+- All AYN branding, identity, and name references
+- All knowledge base sections (Pattern Reliability, Smart Money Concepts, Wyckoff, Funding Rates, etc.)
+- Position sizing rules
+- Paper trading anti-fabrication rules
+- Autonomous trading mode rules
+- Security rules
 
-Line 2 uses `npm:resend@2.0.0` which fails in the Deno bundler. Needs to be switched to an ESM import.
+**Changes:**
+- Remove all disclaimer/hedging banned phrases that still leak through (the banned list stays but gets reinforced)
+- Add sharper voice directives: "You talk like a prop desk trader. Blunt. Data-first. No softening. If a setup is trash, say it's trash."
+- Add "Never re-introduce yourself mid-conversation. You already told them who you are."
+- Add "Maintain full context across the conversation. Reference earlier messages naturally."
+- Remove any remaining soft language like "strongly recommend stepping away" -- replace with direct trader speak
+- Tighten emotional response section to be blunter (e.g., REVENGE: "Step away. You're tilted. Come back tomorrow." instead of the softer version)
 
----
+## Part 4: Deploy
 
-## Implementation Plan
+Deploy all three updated functions:
+- `ayn-unified`
+- `analyze-trading-chart`
 
-### Step 1: Create a Shared Correct Signing Function
+Then verify via logs that signing is correct and prices are fresh.
 
-All Pionex API calls will use the same correct signing logic:
+## Files Modified
 
-```typescript
-async function signPionexRequest(
-  method: string,  // "GET" or "POST"
-  path: string,    // "/api/v1/market/klines"
-  params: Record<string, string>,  // { symbol: "BTC_USDT", interval: "60M", ... }
-  secret: string
-): Promise<{ signature: string; queryString: string }> {
-  // Sort params by key (ASCII ascending) -- Pionex requirement
-  const sortedKeys = Object.keys(params).sort();
-  const queryString = sortedKeys.map(k => `${k}=${params[k]}`).join('&');
-  const pathUrl = `${path}?${queryString}`;
-  const message = `${method}${pathUrl}`;  // e.g. "GET/api/v1/market/klines?interval=60M&..."
-  
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
-  const signature = Array.from(new Uint8Array(sig))
-    .map(b => b.toString(16).padStart(2, '0')).join('');
-  return { signature, queryString };
-}
-```
-
-### Step 2: Fix Files
-
-| File | Changes |
+| File | What Changes |
 |---|---|
-| **`supabase/functions/get-klines/index.ts`** | Replace `signPionexRequest` with the correct version using sorted params and `GET` prefix |
-| **`supabase/functions/ayn-unified/marketScanner.ts`** | Fix `fetchKlines` signing: remove `GET\n...\n...` format, use correct `GET/path?sorted_params` format |
-| **`supabase/functions/ayn-unified/index.ts`** | Fix `scanMarketOpportunities` signing for the tickers endpoint |
-| **`supabase/functions/ayn-monitor-trades/index.ts`** | Fix ticker parsing (line 46-47): detect `_USDT` format and use as-is; fix signing for tickers endpoint |
-| **`supabase/functions/admin-notifications/index.ts`** | Change `npm:resend@2.0.0` to `https://esm.sh/resend@2.0.0` |
-
-### Step 3: Deploy and Verify
-
-Deploy all 4 affected edge functions and check logs to confirm:
-- Last candle age is under 60-120 seconds (not 4 hours)
-- Monitor successfully fetches prices for open trades
-- Admin notifications build without errors
-
----
-
-## Expected Outcome
-
-- Kline data will be fresh (under ~2 minutes old for 1-minute candles)
-- The 4-hour delay will be eliminated
-- Trade monitor will correctly fetch prices for all open positions (stop-loss and take-profit will actually trigger)
-- Admin notifications edge function will build successfully
+| `supabase/functions/ayn-unified/index.ts` | Fix `signReq` helper (~lines 1032-1044) to use `GET` prefix + sorted params |
+| `supabase/functions/analyze-trading-chart/index.ts` | Fix ticker format (lines 206-207) + fix `signRequest` (lines 220-244) + fix both call sites |
+| `supabase/functions/ayn-unified/systemPrompts.ts` | Sharpen trading-coach voice, remove disclaimers, add context continuity rules |
 
