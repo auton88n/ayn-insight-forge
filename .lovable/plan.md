@@ -1,27 +1,22 @@
 
-Implementation steps:
-1. Update `src/components/dashboard/CenterStageLayout.tsx` ResponseCard wrapper sizing logic so inline mode gets a real bounded height (not only `maxHeight` + clip).
-   - Replace current inline wrapper style with a computed `responseCardViewportHeight` using `100dvh` and `footerHeight`.
-   - Apply both `height` and `maxHeight` to the wrapper in inline mode.
-   - Keep transcript mode behavior unchanged.
 
-2. Update `src/components/eye/ResponseCard.tsx` root container to fully respect parent height in inline mode.
-   - Add inline-specific `h-full max-h-full min-h-0` on the outer card container.
-   - Keep transcript mode `h-full` behavior intact.
+# Fix ResponseCard Height Constraint
 
-3. Refactor inline content area constraint in `ResponseCard.tsx`.
-   - Remove dependency on fixed `calc(50vh-84px)` as the primary limiter.
-   - Let content area use `flex-1 min-h-0 overflow-y-auto` under the parent’s bounded height so footer actions (copy/like/dislike/expand) always remain visible.
+## Changes in `src/components/eye/ResponseCard.tsx`
 
-4. Keep the bottom fade indicator aligned with the action bar.
-   - Verify/update the absolute fade offset (`bottom-14`) if needed after height refactor so it never overlaps action buttons.
+### 1. Line 372-373: Replace inline height classes
+Change:
+```
+variant === "inline" && "h-full max-h-full min-h-0",
+transcriptOpen && "h-full",
+```
+To:
+```
+variant === "inline" && "min-h-0",
+transcriptOpen ? "h-full" : "max-h-[55vh]",
+```
 
-5. Validate layout behavior in preview for long responses.
-   - Desktop: confirm card bottom actions are always visible.
-   - Smaller viewport: confirm action bar remains visible and content scrolls internally.
-   - Transcript mode: confirm no regression in history panel scrolling.
+This caps the card at 55vh when not in transcript mode, forcing internal scrolling instead of unbounded growth.
 
-Technical details:
-- Root cause is parent-level clipping (`overflow: hidden`) with only `maxHeight` on wrapper while child card is auto-height.
-- Reliable fix is structural: give wrapper an explicit height budget + make card/content honor that budget with flex/min-h-0 rules.
-- This avoids fragile pixel-subtraction tuning and keeps footer controls persistently visible.
+No other changes needed — the content area already has `flex-1 min-h-0 overflow-y-auto` from the previous fix, so it will scroll correctly inside the bounded card.
+
