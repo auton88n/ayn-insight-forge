@@ -86,15 +86,15 @@ export const AYN_EMAIL_FOOTER = `
 
 // Email template subject lines
 export const EMAIL_SUBJECTS: Record<EmailType, string | ((data: EmailData) => string)> = {
-  welcome: "Welcome to AYN! 🎉 | !AYN مرحباً بك في",
+  welcome: "Welcome to AYN! 🎉",
   credit_warning: (data) => `⚠️ AYN: Low Credits Alert - Only ${(data as CreditWarningEmailData).creditsLeft} remaining`,
   auto_delete_warning: (data) => `🗑️ AYN: ${(data as AutoDeleteWarningEmailData).itemCount} items will be deleted in ${(data as AutoDeleteWarningEmailData).daysLeft} days`,
   payment_receipt: (data) => `✅ AYN Payment Confirmation - ${(data as PaymentReceiptEmailData).plan}`,
-  password_reset: "🔐 AYN: Password Reset Request | طلب إعادة تعيين كلمة المرور",
-  subscription_created: (data) => `🎉 Welcome to AYN ${(data as SubscriptionCreatedEmailData).planName}! | !${(data as SubscriptionCreatedEmailData).planName} AYN مرحباً بك في`,
-  subscription_renewed: (data) => `✅ AYN ${(data as SubscriptionRenewedEmailData).planName} Renewed | تم تجديد اشتراكك`,
-  subscription_canceled: "😢 Your AYN Subscription Has Ended | انتهى اشتراكك في AYN",
-  subscription_updated: (data) => `📊 AYN Plan Updated to ${(data as SubscriptionUpdatedEmailData).newPlan} | تم تحديث خطتك`,
+  password_reset: "🔐 AYN: Password Reset Request",
+  subscription_created: (data) => `🎉 Welcome to AYN ${(data as SubscriptionCreatedEmailData).planName}!`,
+  subscription_renewed: (data) => `✅ AYN ${(data as SubscriptionRenewedEmailData).planName} Renewed`,
+  subscription_canceled: "😢 Your AYN Subscription Has Ended",
+  subscription_updated: (data) => `📊 AYN Plan Updated to ${(data as SubscriptionUpdatedEmailData).newPlan}`,
 };
 
 // Get subject line for email type
