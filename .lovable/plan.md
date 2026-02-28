@@ -1,45 +1,56 @@
 
 
-# Add scroll-to-bottom arrow for ResponseCard (normal mode)
+# Fix Credit Display Consistency Across All Tiers
 
-The auto-scroll logic already works (lines 264-272) — it scrolls when `shouldAutoScrollRef` is true (user is at bottom). The scroll-down arrow button already exists in history/transcript mode but is missing from normal response mode.
+## The Problem
+
+There are **4 separate data sources** for credit display, each with different defaults and logic:
+
+1. **Settings page (`AccountPreferences.tsx`)** — raw query that only reads `monthly_messages` (defaults to 50), completely ignores daily limits for free users
+2. **Sidebar (`useUsageTracking.ts`)** — correctly tier-aware, defaults daily to 5
+3. **Sidebar card (`CreditUpgradeCard.tsx`)** — uses `monthlyLimit ?? 50` as base, wrong for free daily users
+4. **Admin panel (`UserAILimits.tsx`)** — uses `daily_messages ?? 10` (inconsistent default)
+
+Additionally, `UsageCard.tsx` always shows "Daily HOO Credits" even for paid monthly tiers.
 
 ## Changes
 
-### `src/components/eye/ResponseCard.tsx`
+### 1. `src/components/settings/AccountPreferences.tsx` — Use `useUsageTracking` hook
 
-**1. Add a clickable scroll-to-bottom button in normal response mode (after the gradient overlay, lines 556-561)**
+Replace the manual `user_ai_limits` query + local state with the existing `useUsageTracking` hook (same one the sidebar uses). This ensures the Settings page shows the **same data** as the sidebar — tier-aware, daily vs monthly, correct defaults.
 
-Replace the current non-clickable gradient overlay with a clickable scroll-down arrow button (matching the history mode pattern):
+- Remove the `usageData` state and its manual fetch from `user_ai_limits`
+- Import and call `useUsageTracking(userId)`
+- Pass hook values to `UsageCard`: `currentUsage`, `limit` (which is already tier-correct), `isUnlimited`, `resetDate`
 
-```tsx
-{isScrollable && !isAtBottom && (
-  <>
-    <div
-      className="absolute bottom-14 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"
-      aria-hidden="true"
-    />
-    <motion.button
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.15 }}
-      onClick={() => {
-        contentRef.current?.scrollTo({ top: contentRef.current.scrollHeight, behavior: "smooth" });
-        shouldAutoScrollRef.current = true;
-      }}
-      className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 p-1.5 rounded-full bg-foreground text-background shadow-lg hover:bg-foreground/90 transition-colors"
-      aria-label="Scroll to bottom"
-    >
-      <ChevronDown size={14} />
-    </motion.button>
-  </>
-)}
-```
+### 2. `src/components/dashboard/UsageCard.tsx` — Make tier-aware labels
 
-Clicking the arrow also re-enables auto-scroll (`shouldAutoScrollRef = true`) so the card continues following new streaming content.
+- Add `isDaily` and `tier` props
+- Change header from hardcoded "Daily HOO Credits" to dynamic: free tier → "Daily Credits", paid → "Monthly Credits"
+- Change tooltip text similarly
+- Show bonus credits in the display when present (add `bonusCredits` prop)
 
-**2. Wrap the scroll button in `AnimatePresence` for smooth enter/exit.**
+### 3. `src/components/dashboard/CreditUpgradeCard.tsx` — Fix default base limit
 
-No other files need changes. The auto-scroll during streaming already works via the existing `useEffect` on `combinedContent` (line 264-272).
+- Change `const baseLimit = monthlyLimit ?? 50;` to `const baseLimit = monthlyLimit ?? 5;` — free tier gets 5 daily, not 50 monthly
+- Add `isDaily` prop to show correct label ("daily" vs "monthly")
+
+### 4. `src/components/admin/UserAILimits.tsx` — Fix inconsistent default
+
+- Change `daily_messages ?? 10` to `daily_messages ?? 5` to match all other defaults
+
+### 5. `src/hooks/useUsageTracking.ts` — Add `limit` field alias
+
+- Export a `limit` field (alias of the computed limit value) so consumers don't need to handle null logic themselves. Already works correctly, no logic changes needed.
+
+## Summary of default alignment
+
+| Location | Before | After |
+|---|---|---|
+| useUsageTracking | 5 (daily) | 5 (daily) ✓ |
+| AccountPreferences | 50 (monthly, wrong) | uses useUsageTracking |
+| CreditUpgradeCard | 50 (monthly, wrong) | 5 (daily default) |
+| UserAILimits admin | 10 (wrong) | 5 |
+| tierLimits.ts | 5 | 5 ✓ |
+| SubscriptionContext | 5 | 5 ✓ |
 
