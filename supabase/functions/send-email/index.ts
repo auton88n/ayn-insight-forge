@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
@@ -38,11 +38,11 @@ const escapeHtml = (str: string): string => {
     .replace(/'/g, '&#039;');
 };
 
-// Generate welcome email template (bilingual)
+// Generate welcome email template (English only)
 function welcomeEmailTemplate(userName: string): { subject: string; html: string } {
   const safeName = escapeHtml(userName || 'there');
   return {
-    subject: "Welcome to AYN! 🎉 | !AYN مرحباً بك في",
+    subject: "Welcome to AYN! 🎉",
     html: `
 <!DOCTYPE html>
 <html>
@@ -59,7 +59,7 @@ function welcomeEmailTemplate(userName: string): { subject: string; html: string
   
   <div style="background:#f0f9ff;border-radius:8px;padding:16px;margin:24px 0;border-left:4px solid #0284c7;">
     <p style="font-size:14px;color:#0369a1;margin:0;">
-      🎁 You start with <strong>50 free credits</strong> this month!
+      🎁 You start with <strong>5 free daily credits</strong> to explore!
     </p>
   </div>
   
@@ -71,19 +71,6 @@ function welcomeEmailTemplate(userName: string): { subject: string; html: string
       <li>📁 Document Analysis</li>
       <li>🎨 Creative Design Ideas</li>
     </ul>
-  </div>
-  
-  <hr style="border:none;border-top:1px solid #eee;margin:32px 0;">
-  
-  <p style="font-size:18px;color:#333;direction:rtl;text-align:right;margin-bottom:16px;">،${safeName} مرحباً</p>
-  <p style="font-size:16px;color:#666;line-height:1.8;direction:rtl;text-align:right;margin-bottom:24px;">
-    أهلاً بك في AYN! مساعدك الذكي جاهز لمساعدتك في الحسابات الهندسية والمهام الإبداعية والمساعدة الذكية.
-  </p>
-  
-  <div style="background:#f0f9ff;border-radius:8px;padding:16px;margin:24px 0;border-right:4px solid #0284c7;direction:rtl;text-align:right;">
-    <p style="font-size:14px;color:#0369a1;margin:0;">
-      🎁 تبدأ بـ <strong>50 رصيد مجاني</strong> هذا الشهر!
-    </p>
   </div>
   
   ${AYN_FOOTER}
@@ -238,12 +225,12 @@ function paymentReceiptTemplate(userName: string, amount: string, plan: string, 
   };
 }
 
-// Generate password reset notification email template (bilingual)
+// Generate password reset notification email template (English only)
 function passwordResetTemplate(userName: string): { subject: string; html: string } {
   const safeName = escapeHtml(userName || 'there');
   
   return {
-    subject: "🔐 AYN: Password Reset Request | طلب إعادة تعيين كلمة المرور",
+    subject: "🔐 AYN: Password Reset Request",
     html: `
 <!DOCTYPE html>
 <html>
@@ -276,22 +263,6 @@ function passwordResetTemplate(userName: string): { subject: string; html: strin
     </p>
   </div>
   
-  <hr style="border:none;border-top:1px solid #eee;margin:32px 0;">
-  
-  <p style="font-size:18px;color:#333;direction:rtl;text-align:right;margin-bottom:16px;">،${safeName} مرحباً</p>
-  <p style="font-size:16px;color:#666;line-height:1.8;direction:rtl;text-align:right;margin-bottom:24px;">
-    تم استلام طلب لإعادة تعيين كلمة المرور الخاصة بك. تم إرسال بريد إلكتروني منفصل يحتوي على رابط إعادة تعيين كلمة المرور.
-  </p>
-  
-  <div style="background:#f9f9f9;border-radius:12px;padding:24px;margin-bottom:24px;direction:rtl;text-align:right;">
-    <p style="font-size:14px;color:#374151;margin:0 0 12px;font-weight:600;">🛡️ نصائح أمنية:</p>
-    <ul style="font-size:14px;color:#6b7280;margin:0;padding-right:20px;line-height:1.8;">
-      <li>لا تشارك كلمة المرور أو رابط إعادة التعيين مع أي شخص</li>
-      <li>أنشئ كلمة مرور قوية تحتوي على أحرف وأرقام ورموز</li>
-      <li>تنتهي صلاحية رابط إعادة التعيين خلال ساعة واحدة للأمان</li>
-    </ul>
-  </div>
-  
   ${AYN_FOOTER}
 </div>
 </body>
@@ -299,14 +270,14 @@ function passwordResetTemplate(userName: string): { subject: string; html: strin
   };
 }
 
-// Generate subscription created email template (bilingual)
+// Generate subscription created email template (English only)
 function subscriptionCreatedTemplate(userName: string, planName: string, credits: number, nextBillingDate: string): { subject: string; html: string } {
   const safeName = escapeHtml(userName || 'there');
   const safePlan = escapeHtml(planName);
   const safeDate = escapeHtml(nextBillingDate);
   
   return {
-    subject: `🎉 Welcome to AYN ${safePlan}! | !${safePlan} AYN مرحباً بك في`,
+    subject: `🎉 Welcome to AYN ${safePlan}!`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -347,18 +318,6 @@ function subscriptionCreatedTemplate(userName: string, planName: string, credits
     </p>
   </div>
   
-  <hr style="border:none;border-top:1px solid #eee;margin:32px 0;">
-  
-  <p style="font-size:18px;color:#333;direction:rtl;text-align:right;margin-bottom:16px;">،${safeName} مرحباً</p>
-  <p style="font-size:16px;color:#666;line-height:1.8;direction:rtl;text-align:right;margin-bottom:24px;">
-    شكراً لاشتراكك في AYN ${safePlan}! تم ترقية حسابك وجميع الميزات المميزة نشطة الآن.
-  </p>
-  
-  <div style="background:#f9f9f9;border-radius:12px;padding:24px;margin-bottom:24px;direction:rtl;text-align:right;">
-    <p style="font-size:14px;color:#374151;margin:0 0 8px;font-weight:600;">تفاصيل الاشتراك:</p>
-    <p style="font-size:14px;color:#6b7280;margin:0;">الخطة: ${safePlan} | الرصيد الشهري: ${credits} | التجديد التالي: ${safeDate}</p>
-  </div>
-  
   ${AYN_FOOTER}
 </div>
 </body>
@@ -366,7 +325,7 @@ function subscriptionCreatedTemplate(userName: string, planName: string, credits
   };
 }
 
-// Generate subscription renewed email template (bilingual)
+// Generate subscription renewed email template (English only)
 function subscriptionRenewedTemplate(userName: string, planName: string, amount: string, nextBillingDate: string): { subject: string; html: string } {
   const safeName = escapeHtml(userName || 'there');
   const safePlan = escapeHtml(planName);
@@ -374,7 +333,7 @@ function subscriptionRenewedTemplate(userName: string, planName: string, amount:
   const safeDate = escapeHtml(nextBillingDate);
   
   return {
-    subject: `✅ AYN ${safePlan} Renewed | تم تجديد اشتراكك`,
+    subject: `✅ AYN ${safePlan} Renewed`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -415,13 +374,6 @@ function subscriptionRenewedTemplate(userName: string, planName: string, amount:
     </p>
   </div>
   
-  <hr style="border:none;border-top:1px solid #eee;margin:32px 0;">
-  
-  <p style="font-size:18px;color:#333;direction:rtl;text-align:right;margin-bottom:16px;">،${safeName} مرحباً</p>
-  <p style="font-size:16px;color:#666;line-height:1.8;direction:rtl;text-align:right;margin-bottom:24px;">
-    تم تجديد اشتراكك في AYN ${safePlan} بنجاح. تم إعادة تعيين رصيدك لفترة الفوترة الجديدة.
-  </p>
-  
   ${AYN_FOOTER}
 </div>
 </body>
@@ -429,14 +381,14 @@ function subscriptionRenewedTemplate(userName: string, planName: string, amount:
   };
 }
 
-// Generate subscription canceled email template (bilingual)
+// Generate subscription canceled email template (English only)
 function subscriptionCanceledTemplate(userName: string, planName: string, endDate: string): { subject: string; html: string } {
   const safeName = escapeHtml(userName || 'there');
   const safePlan = escapeHtml(planName);
   const safeDate = escapeHtml(endDate);
   
   return {
-    subject: "😢 Your AYN Subscription Has Ended | انتهى اشتراكك في AYN",
+    subject: "😢 Your AYN Subscription Has Ended",
     html: `
 <!DOCTYPE html>
 <html>
@@ -466,7 +418,7 @@ function subscriptionCanceledTemplate(userName: string, planName: string, endDat
       </tr>
       <tr>
         <td style="padding:12px 0;color:#666;font-size:14px;">Current Plan</td>
-        <td style="padding:12px 0;color:#333;font-size:14px;text-align:right;font-weight:600;">Free (50 credits/month)</td>
+        <td style="padding:12px 0;color:#333;font-size:14px;text-align:right;font-weight:600;">Free (5 daily credits)</td>
       </tr>
     </table>
   </div>
@@ -477,19 +429,6 @@ function subscriptionCanceledTemplate(userName: string, planName: string, endDat
     </p>
   </div>
   
-  <hr style="border:none;border-top:1px solid #eee;margin:32px 0;">
-  
-  <p style="font-size:18px;color:#333;direction:rtl;text-align:right;margin-bottom:16px;">،${safeName} مرحباً</p>
-  <p style="font-size:16px;color:#666;line-height:1.8;direction:rtl;text-align:right;margin-bottom:24px;">
-    تم إلغاء اشتراكك في AYN ${safePlan}. تم تخفيض حسابك إلى الخطة المجانية.
-  </p>
-  
-  <div style="background:#f0f9ff;border-radius:8px;padding:16px;margin-bottom:24px;direction:rtl;text-align:right;">
-    <p style="font-size:14px;color:#0369a1;margin:0;">
-      💡 نحب أن تعود! يمكنك إعادة الاشتراك في أي وقت لاستعادة الوصول إلى الميزات المميزة.
-    </p>
-  </div>
-  
   ${AYN_FOOTER}
 </div>
 </body>
@@ -497,7 +436,7 @@ function subscriptionCanceledTemplate(userName: string, planName: string, endDat
   };
 }
 
-// Generate subscription updated email template (bilingual)
+// Generate subscription updated email template (English only)
 function subscriptionUpdatedTemplate(userName: string, oldPlan: string, newPlan: string, effectiveDate: string): { subject: string; html: string } {
   const safeName = escapeHtml(userName || 'there');
   const safeOldPlan = escapeHtml(oldPlan);
@@ -505,7 +444,7 @@ function subscriptionUpdatedTemplate(userName: string, oldPlan: string, newPlan:
   const safeDate = escapeHtml(effectiveDate);
   
   return {
-    subject: `📊 AYN Plan Updated to ${safeNewPlan} | تم تحديث خطتك`,
+    subject: `📊 AYN Plan Updated to ${safeNewPlan}`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -545,13 +484,6 @@ function subscriptionUpdatedTemplate(userName: string, oldPlan: string, newPlan:
       ✨ Your new plan benefits are now active! Enjoy your updated capabilities.
     </p>
   </div>
-  
-  <hr style="border:none;border-top:1px solid #eee;margin:32px 0;">
-  
-  <p style="font-size:18px;color:#333;direction:rtl;text-align:right;margin-bottom:16px;">،${safeName} مرحباً</p>
-  <p style="font-size:16px;color:#666;line-height:1.8;direction:rtl;text-align:right;margin-bottom:24px;">
-    تم تحديث اشتراكك في AYN من ${safeOldPlan} إلى ${safeNewPlan}. مزايا خطتك الجديدة نشطة الآن!
-  </p>
   
   ${AYN_FOOTER}
 </div>
