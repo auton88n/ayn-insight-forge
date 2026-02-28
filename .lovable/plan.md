@@ -1,59 +1,50 @@
 
 
-# Fix Pionex Signing Bugs + Sharpen Trading Prompt
+# Investigation Results + Fix Plan
 
-## Part 1: Fix Pionex Signing in `ayn-unified/index.ts` (lines 1032-1044)
+## What I Found
 
-The `signReq` helper signs the raw path string (e.g., `/api/v1/market/tickers?symbol=X&timestamp=Y`) instead of signing `GET` + path with sorted params.
+### 1. Welcome Email is Bilingual (English + Arabic)
+**File:** `supabase/functions/send-email/index.ts`, lines 41-93
 
-**Fix:** Replace `signReq` to:
-1. Accept method + path + params as a Record
-2. Sort params by key alphabetically
-3. Sign `GET/api/v1/market/tickers?symbol=X&timestamp=Y` (method prepended, no newlines)
+The `welcomeEmailTemplate` function renders both English and Arabic content in a single email. The subject line is also bilingual: `"Welcome to AYN! 🎉 | !AYN مرحباً بك في"`. This is the email sent when users sign up.
 
-## Part 2: Fix Pionex Signing in `analyze-trading-chart/index.ts` (lines 220-228, 235-244, 256-258)
+The **auth confirmation email** (`auth-send-email/index.ts`) is already English-only — no issue there.
 
-Same bug -- `signRequest` signs the raw path without `GET` prefix and params aren't sorted.
+### 2. Credit Number is Wrong in the Welcome Email
+The welcome email says **"50 free credits"** (line 62) and **"50 رصيد مجاني"** (line 85). But the actual free tier gives **5 daily credits**, not 50. This is just incorrect copy that was never updated when the tier system changed.
 
-**Ticker fix (lines 206-207):** Currently strips `/USDT` but not `_USDT`. Will add detection: if ticker already contains `_USDT`, use it directly.
+### 3. Why Credits Sometimes Show 5 vs 10
+The free tier is consistently set to **5** across all sources:
+- `handle_new_user` trigger: `daily_messages = 5`
+- `check-subscription` edge function: `dailyCredits: 5`
+- `src/constants/tierLimits.ts`: `credits: 5`
+- `check_user_ai_limit` DB function: defaults to 5
 
-**Signing fix:** Replace `signRequest` with the correct implementation that prepends `GET` and sorts params.
+If a user sees 10, it's likely from **bonus credits** (`bonus_credits` field in `user_ai_limits`). The limit check adds bonus to the base: `total_limit = limit_val + bonus_val`. So 5 base + 5 bonus = 10 displayed. There's no code path that sets the free tier to 10.
 
-**Both call sites** (klines at line 235-237 and tickers at line 256-258) will be updated to pass params as a Record and use the corrected signer.
+### 4. `send-email/index.ts` Has the Same `npm:resend` Build Bug
+Line 2: `import { Resend } from "npm:resend@2.0.0"` — same issue we fixed in `admin-notifications`.
 
-## Part 3: Sharpen Trading Prompt in `systemPrompts.ts`
+### 5. Last Changes Made (Previous Sessions)
+- Fixed Pionex API HMAC signing across `get-klines`, `ayn-unified`, `ayn-monitor-trades`, `analyze-trading-chart`, and `marketScanner.ts` (missing `GET` prefix, unsorted params)
+- Fixed ticker format bug in `ayn-monitor-trades` (`DEGO_USDT` → `DEGO_USDT_USDT`)
+- Fixed `admin-notifications` Resend import from `npm:` to `https://esm.sh/`
+- Sharpened the trading agent persona in `systemPrompts.ts` (removed disclaimers, added prop-trader voice)
 
-The trading-coach prompt (lines 160-380) will be updated:
+---
 
-**Keep unchanged:**
-- All AYN branding, identity, and name references
-- All knowledge base sections (Pattern Reliability, Smart Money Concepts, Wyckoff, Funding Rates, etc.)
-- Position sizing rules
-- Paper trading anti-fabrication rules
-- Autonomous trading mode rules
-- Security rules
+## Fix Plan
 
-**Changes:**
-- Remove all disclaimer/hedging banned phrases that still leak through (the banned list stays but gets reinforced)
-- Add sharper voice directives: "You talk like a prop desk trader. Blunt. Data-first. No softening. If a setup is trash, say it's trash."
-- Add "Never re-introduce yourself mid-conversation. You already told them who you are."
-- Add "Maintain full context across the conversation. Reference earlier messages naturally."
-- Remove any remaining soft language like "strongly recommend stepping away" -- replace with direct trader speak
-- Tighten emotional response section to be blunter (e.g., REVENGE: "Step away. You're tilted. Come back tomorrow." instead of the softer version)
+### Step 1: Make welcome email English-only + fix credit count
+**File:** `supabase/functions/send-email/index.ts`
+- Remove all Arabic content from `welcomeEmailTemplate` (lines 78-87)
+- Change subject to `"Welcome to AYN! 🎉"` (remove Arabic portion)
+- Change "50 free credits" to "5 free daily credits" to match actual limits
+- Fix `npm:resend` import to `https://esm.sh/resend@2.0.0` (line 2)
 
-## Part 4: Deploy
+### Step 2: Fix subject in `src/lib/email-templates.ts`
+- Update the `welcome` subject from `"Welcome to AYN! 🎉 | !AYN مرحباً بك في"` to `"Welcome to AYN! 🎉"`
 
-Deploy all three updated functions:
-- `ayn-unified`
-- `analyze-trading-chart`
-
-Then verify via logs that signing is correct and prices are fresh.
-
-## Files Modified
-
-| File | What Changes |
-|---|---|
-| `supabase/functions/ayn-unified/index.ts` | Fix `signReq` helper (~lines 1032-1044) to use `GET` prefix + sorted params |
-| `supabase/functions/analyze-trading-chart/index.ts` | Fix ticker format (lines 206-207) + fix `signRequest` (lines 220-244) + fix both call sites |
-| `supabase/functions/ayn-unified/systemPrompts.ts` | Sharpen trading-coach voice, remove disclaimers, add context continuity rules |
+### Step 3: Deploy `send-email` function
 
