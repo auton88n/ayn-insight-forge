@@ -658,8 +658,8 @@ export const CenterStageLayout = ({
               <motion.div
                 className={cn("w-full flex justify-center mt-2", transcriptOpen && "flex-1 min-h-0")}
                 style={{
-                  maxHeight: `calc(100dvh - ${footerHeight + 200}px)`,
-                  height: `calc(100dvh - ${footerHeight + 200}px)`,
+                  maxHeight: `calc(100dvh - ${footerHeight + 8}px)`,
+                  ...(transcriptOpen ? { height: `calc(100dvh - ${footerHeight + 8}px)` } : {}),
                   overflow: "hidden",
                 }}
                 initial={{ opacity: 0, y: 10 }}
