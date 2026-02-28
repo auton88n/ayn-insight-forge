@@ -630,7 +630,7 @@ export const CenterStageLayout = ({
           "overflow-hidden",
           "items-center",
           hasVisibleResponses || transcriptOpen ? "justify-start pt-4" : "justify-center",
-          "transition-all duration-300 ease-out",
+          "transition-all duration-200 ease-out",
         )}
       >
         {/* Unified layout - Eye and ResponseCard in same flex column */}
@@ -740,7 +740,7 @@ export const CenterStageLayout = ({
         className={cn(
           "fixed bottom-0 left-0 right-0 z-30",
           "pb-safe",
-          "transition-all duration-300",
+          "transition-all duration-200",
           sidebarOpen && "md:left-[20rem]",
         )}
       >
