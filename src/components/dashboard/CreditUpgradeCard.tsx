@@ -37,7 +37,7 @@ export const CreditUpgradeCard = ({
   const showUpgrade = currentTier === 'free' && !isUnlimited;
 
   // Total limit includes base monthly limit + bonus credits
-  const baseLimit = monthlyLimit ?? 50;
+  const baseLimit = monthlyLimit ?? 5;
   const totalLimit = baseLimit + bonusCredits;
   const creditsLeft = isUnlimited ? 999 : Math.max(0, totalLimit - currentUsage);
 

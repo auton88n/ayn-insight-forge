@@ -214,7 +214,7 @@ export function UserAILimits() {
 
   const unlimitedCount = limits.filter(l => l.is_unlimited).length;
   const atLimitCount = limits.filter(l => 
-    !l.is_unlimited && (l.current_daily_messages ?? 0) >= (l.daily_messages ?? 10)
+    !l.is_unlimited && (l.current_daily_messages ?? 0) >= (l.daily_messages ?? 5)
   ).length;
 
   if (isLoading) {

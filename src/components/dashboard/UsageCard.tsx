@@ -13,6 +13,9 @@ interface UsageCardProps {
   isUnlimited?: boolean;
   resetDate: string | null; // ISO date string
   compact?: boolean;
+  isDaily?: boolean;
+  tier?: string;
+  bonusCredits?: number;
 }
 
 export const UsageCard = ({
@@ -21,7 +24,10 @@ export const UsageCard = ({
   dailyLimit,
   isUnlimited: isUnlimitedProp = false,
   resetDate,
-  compact = false
+  compact = false,
+  isDaily = true,
+  tier = 'free',
+  bonusCredits = 0,
 }: UsageCardProps) => {
   // Support both props during migration (prefer monthlyLimit)
   const limit = monthlyLimit ?? dailyLimit ?? null;
@@ -158,7 +164,7 @@ export const UsageCard = ({
                       <Zap className={cn("w-3.5 h-3.5", statusColor)} />
                     </div>
                   )}
-                  <span className="text-sm font-medium text-foreground">HOO Credit</span>
+                  <span className="text-sm font-medium text-foreground">{isDaily ? 'Daily' : 'Monthly'} Credits</span>
                 </div>
                 
                 <div className="flex items-center gap-1.5">
@@ -204,7 +210,7 @@ export const UsageCard = ({
           </TooltipTrigger>
           <TooltipContent side="right" className="max-w-[200px]">
             <div className="space-y-1">
-              <p className="font-medium">{isUnlimited ? 'Unlimited Plan' : 'Daily HOO Credits'}</p>
+              <p className="font-medium">{isUnlimited ? 'Unlimited Plan' : `${isDaily ? 'Daily' : 'Monthly'} Credits`}</p>
               <p className="text-xs text-muted-foreground">
                 {currentUsage} messages sent
                 {resetDate && ` • Resets in ${hoursUntilReset}h`}
@@ -244,7 +250,7 @@ export const UsageCard = ({
           <Zap className="w-5 h-5 text-primary dark:text-white" />
         </div>
         <div>
-          <p className="text-base font-semibold text-foreground">Daily HOO Credits</p>
+          <p className="text-base font-semibold text-foreground">{isDaily ? 'Daily' : 'Monthly'} Credits</p>
           {resetDate && (
             <p className="text-xs text-muted-foreground">Resets in {formattedResetTime}</p>
           )}

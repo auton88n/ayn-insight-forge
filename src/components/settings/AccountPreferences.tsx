@@ -13,18 +13,12 @@ import { UsageCard } from '@/components/dashboard/UsageCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Key } from 'lucide-react';
 import { useSettingsContext } from '@/contexts/SettingsContext';
+import { useUsageTracking } from '@/hooks/useUsageTracking';
 
 interface AccountPreferencesProps {
   userId: string;
   userEmail: string;
   accessToken: string;
-}
-
-interface UsageData {
-  currentUsage: number;
-  monthlyLimit: number | null;
-  isUnlimited: boolean;
-  resetDate: string | null;
 }
 
 export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPreferencesProps) => {
@@ -43,12 +37,7 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
     avatar_url: '',
   });
   const [originalProfile, setOriginalProfile] = useState(profile);
-  const [usageData, setUsageData] = useState<UsageData>({
-    currentUsage: 0,
-    monthlyLimit: null,
-    isUnlimited: false,
-    resetDate: null,
-  });
+  const usage = useUsageTracking(userId);
 
   useEffect(() => {
     if (!userId) {
@@ -56,49 +45,29 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
       return;
     }
     
-    // Load all data in parallel for faster rendering
-    const loadAllData = async () => {
-      // Parallel fetch - profile and usage together
-      const [profileResult, usageResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('contact_person, company_name, business_type, business_context, avatar_url')
-          .eq('user_id', userId)
-          .single(),
-        supabase
-          .from('user_ai_limits')
-          .select('current_monthly_messages, monthly_messages, is_unlimited, monthly_reset_at')
-          .eq('user_id', userId)
-          .maybeSingle()
-      ]);
+    const loadProfile = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('contact_person, company_name, business_type, business_context, avatar_url')
+        .eq('user_id', userId)
+        .single();
 
-      // Process profile
-      if (profileResult.data) {
+      if (data) {
         const profileData = {
-          contact_person: profileResult.data.contact_person || '',
-          company_name: profileResult.data.company_name || '',
-          business_type: profileResult.data.business_type || '',
-          business_context: (profileResult.data as any).business_context || '',
-          avatar_url: profileResult.data.avatar_url || '',
+          contact_person: data.contact_person || '',
+          company_name: data.company_name || '',
+          business_type: data.business_type || '',
+          business_context: (data as any).business_context || '',
+          avatar_url: data.avatar_url || '',
         };
         setProfile(profileData);
         setOriginalProfile(profileData);
       }
 
-      // Process usage
-      if (usageResult.data) {
-        setUsageData({
-          currentUsage: usageResult.data.current_monthly_messages ?? 0,
-          monthlyLimit: usageResult.data.is_unlimited ? null : (usageResult.data.monthly_messages ?? 50),
-          isUnlimited: usageResult.data.is_unlimited ?? false,
-          resetDate: usageResult.data.monthly_reset_at ?? null,
-        });
-      }
-
       setLoading(false);
     };
 
-    loadAllData();
+    loadProfile();
   }, [userId]);
 
   // Track unsaved changes
@@ -194,10 +163,13 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
         <Card className="p-6 bg-card/50 backdrop-blur-xl border-border/50">
           <h2 className="text-xl font-semibold mb-4">Usage & Limits</h2>
           <UsageCard
-            currentUsage={usageData.currentUsage}
-            monthlyLimit={usageData.monthlyLimit}
-            isUnlimited={usageData.isUnlimited}
-            resetDate={usageData.resetDate}
+            currentUsage={usage.currentUsage}
+            monthlyLimit={usage.limit}
+            isUnlimited={usage.isUnlimited}
+            resetDate={usage.resetDate}
+            isDaily={usage.isDaily}
+            tier={usage.tier}
+            bonusCredits={usage.bonusCredits}
           />
         </Card>
       )}
