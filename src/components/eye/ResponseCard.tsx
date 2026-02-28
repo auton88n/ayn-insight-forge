@@ -369,6 +369,7 @@ const ResponseCardComponent = ({
             "shadow-md shadow-black/5 backdrop-blur-sm",
             variant === "sheet" ? "rounded-t-2xl rounded-b-lg" : "rounded-2xl",
             "overflow-hidden",
+            variant === "inline" && "h-full max-h-full min-h-0",
             transcriptOpen && "h-full",
           )}
           style={{
@@ -506,7 +507,6 @@ const ResponseCardComponent = ({
                 ref={contentRef}
                 className={cn(
                   "flex-1 min-h-0 overflow-y-auto overflow-x-hidden",
-                  variant === "inline" && "max-h-[calc(50vh-84px)] sm:max-h-[calc(55vh-84px)]",
                   "[&_img]:w-full [&_img]:max-h-[200px] [&_img]:object-cover [&_img]:rounded-lg",
                   "[&>div]:px-4 [&>div]:py-3",
                   "[-webkit-overflow-scrolling:touch]",
