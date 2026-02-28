@@ -506,7 +506,7 @@ const ResponseCardComponent = ({
                 ref={contentRef}
                 className={cn(
                   "flex-1 min-h-0 overflow-y-auto overflow-x-hidden",
-                  variant === "inline" && "max-h-[50vh] sm:max-h-[55vh]",
+                  variant === "inline" && "max-h-[calc(50vh-84px)] sm:max-h-[calc(55vh-84px)]",
                   "[&_img]:w-full [&_img]:max-h-[200px] [&_img]:object-cover [&_img]:rounded-lg",
                   "[&>div]:px-4 [&>div]:py-3",
                   "[-webkit-overflow-scrolling:touch]",
