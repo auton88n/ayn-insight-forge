@@ -370,7 +370,7 @@ const ResponseCardComponent = ({
             variant === "sheet" ? "rounded-t-2xl rounded-b-lg" : "rounded-2xl",
             "overflow-hidden",
             variant === "inline" && "min-h-0",
-            transcriptOpen ? "h-full" : "max-h-[55vh]",
+            "h-full",
           )}
           style={{
             willChange: "transform, opacity",
