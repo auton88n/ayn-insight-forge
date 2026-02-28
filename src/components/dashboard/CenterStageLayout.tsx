@@ -151,6 +151,8 @@ export const CenterStageLayout = ({
   const footerRef = useRef<HTMLDivElement>(null);
 
   const [footerHeight, setFooterHeight] = useState(112);
+  const responseWrapperRef = useRef<HTMLDivElement>(null);
+  const [responseWrapperMaxHeight, setResponseWrapperMaxHeight] = useState(400);
 
   const [internalShowFeedback, setInternalShowFeedback] = useState(false);
   const showFeedbackModal = showFeedbackModalProp ?? internalShowFeedback;
@@ -233,6 +235,33 @@ export const CenterStageLayout = ({
     observer.observe(footerRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // Dynamic height: measure from responseWrapper top to footer top, keeping 8px gap
+  useEffect(() => {
+    const measure = () => {
+      if (!responseWrapperRef.current || !footerRef.current) return;
+      const wrapperTop = responseWrapperRef.current.getBoundingClientRect().top;
+      const footerTop = footerRef.current.getBoundingClientRect().top;
+      const available = Math.max(0, footerTop - wrapperTop - 8);
+      setResponseWrapperMaxHeight(available);
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(() => measure());
+    if (footerRef.current) ro.observe(footerRef.current);
+    if (responseWrapperRef.current) ro.observe(responseWrapperRef.current);
+
+    window.addEventListener("resize", measure);
+    const vv = window.visualViewport;
+    if (vv) vv.addEventListener("resize", measure);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      if (vv) vv.removeEventListener("resize", measure);
+    };
+  }, [transcriptOpen, responseBubbles.length, sidebarOpen, isMobile]);
 
   // Reset all visual state when messages are cleared
   useEffect(() => {
@@ -646,20 +675,15 @@ export const CenterStageLayout = ({
             </div>
           </motion.div>
 
-          {/* ResponseCard wrapper
-              =============================================
-              FIX: Changed overflow from 'visible' to 'hidden'
-              when transcriptOpen. overflow:visible was the root
-              cause — it let content spill out of the container
-              regardless of any maxHeight set on children.
-              ============================================= */}
+          {/* ResponseCard wrapper — height is measured dynamically from wrapper top to footer top */}
           <AnimatePresence>
             {(responseBubbles.length > 0 || transcriptOpen) && (
               <motion.div
+                ref={responseWrapperRef}
                 className={cn("w-full flex justify-center mt-2", transcriptOpen && "flex-1 min-h-0")}
                 style={{
-                  maxHeight: `calc(100dvh - ${footerHeight + 8}px)`,
-                  ...(transcriptOpen ? { height: `calc(100dvh - ${footerHeight + 8}px)` } : {}),
+                  maxHeight: `${responseWrapperMaxHeight}px`,
+                  ...(transcriptOpen ? { height: `${responseWrapperMaxHeight}px` } : {}),
                   overflow: "hidden",
                 }}
                 initial={{ opacity: 0, y: 10 }}
