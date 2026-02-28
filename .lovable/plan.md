@@ -1,38 +1,22 @@
 
 
-# Fix: ResponseCard cut off / hidden under chat input
+# Fix ResponseCard Height Constraint
 
-The card is being capped too aggressively by two constraints working against each other.
+## Changes in `src/components/eye/ResponseCard.tsx`
 
-## Changes
-
-### 1. `src/components/dashboard/CenterStageLayout.tsx` (lines 660-663)
-
-Replace the wrapper sizing to use a small gap (`+16`) instead of `+200`, and only set fixed `height` in transcript mode:
-
-```tsx
-// Current:
-maxHeight: `calc(100dvh - ${footerHeight + 200}px)`,
-height: `calc(100dvh - ${footerHeight + 200}px)`,
-overflow: "hidden",
-
-// New:
-maxHeight: `calc(100dvh - ${footerHeight + 16}px)`,
-...(transcriptOpen ? { height: `calc(100dvh - ${footerHeight + 16}px)` } : {}),
-overflow: "hidden",
+### 1. Line 372-373: Replace inline height classes
+Change:
 ```
-
-### 2. `src/components/eye/ResponseCard.tsx` (line 373)
-
-Remove the fixed `max-h-[55vh]` cap — let the parent wrapper control the budget:
-
-```tsx
-// Current:
+variant === "inline" && "h-full max-h-full min-h-0",
+transcriptOpen && "h-full",
+```
+To:
+```
+variant === "inline" && "min-h-0",
 transcriptOpen ? "h-full" : "max-h-[55vh]",
-
-// New:
-"h-full",
 ```
 
-The parent's dynamic `maxHeight` (viewport minus footer minus 16px) ensures the card never overlaps the chat input. The card fills available space and scrolls internally via the existing `flex-1 min-h-0 overflow-y-auto` on the content area.
+This caps the card at 55vh when not in transcript mode, forcing internal scrolling instead of unbounded growth.
+
+No other changes needed — the content area already has `flex-1 min-h-0 overflow-y-auto` from the previous fix, so it will scroll correctly inside the bounded card.
 
