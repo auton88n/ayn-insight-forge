@@ -369,8 +369,8 @@ const ResponseCardComponent = ({
             "shadow-md shadow-black/5 backdrop-blur-sm",
             variant === "sheet" ? "rounded-t-2xl rounded-b-lg" : "rounded-2xl",
             "overflow-hidden",
-            variant === "inline" && "h-full max-h-full min-h-0",
-            transcriptOpen && "h-full",
+            variant === "inline" && "min-h-0",
+            transcriptOpen ? "h-full" : "max-h-[55vh]",
           )}
           style={{
             willChange: "transform, opacity",
