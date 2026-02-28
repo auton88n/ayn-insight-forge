@@ -553,12 +553,30 @@ const ResponseCardComponent = ({
 
               </div>
 
-              {isScrollable && !isAtBottom && (
-                <div
-                  className="absolute bottom-14 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"
-                  aria-hidden="true"
-                />
-              )}
+              <AnimatePresence>
+                {isScrollable && !isAtBottom && (
+                  <>
+                    <div
+                      className="absolute bottom-14 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => {
+                        contentRef.current?.scrollTo({ top: contentRef.current.scrollHeight, behavior: "smooth" });
+                        shouldAutoScrollRef.current = true;
+                      }}
+                      className="absolute bottom-16 left-1/2 -translate-x-1/2 z-10 p-1.5 rounded-full bg-foreground text-background shadow-lg hover:bg-foreground/90 transition-colors"
+                      aria-label="Scroll to bottom"
+                    >
+                      <ChevronDown size={14} />
+                    </motion.button>
+                  </>
+                )}
+              </AnimatePresence>
 
               {/* Action bar */}
               <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-t border-border/40">
