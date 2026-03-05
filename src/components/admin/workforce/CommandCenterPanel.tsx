@@ -61,25 +61,10 @@ interface Directive {
   created_at: string;
 }
 
-const AGENT_META: Record<string, { name: string; emoji: string; gradient: string }> = {
-  system: { name: 'AYN', emoji: '🧠', gradient: 'from-violet-500 to-purple-600' },
-  chief_of_staff: { name: 'Chief of Staff', emoji: '📋', gradient: 'from-blue-500 to-cyan-500' },
-  advisor: { name: 'Strategic Advisor', emoji: '📊', gradient: 'from-emerald-500 to-teal-500' },
-  sales: { name: 'Sales Hunter', emoji: '💼', gradient: 'from-amber-500 to-orange-500' },
-  marketing: { name: 'Marketing Strategist', emoji: '📣', gradient: 'from-pink-500 to-rose-500' },
-  security_guard: { name: 'Security Guard', emoji: '🛡️', gradient: 'from-red-500 to-rose-600' },
-  lawyer: { name: 'Legal Counsel', emoji: '⚖️', gradient: 'from-slate-500 to-gray-600' },
-  innovation: { name: 'Innovation Lead', emoji: '🚀', gradient: 'from-indigo-500 to-violet-500' },
-  customer_success: { name: 'Customer Success', emoji: '🤝', gradient: 'from-green-500 to-emerald-500' },
-  qa_watchdog: { name: 'QA Watchdog', emoji: '🐕', gradient: 'from-yellow-500 to-amber-500' },
-  investigator: { name: 'Investigator', emoji: '🔍', gradient: 'from-cyan-500 to-blue-500' },
-  follow_up: { name: 'Follow-Up Agent', emoji: '📬', gradient: 'from-purple-500 to-fuchsia-500' },
-  hr_manager: { name: 'HR Manager', emoji: '👥', gradient: 'from-teal-500 to-emerald-600' },
-  founder: { name: 'Founder', emoji: '👤', gradient: 'from-orange-500 to-red-500' },
-};
+const AYN_META = { name: 'AYN', emoji: '🧠', gradient: 'from-violet-500 to-purple-600' };
 
-function getAgentMeta(id: string) {
-  return AGENT_META[id] || { name: id, emoji: '🤖', gradient: 'from-gray-500 to-gray-600' };
+function getAgentMeta(_id: string) {
+  return AYN_META;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
