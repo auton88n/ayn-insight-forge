@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Command as CommandIcon,
+  Brain,
   ArrowUp,
   Loader2,
   Trash2,
@@ -61,25 +61,10 @@ interface Directive {
   created_at: string;
 }
 
-const AGENT_META: Record<string, { name: string; emoji: string; gradient: string }> = {
-  system: { name: 'AYN', emoji: '🧠', gradient: 'from-violet-500 to-purple-600' },
-  chief_of_staff: { name: 'Chief of Staff', emoji: '📋', gradient: 'from-blue-500 to-cyan-500' },
-  advisor: { name: 'Strategic Advisor', emoji: '📊', gradient: 'from-emerald-500 to-teal-500' },
-  sales: { name: 'Sales Hunter', emoji: '💼', gradient: 'from-amber-500 to-orange-500' },
-  marketing: { name: 'Marketing Strategist', emoji: '📣', gradient: 'from-pink-500 to-rose-500' },
-  security_guard: { name: 'Security Guard', emoji: '🛡️', gradient: 'from-red-500 to-rose-600' },
-  lawyer: { name: 'Legal Counsel', emoji: '⚖️', gradient: 'from-slate-500 to-gray-600' },
-  innovation: { name: 'Innovation Lead', emoji: '🚀', gradient: 'from-indigo-500 to-violet-500' },
-  customer_success: { name: 'Customer Success', emoji: '🤝', gradient: 'from-green-500 to-emerald-500' },
-  qa_watchdog: { name: 'QA Watchdog', emoji: '🐕', gradient: 'from-yellow-500 to-amber-500' },
-  investigator: { name: 'Investigator', emoji: '🔍', gradient: 'from-cyan-500 to-blue-500' },
-  follow_up: { name: 'Follow-Up Agent', emoji: '📬', gradient: 'from-purple-500 to-fuchsia-500' },
-  hr_manager: { name: 'HR Manager', emoji: '👥', gradient: 'from-teal-500 to-emerald-600' },
-  founder: { name: 'Founder', emoji: '👤', gradient: 'from-orange-500 to-red-500' },
-};
+const AYN_META = { name: 'AYN', emoji: '🧠', gradient: 'from-violet-500 to-purple-600' };
 
-function getAgentMeta(id: string) {
-  return AGENT_META[id] || { name: id, emoji: '🤖', gradient: 'from-gray-500 to-gray-600' };
+function getAgentMeta(_id: string) {
+  return AYN_META;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -90,17 +75,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   general: 'bg-muted text-muted-foreground border-border',
 };
 
-const AGENT_EMPLOYEE_MAP: Record<string, string> = {
-  sales: 'sales',
-  investigator: 'investigator',
-  marketing: 'marketing',
-  security: 'security_guard',
-  lawyer: 'lawyer',
-  advisor: 'advisor',
-  qa: 'qa_watchdog',
-  followup: 'follow_up',
-  customer: 'customer_success',
-};
 
 // ─── Helper: Build enriched content string for history ───
 function buildEnrichedContent(msg: ChatMessage): string {
@@ -421,12 +395,12 @@ export function CommandCenterPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
-            <CommandIcon className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Command Center</h2>
-            <p className="text-sm text-muted-foreground">Talk to AYN — commands, questions, directives</p>
+            <h2 className="text-lg font-semibold">AYN Mind</h2>
+            <p className="text-sm text-muted-foreground">Your smart personal assistant — commands, questions, actions</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -572,20 +546,7 @@ export function CommandCenterPanel() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 py-2">
                       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">AYN is coordinating the team...</span>
-                    </div>
-                    <div className="flex gap-1 mt-1">
-                      {['💼', '🔍', '🛡️', '📣'].map((emoji, i) => (
-                        <motion.span
-                          key={i}
-                          initial={{ opacity: 0.3 }}
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ duration: 1.5, delay: i * 0.3, repeat: Infinity }}
-                          className="text-xs"
-                        >
-                          {emoji}
-                        </motion.span>
-                      ))}
+                      <span className="text-sm text-muted-foreground">AYN is thinking...</span>
                     </div>
                   </div>
                 </motion.div>
@@ -691,7 +652,7 @@ function ToolResultCard({ result }: { result: ToolResult }) {
   }
 
   if (result.type === 'agent_result') {
-    const meta = result.agent ? getAgentMeta(AGENT_EMPLOYEE_MAP[result.agent] || result.agent) : { name: 'Agent', emoji: '🤖', gradient: 'from-gray-500 to-gray-600' };
+    const meta = AYN_META;
     const agentMessage = result.message;
     const hasError = result.result?.error;
     const isSuccess = result.success !== false && !hasError;

@@ -547,6 +547,63 @@ export type Database = {
         }
         Relationships: []
       }
+      brain_insights: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      brain_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          iterations: number | null
+          message: string | null
+          model_used: string | null
+          response: string | null
+          tools_used: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          iterations?: number | null
+          message?: string | null
+          model_used?: string | null
+          response?: string | null
+          tools_used?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          iterations?: number | null
+          message?: string | null
+          model_used?: string | null
+          response?: string | null
+          tools_used?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       building_codes: {
         Row: {
           applies_to: string | null

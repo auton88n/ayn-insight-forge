@@ -21,7 +21,7 @@ import {
   Twitter,
   Activity,
   Brain,
-  Swords
+  
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -48,8 +48,7 @@ export type AdminTabId =
   | 'terms-consent'
   | 'ayn-logs'
   | 'ayn-mind'
-  | 'ai-workforce'
-  | 'war-room';
+;
 
 interface AdminSection {
   id: AdminTabId;
@@ -84,8 +83,6 @@ const aiSections: AdminSection[] = [
   { id: 'twitter-marketing', title: 'Twitter Marketing', shortTitle: 'Twtr', icon: Twitter, gradient: 'from-sky-500 to-blue-600', adminOnly: true },
   { id: 'ayn-logs', title: 'AYN Logs', shortTitle: 'Logs', icon: Activity, gradient: 'from-orange-500 to-red-500', adminOnly: true },
   { id: 'ayn-mind', title: 'AYN Mind', shortTitle: 'Mind', icon: Brain, gradient: 'from-violet-500 to-purple-600', adminOnly: true },
-  { id: 'ai-workforce', title: 'AI Workforce', shortTitle: 'Team', icon: Users, gradient: 'from-indigo-500 to-violet-600', adminOnly: true },
-  { id: 'war-room', title: 'Command Center', shortTitle: 'Cmd', icon: Swords, gradient: 'from-red-500 to-orange-500', adminOnly: true },
 ];
 
 interface AdminSidebarProps {
