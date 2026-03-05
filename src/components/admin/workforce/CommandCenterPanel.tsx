@@ -38,7 +38,7 @@ interface ChatMessage {
 }
 
 interface ToolResult {
-  type: 'agent_result' | 'directive_saved' | 'discussion' | 'error';
+  type: 'agent_result' | 'directive_saved' | 'discussion' | 'error' | 'memory_updated';
   agent?: string;
   agent_name?: string;
   agent_emoji?: string;
@@ -281,9 +281,9 @@ export function CommandCenterPanel() {
 
       // Build enriched history for context (last 10 messages, truncated)
       const allMessages = [...messages, userMsg];
-      const history = allMessages.slice(-10).map(m => ({
+      const history = allMessages.slice(-30).map(m => ({
         role: m.role,
-        content: buildEnrichedContent(m).substring(0, 500),
+        content: buildEnrichedContent(m).substring(0, 2000),
       }));
 
       const controller = new AbortController();
@@ -611,6 +611,17 @@ function ToolResultCard({ result }: { result: ToolResult }) {
     return (
       <div className="ml-10 p-3 rounded-lg border border-destructive/30 bg-destructive/5 text-sm text-destructive">
         {result.message || result.error}
+      </div>
+    );
+  }
+
+  if (result.type === 'memory_updated') {
+    return (
+      <div className="ml-10 p-2.5 rounded-lg border border-violet-500/20 bg-violet-500/5">
+        <div className="flex items-center gap-2 text-xs text-violet-600 dark:text-violet-400">
+          <span>🧠</span>
+          <span className="font-medium">Memory updated — I'll remember this.</span>
+        </div>
       </div>
     );
   }

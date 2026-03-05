@@ -56,15 +56,188 @@ async function loadDirectives(supabase: any) {
   return data || [];
 }
 
-// ─── Agent-specific parameter hints for AYN ───
+// ─── CHANGE 1: Load founder personal memory ───
+async function loadFounderMemory(supabase: any): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from('founder_context')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    if (!data) return '';
+
+    const parts: string[] = [];
+
+    if (data.current_priorities?.length > 0) {
+      parts.push(`Current priorities: ${data.current_priorities.join(', ')}`);
+    }
+    if (data.current_projects?.length > 0) {
+      parts.push(`Active projects: ${JSON.stringify(data.current_projects)}`);
+    }
+    if (data.open_decisions?.length > 0) {
+      parts.push(`Open decisions (not resolved yet): ${JSON.stringify(data.open_decisions)}`);
+    }
+    if (data.people_context && Object.keys(data.people_context).length > 0) {
+      parts.push(`Key people & context: ${JSON.stringify(data.people_context)}`);
+    }
+    if (data.last_topics?.length > 0) {
+      parts.push(`Recent topics discussed: ${JSON.stringify(data.last_topics)}`);
+    }
+    if (data.preferences && Object.keys(data.preferences).length > 0) {
+      parts.push(`Preferences & patterns: ${JSON.stringify(data.preferences)}`);
+    }
+    if (data.mood_signal) {
+      parts.push(`Current mood/state: ${data.mood_signal}`);
+    }
+
+    if (parts.length === 0) return '';
+
+    return `\nFOUNDER CONTEXT (you know this about Ghazi — use it naturally, don't announce it):\n${parts.join('\n')}`;
+  } catch {
+    return '';
+  }
+}
+
+// ─── CHANGE 2: Extract and save new facts from conversation ───
+async function extractAndSaveMemory(supabase: any, userMessage: string, aiReply: string, apiKey: string): Promise<void> {
+  try {
+    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'google/gemini-2.0-flash',
+        messages: [{
+          role: 'user',
+          content: `Extract any NEW facts about Ghazi from this exchange. Only extract things explicitly stated, never infer.
+Return ONLY valid JSON, nothing else:
+{
+  "new_project": null,
+  "closed_project": null,
+  "new_decision": null,
+  "resolved_decision": null,
+  "new_person": null,
+  "new_priority": null,
+  "preference_signal": null,
+  "mood_signal": null,
+  "topic": null
+}
+
+User said: "${userMessage.substring(0, 500)}"
+AYN replied: "${aiReply.substring(0, 500)}"
+
+Rules:
+- If nothing new was revealed, return all nulls
+- new_project: string describing a project Ghazi mentioned working on
+- closed_project: string name of a project that's done/cancelled
+- new_decision: string describing a pending decision Ghazi hasn't made yet
+- resolved_decision: string of a decision that was just made
+- new_person: object like {"name": "...", "context": "..."}
+- new_priority: string of what Ghazi said matters most right now
+- preference_signal: object like {"key": "...", "value": "..."}
+- mood_signal: one of: focused, stressed, exploring, excited, tired
+- topic: 3-word max summary of what was discussed`
+        }],
+        max_tokens: 200,
+      }),
+    });
+
+    if (!res.ok) return;
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content?.trim();
+    if (!raw) return;
+
+    let facts: any;
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      facts = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+    } catch { return; }
+
+    if (!facts) return;
+    const hasAnything = Object.values(facts).some(v => v !== null);
+    if (!hasAnything) return;
+
+    // Load current context
+    const { data: current } = await supabase
+      .from('founder_context')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    const updates: any = { updated_at: new Date().toISOString() };
+
+    // Update projects
+    if (facts.new_project) {
+      const projects = current?.current_projects || [];
+      if (!projects.includes(facts.new_project)) {
+        updates.current_projects = [...projects, facts.new_project];
+      }
+    }
+    if (facts.closed_project) {
+      updates.current_projects = (current?.current_projects || [])
+        .filter((p: string) => !p.toLowerCase().includes(facts.closed_project.toLowerCase()));
+    }
+
+    // Update decisions
+    if (facts.new_decision) {
+      const decisions = current?.open_decisions || [];
+      if (!decisions.includes(facts.new_decision)) {
+        updates.open_decisions = [...decisions, facts.new_decision];
+      }
+    }
+    if (facts.resolved_decision) {
+      updates.open_decisions = (current?.open_decisions || [])
+        .filter((d: string) => !d.toLowerCase().includes(facts.resolved_decision.toLowerCase()));
+    }
+
+    // Update people
+    if (facts.new_person?.name) {
+      updates.people_context = {
+        ...(current?.people_context || {}),
+        [facts.new_person.name]: facts.new_person.context || 'mentioned',
+      };
+    }
+
+    // Update priorities
+    if (facts.new_priority) {
+      updates.current_priorities = [facts.new_priority];
+    }
+
+    // Update preferences
+    if (facts.preference_signal?.key) {
+      updates.preferences = {
+        ...(current?.preferences || {}),
+        [facts.preference_signal.key]: facts.preference_signal.value,
+      };
+    }
+
+    // Update mood
+    if (facts.mood_signal) {
+      updates.mood_signal = facts.mood_signal;
+    }
+
+    // Update last topics (rolling last 5)
+    if (facts.topic) {
+      const topics = current?.last_topics || [];
+      const newTopics = [facts.topic, ...topics].slice(0, 5);
+      updates.last_topics = newTopics;
+    }
+
+    await supabase.from('founder_context').upsert({ id: 1, ...updates });
+  } catch (e) {
+    console.error('[MEMORY] extractAndSaveMemory failed:', e);
+  }
+}
+
+// ─── Agent param hints ───
 const AGENT_PARAM_HINTS: Record<string, string> = {
-  sales: `Sales Hunter modes: "prospect" (needs url), "search_leads" (needs search_query), "pipeline_status", "draft_email" (needs lead_id). For natural commands like "find firms", use search_leads with a search_query.`,
-  investigator: `Investigator modes: "investigate" (needs topic or url). Pass the topic or URL directly.`,
-  marketing: `Marketing Strategist modes: "campaign" (needs target_audience or industry — creates full outreach campaign with emails), "email_copy" (needs lead_id or company_name or industry — drafts personalized email), "positioning" (needs competitor_url — analyzes competitor and recommends positioning), "content_plan" (creates content plan based on pipeline), "analyze_pipeline" (reviews pipeline for marketing priorities). For natural commands about reaching companies or industries, use "campaign" with industry param.`,
-  security: `Security Guard modes: "scan" (run security scan), "check" (check specific threat).`,
+  sales: `Sales Hunter modes: "prospect" (needs url), "search_leads" (needs search_query), "pipeline_status", "draft_email" (needs lead_id).`,
+  investigator: `Investigator modes: "investigate" (needs topic or url).`,
+  marketing: `Marketing modes: "campaign" (needs target_audience or industry), "email_copy" (needs lead_id or company_name), "positioning" (needs competitor_url), "content_plan", "analyze_pipeline".`,
+  security: `Security modes: "scan" (run security scan), "check" (check specific threat).`,
   lawyer: `Lawyer modes: "review" (review document/situation), "compliance" (check compliance).`,
   advisor: `Advisor modes: "analyze" (strategic analysis), "recommend" (recommendations).`,
-  qa: `QA Watchdog modes: "check" (run checks), "report" (status report).`,
+  qa: `QA modes: "check" (run checks), "report" (status report).`,
   followup: `Follow-Up modes: "check" (check pending follow-ups), "send" (send follow-up).`,
   customer: `Customer Success modes: "check" (check churn risks), "report" (satisfaction report).`,
 };
@@ -83,10 +256,8 @@ const TOOLS = [
           command: { type: "string", description: "Natural language description of the task" },
           agent_params: {
             type: "object",
-            description: "Structured parameters to pass directly to the agent function. Include 'mode' and any other required params. If unsure, omit and let the system figure it out.",
-            properties: {
-              mode: { type: "string", description: "The agent's operation mode" },
-            },
+            description: "Structured parameters for the agent. Include 'mode' and any other required params.",
+            properties: { mode: { type: "string" } },
             additionalProperties: true,
           },
         },
@@ -98,11 +269,11 @@ const TOOLS = [
     type: "function",
     function: {
       name: "save_directive",
-      description: "Save a standing order. Use when the founder says 'from now on...', 'always...', 'never...', 'focus on...', 'only target...'",
+      description: "Save a standing order. Use when the founder says 'from now on...', 'always...', 'never...', 'focus on...'",
       parameters: {
         type: "object",
         properties: {
-          directive: { type: "string", description: "The standing order text" },
+          directive: { type: "string" },
           category: { type: "string", enum: ["general", "geo", "strategy", "outreach", "budget"] },
           priority: { type: "number", description: "Priority 1-5, 1 is highest" },
         },
@@ -114,7 +285,7 @@ const TOOLS = [
     type: "function",
     function: {
       name: "start_discussion",
-      description: "Start a multi-agent discussion. ONLY use when the founder explicitly asks for opinions from multiple agents or 'everyone'.",
+      description: "Start a multi-agent discussion. ONLY use when explicitly asked for team opinions.",
       parameters: {
         type: "object",
         properties: { topic: { type: "string" } },
@@ -122,66 +293,55 @@ const TOOLS = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "update_founder_memory",
+      description: "Update what AYN knows about Ghazi. Use when Ghazi shares something about his projects, priorities, decisions, or preferences.",
+      parameters: {
+        type: "object",
+        properties: {
+          field: { type: "string", enum: ["current_projects", "open_decisions", "people_context", "current_priorities", "preferences", "mood_signal"] },
+          value: { type: "string", description: "The value to store" },
+        },
+        required: ["field", "value"],
+      },
+    },
+  },
 ];
 
-// ─── Build a simple fallback summary from raw data (no LLM needed) ───
+// ─── Build fallback summary ───
 function buildFallbackSummary(agentKey: string, rawResult: any): string {
   const route = AGENT_ROUTES[agentKey];
   const agentName = route ? getAgentDisplayName(route.employeeId) : agentKey;
-
   if (!rawResult) return `${agentName} completed the task but returned no data.`;
-
-  // Handle errors conversationally
   if (rawResult.error) {
     const err = typeof rawResult.error === 'string' ? rawResult.error : JSON.stringify(rawResult.error);
-    // Common parameter errors → helpful hints
-    if (err.includes('url') || err.includes('URL')) return `I need a URL to work with. Try something like: "prospect https://example.com"`;
-    if (err.includes('required') || err.includes('missing')) return `I'm missing some info to do that. Could you be more specific about what you need?`;
-    if (err.includes('not found')) return `I couldn't find what you're looking for. Want me to try a different approach?`;
-    return `I ran into an issue: ${err.substring(0, 200)}. Want me to try again?`;
+    if (err.includes('url') || err.includes('URL')) return `I need a URL to work with.`;
+    if (err.includes('required') || err.includes('missing')) return `Missing some info. Could you be more specific?`;
+    if (err.includes('not found')) return `Couldn't find that. Want me to try differently?`;
+    return `Ran into an issue: ${err.substring(0, 200)}. Want me to retry?`;
   }
-
-  // Handle success with data summaries
-  if (rawResult.success === false) return `That didn't work as expected. Let me know if you want me to try differently.`;
-
-  // Array results (leads, items, etc.)
+  if (rawResult.success === false) return `That didn't work as expected. Want me to try differently?`;
   if (Array.isArray(rawResult.data || rawResult.leads || rawResult.results)) {
     const items = rawResult.data || rawResult.leads || rawResult.results;
     const count = items.length;
-    if (count === 0) return `I looked but didn't find anything matching that criteria.`;
+    if (count === 0) return `Didn't find anything matching that criteria.`;
     const names = items.slice(0, 3).map((i: any) => i.company_name || i.name || i.title || 'item').join(', ');
     return `Found ${count} result${count > 1 ? 's' : ''}${names ? ': ' + names : ''}${count > 3 ? '...' : ''}.`;
   }
-
-  // Pipeline/status results
-  if (rawResult.pipeline || rawResult.status) return `Here's the current status. Check the details below for the full picture.`;
-
-  // Generic success
-  if (rawResult.success === true) return `Done! Task completed successfully.`;
-
-  // Default: mention something happened
-  const keys = Object.keys(rawResult).filter(k => k !== 'source').slice(0, 3);
-  if (keys.length > 0) return `Got results back (${keys.join(', ')}). Check the details for more.`;
-
+  if (rawResult.success === true) return `Done.`;
   return `Task completed.`;
 }
 
 // ─── Generate natural language summary from agent result ───
 async function generateAgentMessage(agentKey: string, command: string, rawResult: any, apiKey: string): Promise<string> {
   const route = AGENT_ROUTES[agentKey];
-  if (!route) return buildFallbackSummary(agentKey, rawResult);
-  if (!apiKey) return buildFallbackSummary(agentKey, rawResult);
-
+  if (!route || !apiKey) return buildFallbackSummary(agentKey, rawResult);
   const personality = getEmployeePersonality(route.employeeId);
   const resultStr = JSON.stringify(rawResult).substring(0, 2000);
   const hasError = rawResult?.error || rawResult?.success === false;
-
-  const systemMsg = `${personality || `You are ${getAgentDisplayName(route.employeeId)}.`}
-
-Summarize this result for the founder in 1-3 sentences. Be direct, stay in character.
-${hasError ? 'There was an error. Explain what you need from the founder to proceed. Be helpful, not robotic.' : 'Report what you found/did. If relevant, suggest next steps.'}
-Never show raw JSON. Never mention "parameters" or "API". Talk like a real team member.`;
-
+  const systemMsg = `${personality || `You are ${getAgentDisplayName(route.employeeId)}.`}\nSummarize this result in 1-3 sentences. Direct, in character.\n${hasError ? 'There was an error. Explain what you need to proceed.' : 'Report what you found/did.'}\nNever show raw JSON. Never say "parameters" or "API".`;
   try {
     const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -190,34 +350,30 @@ Never show raw JSON. Never mention "parameters" or "API". Talk like a real team 
         model: 'google/gemini-3-flash-preview',
         messages: [
           { role: 'system', content: systemMsg },
-          { role: 'user', content: `Command was: "${command}"\n\nResult:\n${resultStr}` },
+          { role: 'user', content: `Command: "${command}"\n\nResult:\n${resultStr}` },
         ],
         max_tokens: 150,
       }),
     });
     if (!res.ok) return buildFallbackSummary(agentKey, rawResult);
     const data = await res.json();
-    const msg = data.choices?.[0]?.message?.content?.trim();
-    return msg || buildFallbackSummary(agentKey, rawResult);
+    return data.choices?.[0]?.message?.content?.trim() || buildFallbackSummary(agentKey, rawResult);
   } catch {
     return buildFallbackSummary(agentKey, rawResult);
   }
 }
 
-// ─── Execute agent command (with smart params + natural response) ───
+// ─── Execute agent command ───
 async function executeAgentCommand(supabase: any, agentKey: string, command: string, agentParams?: any, apiKey?: string) {
   const route = AGENT_ROUTES[agentKey];
   if (!route) return { error: `Unknown agent: ${agentKey}` };
-
-  // Build the request body — use agent_params if provided, otherwise fall back to defaults
-  const requestBody: any = agentParams && agentParams.mode
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const requestBody: any = agentParams?.mode
     ? { ...agentParams, command, source: 'command_center' }
     : { mode: route.defaultMode, command, source: 'command_center' };
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   try {
-    const agentController = new AbortController();
-    const agentTimeout = setTimeout(() => agentController.abort(), 45000); // 45s max per agent
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000);
     const res = await fetch(`${supabaseUrl}/functions/v1/${route.functionName}`, {
       method: 'POST',
       headers: {
@@ -225,21 +381,17 @@ async function executeAgentCommand(supabase: any, agentKey: string, command: str
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
-      signal: agentController.signal,
+      signal: controller.signal,
     });
-    clearTimeout(agentTimeout);
+    clearTimeout(timeout);
     const data = await res.json();
-
-    // Generate natural language message from the agent
     const agentMessage = apiKey ? await generateAgentMessage(agentKey, command, data, apiKey) : '';
-
     await supabase.from('ayn_activity_log').insert({
       triggered_by: route.employeeId,
       action_type: 'command_center_execution',
       summary: `Command: "${command.substring(0, 100)}"`,
       details: { command, agent_params: agentParams, result: data, source: 'command_center' },
     });
-
     return {
       agent: agentKey,
       agent_name: getAgentDisplayName(route.employeeId),
@@ -254,7 +406,7 @@ async function executeAgentCommand(supabase: any, agentKey: string, command: str
     const friendlyError = isTimeout ? 'Agent took too long to respond' : errorMsg;
     const agentMessage = apiKey
       ? await generateAgentMessage(agentKey, command, { error: friendlyError }, apiKey)
-      : isTimeout ? 'That agent is taking a while — it may still be working in the background.' : '';
+      : isTimeout ? 'That agent is taking a while — may still be working in the background.' : '';
     return { error: `Failed: ${friendlyError}`, message: agentMessage, timeout: isTimeout };
   }
 }
@@ -272,50 +424,80 @@ async function saveDirective(supabase: any, directive: string, category = 'gener
   return { success: true, directive: data };
 }
 
+// ─── Update founder memory directly ───
+async function updateFounderMemory(supabase: any, field: string, value: string) {
+  try {
+    const { data: current } = await supabase.from('founder_context').select('*').eq('id', 1).single();
+    const updates: any = { updated_at: new Date().toISOString() };
+
+    switch (field) {
+      case 'current_projects': {
+        const projects = current?.current_projects || [];
+        if (!projects.includes(value)) updates.current_projects = [...projects, value];
+        break;
+      }
+      case 'open_decisions': {
+        const decisions = current?.open_decisions || [];
+        if (!decisions.includes(value)) updates.open_decisions = [...decisions, value];
+        break;
+      }
+      case 'current_priorities':
+        updates.current_priorities = [value];
+        break;
+      case 'mood_signal':
+        updates.mood_signal = value;
+        break;
+      case 'preferences':
+      case 'people_context':
+        try {
+          const parsed = JSON.parse(value);
+          updates[field] = { ...(current?.[field] || {}), ...parsed };
+        } catch {
+          updates[field] = { ...(current?.[field] || {}), note: value };
+        }
+        break;
+    }
+
+    await supabase.from('founder_context').upsert({ id: 1, ...updates });
+    return { success: true };
+  } catch (e) {
+    return { error: String(e) };
+  }
+}
+
 // ─── Mini discussion ───
 async function runMiniDiscussion(supabase: any, topic: string, apiKey: string) {
   const EXECUTIVE = ['system', 'chief_of_staff'];
   const OPERATIONAL = ['sales', 'investigator', 'follow_up', 'marketing', 'customer_success', 'qa_watchdog', 'security_guard', 'lawyer'];
-
   const msg = topic.toLowerCase();
   const selected = new Set<string>([...EXECUTIVE]);
-
   if (msg.includes('sale') || msg.includes('lead') || msg.includes('revenue')) selected.add('sales');
-  if (msg.includes('market') || msg.includes('brand') || msg.includes('content')) selected.add('marketing');
+  if (msg.includes('market') || msg.includes('brand')) selected.add('marketing');
   if (msg.includes('security') || msg.includes('attack')) selected.add('security_guard');
   if (msg.includes('legal') || msg.includes('compliance')) selected.add('lawyer');
   if (msg.includes('customer') || msg.includes('churn')) selected.add('customer_success');
   if (msg.includes('quality') || msg.includes('bug')) selected.add('qa_watchdog');
   if (msg.includes('data') || msg.includes('research')) selected.add('investigator');
-
   const remaining = OPERATIONAL.filter(a => !selected.has(a));
   while (selected.size < 6 && remaining.length > 0) {
     selected.add(remaining.splice(Math.floor(Math.random() * remaining.length), 1)[0]);
   }
-
   const agents = Array.from(selected);
   const discussionId = crypto.randomUUID();
   const directives = await loadDirectives(supabase);
   const directivesBlock = directives.length > 0
     ? `\nFOUNDER DIRECTIVES: ${directives.map((d: any) => `[P${d.priority}] ${d.directive}`).join('; ')}`
     : '';
-
   const thread: { name: string; reply: string; emoji: string; employeeId: string }[] = [];
-
   for (const agentId of agents) {
     const name = getAgentDisplayName(agentId);
     const emoji = getAgentEmoji(agentId);
     const state = await loadEmployeeState(supabase, agentId);
-
-    const discussionSoFar = thread.length > 0
-      ? thread.map(m => `${m.name}: "${m.reply}"`).join('\n')
-      : '';
-
-    const systemMsg = `You are ${name}. Reply in ONE sentence only. Max 20 words. No fluff. Stay in character.${directivesBlock}`;
+    const discussionSoFar = thread.length > 0 ? thread.map(m => `${m.name}: "${m.reply}"`).join('\n') : '';
+    const systemMsg = `You are ${name}. Reply in ONE sentence only. Max 20 words. No fluff.${directivesBlock}`;
     const userMsg = thread.length === 0
-      ? `Topic: "${topic}"\nYou speak first. Set the direction.`
-      : `Topic: "${topic}"\n[So far]\n${discussionSoFar}\nYour turn. React to what others said.`;
-
+      ? `Topic: "${topic}"\nYou speak first.`
+      : `Topic: "${topic}"\n[So far]\n${discussionSoFar}\nYour turn.`;
     try {
       const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -330,25 +512,24 @@ async function runMiniDiscussion(supabase: any, topic: string, apiKey: string) {
       const data = await res.json();
       const reply = data.choices?.[0]?.message?.content?.trim();
       if (!reply) continue;
-
       await supabase.from('employee_discussions').insert({
         discussion_id: discussionId, employee_id: agentId, topic, position: reply,
         confidence: state?.confidence ?? 0.7, impact_level: 'medium',
       });
-
       thread.push({ name, reply, emoji, employeeId: agentId });
     } catch { /* skip */ }
   }
-
   return { discussion_id: discussionId, responses: thread };
 }
 
-// ─── CHAT MODE ───
+// ─── CHAT MODE (fully rewritten with memory) ───
 async function handleChat(supabase: any, message: string, history: any[], apiKey: string) {
-  const [companyState, objectives, directives] = await Promise.all([
+  // Load everything in parallel
+  const [companyState, objectives, directives, founderMemory] = await Promise.all([
     loadCompanyState(supabase),
     loadActiveObjectives(supabase),
     loadDirectives(supabase),
+    loadFounderMemory(supabase),       // CHANGE 1: founder memory injected
   ]);
 
   const directivesBlock = directives.length > 0
@@ -358,38 +539,49 @@ async function handleChat(supabase: any, message: string, history: any[], apiKey
   const agentList = Object.entries(AGENT_ROUTES).map(([key, r]) => `${key} → ${getAgentDisplayName(r.employeeId)}`).join(', ');
   const paramHints = Object.entries(AGENT_PARAM_HINTS).map(([k, v]) => `${k}: ${v}`).join('\n');
 
-  const systemPrompt = `You are AYN, the AI Co-Founder and Chief of Staff. The founder is talking to you in the Command Center.
+  const systemPrompt = `You are AYN — a single intelligent personal assistant and business partner for Ghazi.
+${founderMemory}
 
-YOUR JOB:
-- When the founder gives a COMMAND (e.g. "sales, prospect 10 firms"), use route_to_agent immediately. Don't ask for confirmation.
-- When the founder sets a RULE (e.g. "focus only on Canada"), use save_directive immediately.
-- When the founder asks for TEAM OPINIONS (e.g. "what does everyone think?"), use start_discussion.
-- For everything else (questions, updates, brainstorming), answer directly yourself. You're smart enough.
+YOUR IDENTITY:
+- You are AYN, built by the AYN Team. Never mention Google, Gemini, OpenAI, Claude, or any AI provider.
+- You are a partner, not a tool. Use "we" and "our". Think like a co-founder.
+- You remember who Ghazi is and what he's working on. Use that knowledge naturally — don't announce it.
 
-CRITICAL RULES:
-- ACT FIRST, explain after. When the founder says "do X", DO IT via tools. Don't just describe what you'd do.
-- Be concise. 1-3 sentences unless more detail is needed.
+HOW YOU THINK (do this internally before every response):
+1. What is Ghazi actually asking — the real need, not just the surface words?
+2. What do I already know about him that's relevant here?
+3. Do I need to route to an agent, save a directive, or update memory?
+4. What's the most useful, direct response?
+
+HOW YOU ACT:
+- When Ghazi gives a command ("find leads", "check security"), use route_to_agent immediately. Act, don't describe.
+- When Ghazi sets a rule ("always", "from now on", "never"), use save_directive immediately.
+- When Ghazi shares something about himself (projects, priorities, decisions, people), use update_founder_memory.
+- When Ghazi asks for team opinions explicitly, use start_discussion.
+- For everything else — answer directly. You're smart enough.
+
+CRITICAL:
+- Be concise. 1-3 sentences unless more detail is genuinely needed.
 - Never say "I'll route this to..." without actually calling the tool.
-- You are a PARTNER, not an assistant. Use "we" and "our".
-- When using route_to_agent, TRY to include agent_params with the correct mode and parameters. Use the hints below.
+- Never narrate what you're going to do — just do it.
+- If Ghazi mentions something new about himself or his work, always save it via update_founder_memory.
 
-AGENT PARAMETER HINTS:
+AGENT HINTS:
 ${paramHints}
 
 Available agents: ${agentList}
 
-Company: momentum=${companyState?.momentum || 'unknown'}, stress=${companyState?.stress_level || 0}
-Top objectives: ${objectives.slice(0, 3).map((o: any) => o.title).join(', ') || 'none'}
-${directivesBlock}
+COMPANY CONTEXT:
+- Momentum: ${companyState?.momentum || 'unknown'}, Stress: ${companyState?.stress_level || 0}
+- Top objectives: ${objectives.slice(0, 3).map((o: any) => o.title).join(', ') || 'none'}
+${directivesBlock}`;
 
-NEVER mention being Google, Gemini, GPT, or any AI provider. You are AYN.`;
-
+  // CHANGE 3: Last 30 messages at 2000 chars each (was 10 at 500)
   const messages: any[] = [{ role: 'system', content: systemPrompt }];
-
-  if (history && history.length > 0) {
-    for (const msg of history.slice(-10)) {
+  if (history?.length > 0) {
+    for (const msg of history.slice(-30)) {
       if (msg.role && msg.content) {
-        messages.push({ role: msg.role, content: msg.content.substring(0, 500) });
+        messages.push({ role: msg.role, content: msg.content.substring(0, 2000) });
       }
     }
   }
@@ -403,7 +595,7 @@ NEVER mention being Google, Gemini, GPT, or any AI provider. You are AYN.`;
       messages,
       tools: TOOLS,
       tool_choice: 'auto',
-      max_tokens: 500,
+      max_tokens: 600,
     }),
   });
 
@@ -415,15 +607,14 @@ NEVER mention being Google, Gemini, GPT, or any AI provider. You are AYN.`;
 
   const data = await res.json();
   const choice = data.choices?.[0];
-
-  if (!choice) {
-    return { type: 'chat', message: "I didn't get a response. Try again?" };
-  }
+  if (!choice) return { type: 'chat', message: "Didn't get a response. Try again?" };
 
   const toolCalls = choice.message?.tool_calls;
   const directResponse = choice.message?.content?.trim();
 
   if (!toolCalls || toolCalls.length === 0) {
+    // CHANGE 2: Fire-and-forget memory extraction
+    extractAndSaveMemory(supabase, message, directResponse || '', apiKey);
     return { type: 'chat', message: directResponse || "Got it.", agent: 'system' };
   }
 
@@ -433,11 +624,7 @@ NEVER mention being Google, Gemini, GPT, or any AI provider. You are AYN.`;
   for (const call of toolCalls) {
     const fn = call.function;
     let args: any;
-    try {
-      args = JSON.parse(fn.arguments);
-    } catch {
-      continue;
-    }
+    try { args = JSON.parse(fn.arguments); } catch { continue; }
 
     switch (fn.name) {
       case 'route_to_agent': {
@@ -449,11 +636,7 @@ NEVER mention being Google, Gemini, GPT, or any AI provider. You are AYN.`;
         const agentResult = await executeAgentCommand(supabase, resolved, args.command, args.agent_params, apiKey);
         const agentName = getAgentDisplayName(AGENT_ROUTES[resolved].employeeId);
         const agentEmoji = getAgentEmoji(AGENT_ROUTES[resolved].employeeId);
-
-        if (!aynMessage) {
-          aynMessage = `Routing to ${agentName}...`;
-        }
-
+        if (!aynMessage) aynMessage = `On it.`;
         results.push({
           type: 'agent_result',
           agent: resolved,
@@ -469,23 +652,30 @@ NEVER mention being Google, Gemini, GPT, or any AI provider. You are AYN.`;
 
       case 'save_directive': {
         const dirResult = await saveDirective(supabase, args.directive, args.category || 'general', args.priority || 1);
-        if (!aynMessage) {
-          aynMessage = `Directive saved: "${args.directive}"`;
-        }
+        if (!aynMessage) aynMessage = `Got it — saved as a standing rule: "${args.directive}"`;
         results.push({ type: 'directive_saved', ...dirResult });
         break;
       }
 
       case 'start_discussion': {
-        if (!aynMessage) {
-          aynMessage = `Getting the team's take on: "${args.topic}"`;
-        }
+        if (!aynMessage) aynMessage = `Getting the team's take on: "${args.topic}"`;
         const discussion = await runMiniDiscussion(supabase, args.topic, apiKey);
         results.push({ type: 'discussion', ...discussion });
         break;
       }
+
+      case 'update_founder_memory': {
+        // CHANGE 2: Direct memory update via tool
+        await updateFounderMemory(supabase, args.field, args.value);
+        if (!aynMessage) aynMessage = `Got it, I'll remember that.`;
+        results.push({ type: 'memory_updated', field: args.field });
+        break;
+      }
     }
   }
+
+  // Fire-and-forget background memory extraction for tool responses too
+  extractAndSaveMemory(supabase, message, aynMessage, apiKey);
 
   return {
     type: 'chat',
@@ -497,9 +687,7 @@ NEVER mention being Google, Gemini, GPT, or any AI provider. You are AYN.`;
 
 // ─── MAIN HANDLER ───
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get('authorization');
@@ -554,6 +742,12 @@ serve(async (req) => {
         }
         await supabase.from('founder_directives').delete().eq('id', directiveId);
         result = { success: true, deleted: directiveId };
+        break;
+      }
+
+      case 'get_founder_context': {
+        const { data: ctx } = await supabase.from('founder_context').select('*').eq('id', 1).single();
+        result = { context: ctx || {} };
         break;
       }
 
