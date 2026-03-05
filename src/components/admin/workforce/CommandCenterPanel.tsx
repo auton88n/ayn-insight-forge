@@ -75,17 +75,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   general: 'bg-muted text-muted-foreground border-border',
 };
 
-const AGENT_EMPLOYEE_MAP: Record<string, string> = {
-  sales: 'sales',
-  investigator: 'investigator',
-  marketing: 'marketing',
-  security: 'security_guard',
-  lawyer: 'lawyer',
-  advisor: 'advisor',
-  qa: 'qa_watchdog',
-  followup: 'follow_up',
-  customer: 'customer_success',
-};
 
 // ─── Helper: Build enriched content string for history ───
 function buildEnrichedContent(msg: ChatMessage): string {
