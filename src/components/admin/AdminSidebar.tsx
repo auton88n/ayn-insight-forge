@@ -48,8 +48,7 @@ export type AdminTabId =
   | 'terms-consent'
   | 'ayn-logs'
   | 'ayn-mind'
-  | 'ai-workforce'
-  | 'war-room';
+;
 
 interface AdminSection {
   id: AdminTabId;
