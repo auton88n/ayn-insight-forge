@@ -548,19 +548,6 @@ export function CommandCenterPanel() {
                       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">AYN is thinking...</span>
                     </div>
-                    <div className="flex gap-1 mt-1">
-                      {['💼', '🔍', '🛡️', '📣'].map((emoji, i) => (
-                        <motion.span
-                          key={i}
-                          initial={{ opacity: 0.3 }}
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ duration: 1.5, delay: i * 0.3, repeat: Infinity }}
-                          className="text-xs"
-                        >
-                          {emoji}
-                        </motion.span>
-                      ))}
-                    </div>
                   </div>
                 </motion.div>
               )}
