@@ -28,8 +28,6 @@ import { MessageFeedbackViewer } from '@/components/admin/MessageFeedbackViewer'
 import { MarketingCommandCenter } from '@/components/admin/marketing/MarketingCommandCenter';
 import { AYNActivityLog } from '@/components/admin/AYNActivityLog';
 import { TermsConsentViewer } from '@/components/admin/TermsConsentViewer';
-import { AYNMindDashboard } from '@/components/admin/AYNMindDashboard';
-import { WorkforceDashboard } from '@/components/admin/workforce/WorkforceDashboard';
 import { CommandCenterPanel } from '@/components/admin/workforce/CommandCenterPanel';
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/config';
