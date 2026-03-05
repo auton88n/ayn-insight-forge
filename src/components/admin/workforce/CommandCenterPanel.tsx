@@ -395,12 +395,12 @@ export function CommandCenterPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
-            <CommandIcon className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Command Center</h2>
-            <p className="text-sm text-muted-foreground">Talk to AYN — commands, questions, directives</p>
+            <h2 className="text-lg font-semibold">AYN Mind</h2>
+            <p className="text-sm text-muted-foreground">Your smart personal assistant — commands, questions, actions</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
