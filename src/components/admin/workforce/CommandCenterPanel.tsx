@@ -652,7 +652,7 @@ function ToolResultCard({ result }: { result: ToolResult }) {
   }
 
   if (result.type === 'agent_result') {
-    const meta = result.agent ? getAgentMeta(AGENT_EMPLOYEE_MAP[result.agent] || result.agent) : { name: 'Agent', emoji: '🤖', gradient: 'from-gray-500 to-gray-600' };
+    const meta = AYN_META;
     const agentMessage = result.message;
     const hasError = result.result?.error;
     const isSuccess = result.success !== false && !hasError;
