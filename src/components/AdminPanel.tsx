@@ -450,9 +450,7 @@ export const AdminPanel = ({
                     {activeTab === 'twitter-marketing' && <MarketingCommandCenter />}
                     {activeTab === 'terms-consent' && <TermsConsentViewer />}
                     {activeTab === 'ayn-logs' && <AYNActivityLog />}
-                    {activeTab === 'ayn-mind' && <AYNMindDashboard />}
-                    {activeTab === 'ai-workforce' && <WorkforceDashboard />}
-                    {activeTab === 'war-room' && <CommandCenterPanel />}
+                    {activeTab === 'ayn-mind' && <CommandCenterPanel />}
                   </ErrorBoundary>
                 </motion.div>
               </AnimatePresence>
