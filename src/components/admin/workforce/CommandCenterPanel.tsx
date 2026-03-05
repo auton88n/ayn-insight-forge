@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  Command as CommandIcon,
+  Brain,
   ArrowUp,
   Loader2,
   Trash2,
