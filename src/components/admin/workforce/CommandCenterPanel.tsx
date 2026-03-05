@@ -546,7 +546,7 @@ export function CommandCenterPanel() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 py-2">
                       <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">AYN is coordinating the team...</span>
+                      <span className="text-sm text-muted-foreground">AYN is thinking...</span>
                     </div>
                     <div className="flex gap-1 mt-1">
                       {['💼', '🔍', '🛡️', '📣'].map((emoji, i) => (
