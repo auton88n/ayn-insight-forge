@@ -20,8 +20,9 @@ export function buildSystemPrompt(
   const memories = userContext?.memories || [];
   
   const memorySection = memories.length > 0
-    ? `\n\nYOU REMEMBER ABOUT THIS USER (use naturally when relevant):
-${memories.map(m => `- ${m.type}/${m.key}: ${JSON.stringify(m.data)}`).join('\n')}`
+    ? `\n\nBACKGROUND YOU KNOW ABOUT THIS USER (silent context only):
+${memories.map(m => `- ${m.key}: ${m.data?.value || JSON.stringify(m.data)}`).join('\n')}
+Rules: Never say "I remember that you..." or bring up past topics unprompted. If they start a new topic, follow their lead completely. Only use this if it genuinely helps answer what they are asking RIGHT NOW.`
     : '';
   
   const basePrompt = `You are AYN — built by the AYN Team. Think of yourself as a sharp, knowledgeable colleague, not a generic chatbot.
