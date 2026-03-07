@@ -141,39 +141,36 @@ async function uploadImageIfDataUrl(imageUrl: string, userId: string): Promise<s
   }
 }
 
-// Extract and save memories from conversation
+// Extract and save memories — parses [MEMORY:type/key=value] tags from AI response
 async function extractAndSaveMemories(
   supabase: ReturnType<typeof createClient>,
   userId: string,
-  userMessage: string
+  aiResponse: string
 ): Promise<void> {
-  const patterns = [
-    { regex: /my name is (\w+)/i, type: 'profile', key: 'name' },
-    { regex: /i'm (\w+), /i, type: 'profile', key: 'name' },
-    { regex: /call me (\w+)/i, type: 'profile', key: 'preferred_name' },
-    { regex: /i'm (?:a |an )?(\w+(?:\s+\w+)?)\s*(?:engineer|developer|designer|architect|manager)/i, type: 'profile', key: 'profession' },
-    { regex: /i work (?:at|for|with) (.+?)(?:\.|,|$)/i, type: 'profile', key: 'company' },
-    { regex: /i (?:prefer|use|follow) (.+?) code/i, type: 'preference', key: 'building_code' },
-    { regex: /i (?:usually|always|prefer to) use (.+?) units/i, type: 'preference', key: 'units' },
-    { regex: /i'm (?:from|based in|located in) (.+?)(?:\.|,|$)/i, type: 'profile', key: 'location' },
-  ];
+  // Parse [MEMORY:type/key=value] tags embedded in the AI response
+  const memoryTagRegex = /\[MEMORY:([a-z_]+)\/([a-z_]+)=([^\]]+)\]/gi;
+  let match;
+  const saved: string[] = [];
 
-  for (const pattern of patterns) {
-    const match = userMessage.match(pattern.regex);
-    if (match && match[1]) {
-      try {
-        await supabase.rpc('upsert_user_memory', {
-          _user_id: userId,
-          _memory_type: pattern.type,
-          _memory_key: pattern.key,
-          _memory_data: { value: match[1].trim(), source: 'conversation', extracted_at: new Date().toISOString() },
-          _priority: 1
-        });
-        console.log(`[ayn-unified] Saved memory: ${pattern.type}/${pattern.key} = ${match[1]}`);
-      } catch (err) {
-        console.error(`[ayn-unified] Failed to save memory:`, err);
-      }
+  while ((match = memoryTagRegex.exec(aiResponse)) !== null) {
+    const [, memType, memKey, memValue] = match;
+    if (!memValue?.trim()) continue;
+    try {
+      await supabase.rpc('upsert_user_memory', {
+        _user_id: userId,
+        _memory_type: memType,
+        _memory_key: memKey,
+        _memory_data: { value: memValue.trim(), source: 'ai_extracted', extracted_at: new Date().toISOString() },
+        _priority: 1
+      });
+      saved.push(`${memType}/${memKey}`);
+    } catch (err) {
+      console.error(`[ayn-unified] Failed to save memory ${memType}/${memKey}:`, err);
     }
+  }
+
+  if (saved.length > 0) {
+    console.log(`[ayn-unified] Saved ${saved.length} memories:`, saved.join(', '));
   }
 }
 
@@ -725,8 +722,8 @@ serve(async (req) => {
     }
 
     // Trim conversation history to avoid exceeding token limits (~1M tokens)
-    // 1. Keep only last 10 messages
-    const MAX_CONTEXT_MESSAGES = 10;
+    // 1. Keep only last 20 messages
+    const MAX_CONTEXT_MESSAGES = 20;
     let messages = rawMessages;
     if (rawMessages.length > MAX_CONTEXT_MESSAGES) {
       const systemMsgs = rawMessages.filter((m: any) => m.role === 'system');
@@ -864,12 +861,7 @@ serve(async (req) => {
 
     const language = (userContext as { preferences?: { language?: string } })?.preferences?.language || 'en';
 
-    // Extract and save any memories from the user's message (async, don't block) - skip for internal calls
-    if (!isInternalCall) {
-      extractAndSaveMemories(supabase, userId, lastMessage).catch(err => 
-        console.error('[ayn-unified] Memory extraction failed:', err)
-      );
-    }
+    // Memory extraction now happens AFTER the AI responds (parses [MEMORY:] tags from response)
 
     // Build chart history context for AYN
     const chartSection = chartHistory?.data?.length
@@ -1618,6 +1610,14 @@ You may discuss trading concepts, strategy, and education freely — just don't 
       }
     }
     
+    // Extract & strip MEMORY tags from AI response (zero extra API cost)
+    if (!isInternalCall && responseContent.includes("[MEMORY:")) {
+      extractAndSaveMemories(supabase, userId, responseContent).catch(err =>
+        console.error("[ayn-unified] Memory extraction failed:", err)
+      );
+      responseContent = responseContent.replace(/\[MEMORY:[^\]]+\]/g, "").trim();
+    }
+
     const detectedEmotion = detectResponseEmotion(responseContent);
     const userEmotion = detectUserEmotion(lastMessage);
     

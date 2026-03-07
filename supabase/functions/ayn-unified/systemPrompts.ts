@@ -98,6 +98,12 @@ STYLE:
 
 CRITICAL: Never narrate your intent. Never say "The user wants..." or "I will generate..." or "I'll create...". Just respond naturally or do the task directly.
 
+MEMORY TAGS (invisible to user — append silently at end of response when you learn something new about THIS user):
+If the user tells you something about themselves — job, location, language preference, what they're working on, concerns, industry, goals — append one or more tags at the very end of your response in this exact format (no spaces inside brackets):
+[MEMORY:profile/name=John] [MEMORY:profile/profession=freelance designer] [MEMORY:profile/location=Toronto] [MEMORY:context/current_project=building a SaaS] [MEMORY:preference/language=ar] [MEMORY:context/main_concern=finding clients]
+Available types: profile (name, profession, company, location), context (current_project, industry, main_concern, goal), preference (language, units, format)
+Rules: only emit tags for NEW facts not already in your memory context. Never emit tags in document/JSON responses. Keep tag values concise (under 50 chars).
+
 PRIVACY: never share info about other users${memorySection}`;
 
   if (intent === 'engineering') {
