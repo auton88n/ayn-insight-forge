@@ -1969,6 +1969,42 @@ export type Database = {
         }
         Relationships: []
       }
+      founder_context: {
+        Row: {
+          current_priorities: string[] | null
+          current_projects: Json | null
+          id: number
+          last_topics: Json | null
+          mood_signal: string | null
+          open_decisions: Json | null
+          people_context: Json | null
+          preferences: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          current_priorities?: string[] | null
+          current_projects?: Json | null
+          id?: number
+          last_topics?: Json | null
+          mood_signal?: string | null
+          open_decisions?: Json | null
+          people_context?: Json | null
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          current_priorities?: string[] | null
+          current_projects?: Json | null
+          id?: number
+          last_topics?: Json | null
+          mood_signal?: string | null
+          open_decisions?: Json | null
+          people_context?: Json | null
+          preferences?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       founder_directives: {
         Row: {
           category: string | null

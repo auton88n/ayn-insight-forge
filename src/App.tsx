@@ -39,10 +39,10 @@ const AutomationApply = lazy(() => import("./pages/services/AutomationApply"));
 const Ticketing = lazy(() => import("./pages/services/Ticketing"));
 const TicketingApply = lazy(() => import("./pages/services/TicketingApply"));
 const Support = lazy(() => import("./pages/Support"));
-const Engineering = lazy(() => import("./pages/EngineeringWorkspacePage"));
-
-const Compliance = lazy(() => import("./pages/CompliancePage"));
-const AIGradingDesigner = lazy(() => import("./pages/AIGradingDesigner"));
+// HIDDEN: Engineering & Compliance features temporarily disabled
+// const Engineering = lazy(() => import("./pages/EngineeringWorkspacePage"));
+// const Compliance = lazy(() => import("./pages/CompliancePage"));
+// const AIGradingDesigner = lazy(() => import("./pages/AIGradingDesigner"));
 const CivilEngineering = lazy(() => import("./pages/services/CivilEngineering"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
@@ -91,10 +91,11 @@ const AnimatedRoutes = () => {
       <Route path="/services/ticketing" element={<Suspense fallback={<PageLoader />}><PageTransition><Ticketing /></PageTransition></Suspense>} />
       <Route path="/services/ticketing/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><TicketingApply /></PageTransition></Suspense>} />
       <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
+      {/* HIDDEN: Engineering & Compliance routes temporarily disabled
       <Route path="/engineering" element={<Suspense fallback={<PageLoader />}><PageTransition><Engineering /></PageTransition></Suspense>} />
-      
       <Route path="/compliance" element={<Suspense fallback={<PageLoader />}><PageTransition><Compliance /></PageTransition></Suspense>} />
       <Route path="/engineering/grading" element={<Suspense fallback={<PageLoader />}><PageTransition><AIGradingDesigner /></PageTransition></Suspense>} />
+      */}
       <Route path="/services/civil-engineering" element={<Suspense fallback={<PageLoader />}><PageTransition><CivilEngineering /></PageTransition></Suspense>} />
       <Route path="/approval-result" element={<PageTransition><ApprovalResult /></PageTransition>} />
       <Route path="/subscription-success" element={<PageTransition><SubscriptionSuccess /></PageTransition>} />

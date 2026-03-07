@@ -387,78 +387,15 @@ export const Sidebar = ({
         )}
 
         
-        {/* Tool Buttons - Card Grid */}
+        {/* Tool Buttons - Card Grid — HIDDEN FOR NOW
         <SidebarGroup className="flex-shrink-0 px-4 pb-3">
           <SidebarGroupContent>
             <div className="grid grid-cols-2 gap-2">
-              {/* Engineering Card */}
-              <Button 
-                variant="ghost"
-                onClick={() => {
-                  if (isMobile) {
-                    toast({
-                      title: 'Larger Screen Required',
-                      description: 'Engineering tools require a tablet or desktop for the best experience.',
-                      action: (
-                        <Monitor className="w-5 h-5 text-cyan-500" />
-                      ),
-                    });
-                  } else {
-                    navigate('/engineering');
-                  }
-                }}
-                className={cn(
-                  "flex-1 flex flex-col items-center gap-1.5 h-auto py-3 px-2 rounded-xl",
-                  "bg-card/60 border border-border/50 backdrop-blur-sm",
-                  "hover:border-cyan-500/40 hover:bg-card/80 hover:shadow-lg hover:-translate-y-0.5",
-                  "text-foreground transition-all duration-200"
-                )}
-              >
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500/15 to-blue-500/15 flex items-center justify-center">
-                  <Calculator className="w-3.5 h-3.5 text-cyan-500" />
-                </div>
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-xs font-semibold">Engineering</span>
-                  <span className="text-[9px] text-muted-foreground">Design Tools</span>
-                </div>
-              </Button>
-              
-              {/* Compliance Card */}
-              <Button 
-                variant="ghost"
-                onClick={() => {
-                  if (isMobile) {
-                    toast({
-                      title: 'Larger Screen Required',
-                      description: 'Compliance tools require a tablet or desktop for the best experience.',
-                      action: (
-                        <Monitor className="w-5 h-5 text-teal-500" />
-                      ),
-                    });
-                  } else {
-                    navigate('/compliance');
-                  }
-                }}
-                className={cn(
-                  "flex-1 flex flex-col items-center gap-1.5 h-auto py-3 px-2 rounded-xl",
-                  "bg-card/60 border border-border/50 backdrop-blur-sm",
-                  "hover:border-teal-500/40 hover:bg-card/80 hover:shadow-lg hover:-translate-y-0.5",
-                  "text-foreground transition-all duration-200"
-                )}
-              >
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-teal-500/15 to-emerald-500/15 flex items-center justify-center">
-                  <ClipboardCheck className="w-3.5 h-3.5 text-teal-500" />
-                </div>
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-xs font-semibold">Compliance</span>
-                  <span className="text-[9px] text-muted-foreground">Code Check</span>
-                </div>
-              </Button>
-
-
+              Engineering Card + Compliance Card
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
+        */}
 
         {/* Search Input */}
         <div className="px-4 pb-3 flex-shrink-0">
