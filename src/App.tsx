@@ -39,10 +39,10 @@ const AutomationApply = lazy(() => import("./pages/services/AutomationApply"));
 const Ticketing = lazy(() => import("./pages/services/Ticketing"));
 const TicketingApply = lazy(() => import("./pages/services/TicketingApply"));
 const Support = lazy(() => import("./pages/Support"));
-const Engineering = lazy(() => import("./pages/EngineeringWorkspacePage"));
-
-const Compliance = lazy(() => import("./pages/CompliancePage"));
-const AIGradingDesigner = lazy(() => import("./pages/AIGradingDesigner"));
+// HIDDEN: Engineering & Compliance features temporarily disabled
+// const Engineering = lazy(() => import("./pages/EngineeringWorkspacePage"));
+// const Compliance = lazy(() => import("./pages/CompliancePage"));
+// const AIGradingDesigner = lazy(() => import("./pages/AIGradingDesigner"));
 const CivilEngineering = lazy(() => import("./pages/services/CivilEngineering"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
