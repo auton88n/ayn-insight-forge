@@ -397,6 +397,35 @@ async function performWebSearch(query: string): Promise<string> {
   }
 }
 
+// Get latest market intelligence snapshot — reads pre-fetched data, zero latency
+async function getMarketSnapshot(supabase: ReturnType<typeof createClient>): Promise<Record<string, unknown>> {
+  try {
+    const { data, error } = await supabase
+      .from('ayn_market_snapshot')
+      .select('snapshot, fetched_at, sources_used')
+      .eq('singleton_key', 1)
+      .maybeSingle();
+
+    if (error || !data) return {};
+
+    // Check if snapshot is stale (older than 5 hours)
+    const fetchedAt = new Date(data.fetched_at);
+    const ageHours = (Date.now() - fetchedAt.getTime()) / (1000 * 60 * 60);
+    if (ageHours > 5) {
+      console.log(`[ayn-unified] Snapshot is ${ageHours.toFixed(1)}h old — still usable`);
+    }
+
+    return {
+      ...data.snapshot,
+      snapshot_age_hours: ageHours.toFixed(1),
+      sources_used: data.sources_used
+    };
+  } catch (error) {
+    console.error('[ayn-unified] Error fetching market snapshot:', error);
+    return {};
+  }
+}
+
 // Get user context from memory
 async function getUserContext(supabase: ReturnType<typeof createClient>, userId: string): Promise<Record<string, unknown>> {
   try {
@@ -817,9 +846,10 @@ serve(async (req) => {
     const wantsAutonomousTrading = intent === 'trading-coach' &&
       autonomousTradingKeywords.some(kw => msgLower.includes(kw));
 
-    const [limitCheck, userContext, chartHistory, accountPerformance, scanResults] = await Promise.all([
+    const [limitCheck, userContext, marketSnapshot, chartHistory, accountPerformance, scanResults] = await Promise.all([
       isInternalCall ? Promise.resolve({ allowed: true }) : checkUserLimit(supabase, userId, intent),
       isInternalCall ? Promise.resolve({}) : getUserContext(supabase, userId),
+      getMarketSnapshot(supabase),
       supabase.from('chart_analyses')
         .select('ticker, asset_type, timeframe, prediction_signal, confidence, sentiment_score, created_at')
         .eq('user_id', userId)
@@ -934,8 +964,18 @@ NEVER say "I'm buying X at $Y" unless you have MARKET SCAN RESULTS above with re
 You may discuss trading concepts, strategy, and education freely — just don't fabricate specific prices.`;
     }
 
+    // Build intelligence context from market snapshot
+    let intelligenceContext = '';
+    if (marketSnapshot && Object.keys(marketSnapshot).length > 0) {
+      const brief = marketSnapshot.intelligence_brief as string[] || [];
+      const ageHours = marketSnapshot.snapshot_age_hours || 'unknown';
+      if (brief.length > 0) {
+        intelligenceContext = `\n\nLIVE MARKET INTELLIGENCE (updated ${ageHours}h ago — use this as background context, only surface what's relevant to the user's question):\n${brief.join('\n')}\n\nFull data available: macro=${JSON.stringify(marketSnapshot.macro || {}).substring(0, 500)}, crypto=${JSON.stringify((marketSnapshot.markets as any)?.crypto || {}).substring(0, 300)}`;
+      }
+    }
+
     // Build system prompt with user message for language detection AND user memories
-    let systemPrompt = buildSystemPrompt(intent, language, context, lastMessage, userContext) + performanceContext + chartSection + scanContext + INJECTION_GUARD;
+    let systemPrompt = buildSystemPrompt(intent, language, context, lastMessage, userContext) + intelligenceContext + performanceContext + chartSection + scanContext + INJECTION_GUARD;
 
     // === FIRECRAWL + LIVE PIONEX INTEGRATION FOR TRADING COACH ===
     if (intent === 'trading-coach') {
