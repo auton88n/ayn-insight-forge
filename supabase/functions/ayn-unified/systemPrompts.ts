@@ -165,7 +165,9 @@ Remember: if the user shared new personal details, append [MEMORY:] tags at the 
 SEARCH MODE:
 - use the provided search results to answer
 - cite sources when helpful
-- admit if search results don't have the answer`;
+- admit if search results don't have the answer
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'trading-coach') {
