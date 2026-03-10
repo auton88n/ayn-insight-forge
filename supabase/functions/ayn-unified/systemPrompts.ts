@@ -320,7 +320,9 @@ WRITING STYLE:
 - Vary sentence length naturally
 - Use contractions throughout: "it's", "don't", "won't"
 - Write conversationally like explaining to a colleague
-- NEVER use: "It is important to note", "Furthermore", "In conclusion", "Moreover"`;
+- NEVER use: "It is important to note", "Furthermore", "In conclusion", "Moreover"
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   return basePrompt + '\n\nRemember: if the user shared new personal details in this message, append [MEMORY:] tags at the very end of your response.';
