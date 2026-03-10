@@ -315,5 +315,5 @@ WRITING STYLE:
 - NEVER use: "It is important to note", "Furthermore", "In conclusion", "Moreover"`;
   }
 
-  return basePrompt;
+  return basePrompt + '\n\nRemember: if the user shared new personal details in this message, append [MEMORY:] tags at the very end of your response.';
 }
