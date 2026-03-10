@@ -185,7 +185,7 @@ async function callLLM(
 
   // Optimized LLM parameters for speed at scale (30K users)
   const llmParams = {
-    max_tokens: 1024,  // Faster responses, smart follow-up handles continuation
+    max_tokens: 1536,  // Room for full response + memory tags
     temperature: 0.7,  // Slightly faster, more focused generation
   };
 
