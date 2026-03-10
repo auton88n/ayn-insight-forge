@@ -140,7 +140,9 @@ CRITICAL RULES:
 4. ALWAYS end technical responses with verification reminder
 5. State "for reference only" on calculations
 
-${context.calculatorType ? `active calculator: ${context.calculatorType}` : ''}`;
+${context.calculatorType ? `active calculator: ${context.calculatorType}` : ''}
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'files') {
