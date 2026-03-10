@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// Using native Deno.serve() - no external import needed
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { getAgentEmoji, getAgentDisplayName, getEmployeePersonality } from "../_shared/aynBrand.ts";
 import { loadEmployeeState } from "../_shared/employeeState.ts";
@@ -686,7 +686,7 @@ ${directivesBlock}`;
 }
 
 // ─── MAIN HANDLER ───
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
