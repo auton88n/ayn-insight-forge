@@ -154,7 +154,9 @@ FILE ANALYSIS MODE:
 - For PDFs/text files: the file content is included in the message - analyze it thoroughly
 - Extract and summarize key information
 - Answer specific questions about the content
-- If you receive an image, always acknowledge what you see in it`;
+- If you receive an image, always acknowledge what you see in it
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'search') {
