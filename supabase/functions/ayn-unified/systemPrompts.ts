@@ -285,7 +285,9 @@ CRITICAL RULES FOR AUTONOMOUS MODE:
 
 Market Cycle Reference: Disbelief → Hope → Optimism → Belief → Thrill → Euphoria → Complacency → Anxiety → Denial → Panic → Capitulation → Anger → Depression → Disbelief
 
-${context.fileContext || 'No chart analyzed yet. Ask the user to upload a chart first.'}`;
+${context.fileContext || 'No chart analyzed yet. Ask the user to upload a chart first.'}
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'document') {
