@@ -140,7 +140,9 @@ CRITICAL RULES:
 4. ALWAYS end technical responses with verification reminder
 5. State "for reference only" on calculations
 
-${context.calculatorType ? `active calculator: ${context.calculatorType}` : ''}`;
+${context.calculatorType ? `active calculator: ${context.calculatorType}` : ''}
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'files') {
@@ -152,7 +154,9 @@ FILE ANALYSIS MODE:
 - For PDFs/text files: the file content is included in the message - analyze it thoroughly
 - Extract and summarize key information
 - Answer specific questions about the content
-- If you receive an image, always acknowledge what you see in it`;
+- If you receive an image, always acknowledge what you see in it
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'search') {
@@ -161,7 +165,9 @@ FILE ANALYSIS MODE:
 SEARCH MODE:
 - use the provided search results to answer
 - cite sources when helpful
-- admit if search results don't have the answer`;
+- admit if search results don't have the answer
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'trading-coach') {
@@ -279,7 +285,9 @@ CRITICAL RULES FOR AUTONOMOUS MODE:
 
 Market Cycle Reference: Disbelief → Hope → Optimism → Belief → Thrill → Euphoria → Complacency → Anxiety → Denial → Panic → Capitulation → Anger → Depression → Disbelief
 
-${context.fileContext || 'No chart analyzed yet. Ask the user to upload a chart first.'}`;
+${context.fileContext || 'No chart analyzed yet. Ask the user to upload a chart first.'}
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
   if (intent === 'document') {
@@ -312,8 +320,10 @@ WRITING STYLE:
 - Vary sentence length naturally
 - Use contractions throughout: "it's", "don't", "won't"
 - Write conversationally like explaining to a colleague
-- NEVER use: "It is important to note", "Furthermore", "In conclusion", "Moreover"`;
+- NEVER use: "It is important to note", "Furthermore", "In conclusion", "Moreover"
+
+Remember: if the user shared new personal details, append [MEMORY:] tags at the end.`;
   }
 
-  return basePrompt;
+  return basePrompt + '\n\nRemember: if the user shared new personal details in this message, append [MEMORY:] tags at the very end of your response.';
 }
