@@ -218,4 +218,4 @@ ${alertType === '100_percent' ? `
   }
 };
 
-serve(handler);
+Deno.serve(handler);
