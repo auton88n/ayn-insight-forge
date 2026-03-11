@@ -12,9 +12,6 @@ verify_jwt = true
 [functions.generate-suggestions]
 verify_jwt = true
 
-[functions.generate-eye-behaviors]
-verify_jwt = true
-
 [functions.send-application-email]
 verify_jwt = false
 
@@ -39,9 +36,6 @@ verify_jwt = true
 [functions.generate-emotion-keywords]
 verify_jwt = false
 
-[functions.analyze-emotion]
-verify_jwt = true
-
 [functions.set-admin-pin]
 verify_jwt = true
 
@@ -57,9 +51,6 @@ verify_jwt = false
 [functions.approve-pin-change]
 verify_jwt = false
 
-[functions.generate-design]
-verify_jwt = false
-
 [functions.save-generated-image]
 verify_jwt = false
 
@@ -68,7 +59,6 @@ verify_jwt = false
 
 [functions.ai-caption-generator]
 verify_jwt = false
-
 
 [functions.generate-dxf]
 verify_jwt = false
@@ -83,15 +73,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-grading-dxf]
-verify_jwt = false
-
-[functions.parse-dxf-design]
-verify_jwt = false
-
-[functions.analyze-autocad-design]
-verify_jwt = false
-
-[functions.apply-design-optimizations]
 verify_jwt = false
 
 [functions.parse-pdf-drawing]
@@ -281,4 +262,54 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ws-relay]
+verify_jwt = false
+
+# === NEW: Previously missing function entries ===
+
+[functions.api]
+verify_jwt = false
+
+[functions.ayn-chief-of-staff]
+verify_jwt = false
+
+[functions.ayn-close-trade]
+verify_jwt = false
+
+[functions.ayn-daily-snapshot]
+verify_jwt = false
+
+[functions.ayn-hr-manager]
+verify_jwt = false
+
+[functions.ayn-innovation]
+verify_jwt = false
+
+[functions.ayn-kill-switch]
+verify_jwt = false
+
+[functions.ayn-marketing-strategist]
+verify_jwt = false
+
+[functions.ayn-outcome-evaluator]
+verify_jwt = false
+
+[functions.ayn-pulse-engine]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
+[functions.generate-compliance-pdf]
+verify_jwt = false
+
+[functions.generate-engineering-pdf]
+verify_jwt = false
+
+[functions.google-analytics]
 verify_jwt = false
