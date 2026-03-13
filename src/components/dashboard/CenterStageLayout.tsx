@@ -12,6 +12,7 @@ import { SystemNotificationBanner } from "./SystemNotificationBanner";
 import { BetaBadge } from "@/components/ui/BetaBadge";
 
 import { BetaFeedbackModal } from "./BetaFeedbackModal";
+import { AYNIntelligence } from "./AYNIntelligence";
 import { useBubbleAnimation } from "@/hooks/useBubbleAnimation";
 import { useAYNEmotion, AYNEmotion } from "@/stores/emotionStore";
 import { useSoundStore } from "@/stores/soundStore";
