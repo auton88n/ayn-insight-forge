@@ -421,6 +421,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ayn_market_snapshot: {
+        Row: {
+          fetch_errors: string[] | null
+          fetched_at: string
+          id: string
+          singleton_key: number | null
+          snapshot: Json
+          sources_used: string[] | null
+        }
+        Insert: {
+          fetch_errors?: string[] | null
+          fetched_at?: string
+          id?: string
+          singleton_key?: number | null
+          snapshot?: Json
+          sources_used?: string[] | null
+        }
+        Update: {
+          fetch_errors?: string[] | null
+          fetched_at?: string
+          id?: string
+          singleton_key?: number | null
+          snapshot?: Json
+          sources_used?: string[] | null
+        }
+        Relationships: []
+      }
       ayn_mind: {
         Row: {
           content: string
@@ -505,6 +532,75 @@ export type Database = {
           recommended_services?: string[] | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ayn_snapshot_history: {
+        Row: {
+          brief_items: number | null
+          btc_dominance: number | null
+          captured_at: string
+          environment_label: string | null
+          environment_score: number | null
+          fear_greed: number | null
+          fed_rate: number | null
+          fetch_errors: string[] | null
+          gold: number | null
+          id: number
+          inflation_cpi: number | null
+          nasdaq: number | null
+          oil_wti: number | null
+          snapshot: Json | null
+          sources_used: string[] | null
+          sp500: number | null
+          unemployment: number | null
+          yield_curve_signal: string | null
+          yield_spread_2_10: number | null
+          yield_spread_3m_10: number | null
+        }
+        Insert: {
+          brief_items?: number | null
+          btc_dominance?: number | null
+          captured_at?: string
+          environment_label?: string | null
+          environment_score?: number | null
+          fear_greed?: number | null
+          fed_rate?: number | null
+          fetch_errors?: string[] | null
+          gold?: number | null
+          id?: number
+          inflation_cpi?: number | null
+          nasdaq?: number | null
+          oil_wti?: number | null
+          snapshot?: Json | null
+          sources_used?: string[] | null
+          sp500?: number | null
+          unemployment?: number | null
+          yield_curve_signal?: string | null
+          yield_spread_2_10?: number | null
+          yield_spread_3m_10?: number | null
+        }
+        Update: {
+          brief_items?: number | null
+          btc_dominance?: number | null
+          captured_at?: string
+          environment_label?: string | null
+          environment_score?: number | null
+          fear_greed?: number | null
+          fed_rate?: number | null
+          fetch_errors?: string[] | null
+          gold?: number | null
+          id?: number
+          inflation_cpi?: number | null
+          nasdaq?: number | null
+          oil_wti?: number | null
+          snapshot?: Json | null
+          sources_used?: string[] | null
+          sp500?: number | null
+          unemployment?: number | null
+          yield_curve_signal?: string | null
+          yield_spread_2_10?: number | null
+          yield_spread_3m_10?: number | null
         }
         Relationships: []
       }
@@ -3821,6 +3917,10 @@ export type Database = {
         Returns: undefined
       }
       admin_view_contact_with_logging: { Args: never; Returns: boolean }
+      apply_credit_topup: {
+        Args: { _credits?: number; _user_id: string }
+        Returns: Json
+      }
       backfill_missing_session_titles: { Args: never; Returns: number }
       call_agent_if_not_debounced: {
         Args: {
@@ -3861,7 +3961,7 @@ export type Database = {
       }
       check_usage_limit: { Args: { _user_id: string }; Returns: boolean }
       check_user_ai_limit: {
-        Args: { _intent_type: string; _user_id: string }
+        Args: { _intent_type?: string; _user_id: string }
         Returns: Json
       }
       check_visitor_analytics_rate_limit: {
@@ -3876,6 +3976,7 @@ export type Database = {
       cleanup_location_data: { Args: never; Returns: undefined }
       cleanup_old_health_checks_v2: { Args: never; Returns: undefined }
       cleanup_old_health_metrics: { Args: never; Returns: undefined }
+      cleanup_old_logs: { Args: never; Returns: Json }
       cleanup_old_security_logs: { Args: never; Returns: undefined }
       cleanup_old_system_reports: { Args: never; Returns: undefined }
       cleanup_security_data: { Args: never; Returns: undefined }
