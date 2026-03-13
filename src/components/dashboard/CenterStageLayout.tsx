@@ -676,6 +676,13 @@ export const CenterStageLayout = ({
             </div>
           </motion.div>
 
+          {/* AYN Intelligence — visible only in idle state */}
+          <AnimatePresence>
+            {!hasVisibleResponses && !transcriptOpen && !showThinking && !isTransitioningToChat && (
+              <AYNIntelligence isMobile={isMobile} />
+            )}
+          </AnimatePresence>
+
           {/* ResponseCard wrapper — height is measured dynamically from wrapper top to footer top */}
           <AnimatePresence>
             {(responseBubbles.length > 0 || transcriptOpen) && (
