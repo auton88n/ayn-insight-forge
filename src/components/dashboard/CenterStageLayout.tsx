@@ -12,7 +12,6 @@ import { SystemNotificationBanner } from "./SystemNotificationBanner";
 import { BetaBadge } from "@/components/ui/BetaBadge";
 
 import { BetaFeedbackModal } from "./BetaFeedbackModal";
-import { AYNIntelligence } from "./AYNIntelligence";
 import { useBubbleAnimation } from "@/hooks/useBubbleAnimation";
 import { useAYNEmotion, AYNEmotion } from "@/stores/emotionStore";
 import { useSoundStore } from "@/stores/soundStore";
@@ -675,13 +674,6 @@ export const CenterStageLayout = ({
               {betaMode && <BetaBadge className={isMobile ? "scale-90" : ""} />}
             </div>
           </motion.div>
-
-          {/* AYN Intelligence — visible only in idle state */}
-          <AnimatePresence>
-            {!hasVisibleResponses && !transcriptOpen && !showThinking && !isTransitioningToChat && (
-              <AYNIntelligence isMobile={isMobile} />
-            )}
-          </AnimatePresence>
 
           {/* ResponseCard wrapper — height is measured dynamically from wrapper top to footer top */}
           <AnimatePresence>

@@ -421,33 +421,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ayn_market_snapshot: {
-        Row: {
-          fetch_errors: string[] | null
-          fetched_at: string
-          id: string
-          singleton_key: number | null
-          snapshot: Json
-          sources_used: string[] | null
-        }
-        Insert: {
-          fetch_errors?: string[] | null
-          fetched_at?: string
-          id?: string
-          singleton_key?: number | null
-          snapshot?: Json
-          sources_used?: string[] | null
-        }
-        Update: {
-          fetch_errors?: string[] | null
-          fetched_at?: string
-          id?: string
-          singleton_key?: number | null
-          snapshot?: Json
-          sources_used?: string[] | null
-        }
-        Relationships: []
-      }
       ayn_mind: {
         Row: {
           content: string
@@ -532,75 +505,6 @@ export type Database = {
           recommended_services?: string[] | null
           status?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      ayn_snapshot_history: {
-        Row: {
-          brief_items: number | null
-          btc_dominance: number | null
-          captured_at: string
-          environment_label: string | null
-          environment_score: number | null
-          fear_greed: number | null
-          fed_rate: number | null
-          fetch_errors: string[] | null
-          gold: number | null
-          id: number
-          inflation_cpi: number | null
-          nasdaq: number | null
-          oil_wti: number | null
-          snapshot: Json | null
-          sources_used: string[] | null
-          sp500: number | null
-          unemployment: number | null
-          yield_curve_signal: string | null
-          yield_spread_2_10: number | null
-          yield_spread_3m_10: number | null
-        }
-        Insert: {
-          brief_items?: number | null
-          btc_dominance?: number | null
-          captured_at?: string
-          environment_label?: string | null
-          environment_score?: number | null
-          fear_greed?: number | null
-          fed_rate?: number | null
-          fetch_errors?: string[] | null
-          gold?: number | null
-          id?: number
-          inflation_cpi?: number | null
-          nasdaq?: number | null
-          oil_wti?: number | null
-          snapshot?: Json | null
-          sources_used?: string[] | null
-          sp500?: number | null
-          unemployment?: number | null
-          yield_curve_signal?: string | null
-          yield_spread_2_10?: number | null
-          yield_spread_3m_10?: number | null
-        }
-        Update: {
-          brief_items?: number | null
-          btc_dominance?: number | null
-          captured_at?: string
-          environment_label?: string | null
-          environment_score?: number | null
-          fear_greed?: number | null
-          fed_rate?: number | null
-          fetch_errors?: string[] | null
-          gold?: number | null
-          id?: number
-          inflation_cpi?: number | null
-          nasdaq?: number | null
-          oil_wti?: number | null
-          snapshot?: Json | null
-          sources_used?: string[] | null
-          sp500?: number | null
-          unemployment?: number | null
-          yield_curve_signal?: string | null
-          yield_spread_2_10?: number | null
-          yield_spread_3m_10?: number | null
         }
         Relationships: []
       }
