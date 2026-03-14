@@ -9,6 +9,20 @@ import { differenceInDays, differenceInHours } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CreditUpgradeCardProps {
+  // All props are now optional — component fetches its own data
+  remaining?: number;
+  totalLimit?: number;
+  allowed?: boolean;
+  resetsAt?: string | null;
+  tier?: string;
+  isFree?: boolean;
+  isUnlimited?: boolean;
+  userId?: string;
+  onOpenFeedback?: () => void;
+  rewardAmount?: number;
+}
+
+interface CreditState {
   remaining: number;
   totalLimit: number;
   allowed: boolean;
@@ -16,82 +30,176 @@ interface CreditUpgradeCardProps {
   tier: string;
   isFree: boolean;
   isUnlimited: boolean;
-  userId?: string;
-  onOpenFeedback?: () => void;
-  rewardAmount?: number;
+  loaded: boolean;
 }
 
 export const CreditUpgradeCard = ({
-  remaining,
-  totalLimit,
-  allowed,
-  resetsAt,
-  tier,
-  isFree,
-  isUnlimited,
   userId,
   onOpenFeedback,
   rewardAmount = 5,
+  // These are fallback props — component will override with live data
+  remaining: propRemaining,
+  totalLimit: propTotalLimit,
+  allowed: propAllowed,
+  resetsAt: propResetsAt,
+  tier: propTier,
+  isFree: propIsFree,
+  isUnlimited: propIsUnlimited,
 }: CreditUpgradeCardProps) => {
   const navigate = useNavigate();
-  const [displayCount, setDisplayCount] = useState(remaining);
   const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState<boolean | null>(null);
+  const [displayCount, setDisplayCount] = useState(0);
 
-  const showUpgrade = isFree;
+  // Live credit state fetched directly from Supabase
+  const [credits, setCredits] = useState<CreditState>({
+    remaining: propRemaining ?? 0,
+    totalLimit: propTotalLimit ?? 5,
+    allowed: propAllowed ?? true,
+    resetsAt: propResetsAt ?? null,
+    tier: propTier ?? 'free',
+    isFree: propIsFree ?? true,
+    isUnlimited: propIsUnlimited ?? false,
+    loaded: false,
+  });
+
+  // Fetch live credit data directly — never trust props alone
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchCredits = async () => {
+      try {
+        const { data: limitsData, error } = await supabase
+          .from('user_ai_limits')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const { data: subData } = await supabase
+          .from('user_subscriptions')
+          .select('subscription_tier')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (error || !limitsData) return;
+
+        const tier = subData?.subscription_tier || 'free';
+        const isFree = tier === 'free';
+        const isUnlimited = limitsData.is_unlimited === true;
+
+        if (isUnlimited) {
+          setCredits(prev => ({ ...prev, isUnlimited: true, loaded: true }));
+          return;
+        }
+
+        let remaining: number;
+        let totalLimit: number;
+        let resetsAt: string | null;
+        let allowed: boolean;
+
+        if (isFree) {
+          // Free users: daily limit, check if daily reset has expired
+          const dailyResetAt = limitsData.daily_reset_at ? new Date(limitsData.daily_reset_at) : null;
+          const isExpired = !dailyResetAt || dailyResetAt <= new Date();
+
+          const used = isExpired ? 0 : (limitsData.current_daily_messages || 0);
+          const limit = limitsData.daily_messages || 5;
+          remaining = Math.max(0, limit - used);
+          totalLimit = limit;
+          resetsAt = isExpired
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            : limitsData.daily_reset_at;
+          allowed = remaining > 0;
+        } else {
+          // Paid users: monthly limit
+          const monthlyResetAt = limitsData.monthly_reset_at ? new Date(limitsData.monthly_reset_at) : null;
+          const isExpired = !monthlyResetAt || monthlyResetAt <= new Date();
+
+          const used = isExpired ? 0 : (limitsData.current_monthly_messages || 0);
+          const limit = (limitsData.monthly_messages || 1000) + (limitsData.bonus_credits || 0);
+          remaining = Math.max(0, limit - used);
+          totalLimit = limit;
+          resetsAt = limitsData.monthly_reset_at;
+          allowed = remaining > 0;
+        }
+
+        setCredits({
+          remaining,
+          totalLimit,
+          allowed,
+          resetsAt,
+          tier,
+          isFree,
+          isUnlimited: false,
+          loaded: true,
+        });
+      } catch {
+        // Silent failure — keep defaults
+        setCredits(prev => ({ ...prev, loaded: true }));
+      }
+    };
+
+    fetchCredits();
+
+    // Re-fetch every 60 seconds to stay current
+    const interval = setInterval(fetchCredits, 60000);
+    return () => clearInterval(interval);
+  }, [userId]);
 
   // Check if user has already submitted feedback
   useEffect(() => {
     if (!userId) return;
-    const checkFeedbackStatus = async () => {
+    const check = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('beta_feedback')
           .select('id')
           .eq('user_id', userId)
           .limit(1);
-        if (error) return;
-        setHasSubmittedFeedback(data && data.length > 0);
+        setHasSubmittedFeedback(data ? data.length > 0 : false);
       } catch {}
     };
-    checkFeedbackStatus();
+    check();
   }, [userId]);
 
   // Animate count changes
   useEffect(() => {
-    if (remaining !== displayCount) {
-      const start = displayCount;
-      const end = remaining;
-      const duration = 300;
-      const startTime = performance.now();
-      const animate = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        setDisplayCount(Math.round(start + (end - start) * eased));
-        if (progress < 1) requestAnimationFrame(animate);
-      };
-      requestAnimationFrame(animate);
-    }
-  }, [remaining]);
+    const target = credits.remaining;
+    if (target === displayCount) return;
+    const start = displayCount;
+    const duration = 300;
+    const startTime = performance.now();
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayCount(Math.round(start + (target - start) * eased));
+      if (progress < 1) requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }, [credits.remaining]);
 
-  // Calculate reset time
+  // Format reset time
   const formattedResetTime = useMemo(() => {
-    if (!resetsAt) return null;
-    const reset = new Date(resetsAt);
+    if (!credits.resetsAt) return null;
+    const reset = new Date(credits.resetsAt);
     const days = differenceInDays(reset, new Date());
     if (days > 0) return `${days}d`;
     const hours = differenceInHours(reset, new Date());
     return hours > 0 ? `${hours}h` : 'Soon';
-  }, [resetsAt]);
+  }, [credits.resetsAt]);
 
-  const percentage = Math.min((totalLimit - remaining) / totalLimit * 100, 100);
-  const isLow = remaining < totalLimit * 0.2;
+  const { remaining, totalLimit, allowed, isFree, isUnlimited, tier } = credits;
+  const percentage = totalLimit > 0 ? Math.min(((totalLimit - remaining) / totalLimit) * 100, 100) : 0;
+  const isLow = remaining < totalLimit * 0.2 && remaining > 0;
   const showEarnButton = userId && onOpenFeedback && hasSubmittedFeedback === false;
 
-  // Don't render anything for unlimited users
+  // Don't render for unlimited users
   if (isUnlimited) return null;
 
-  // Limit reached state
+  // Don't render while loading to avoid flash of wrong data
+  if (!credits.loaded && !userId) return null;
+
+  // Limit reached
   if (!allowed) {
     return (
       <motion.div
@@ -185,13 +293,13 @@ export const CreditUpgradeCard = ({
             animate={{ scale: 1, opacity: 1 }}
             className="text-lg font-bold tabular-nums text-foreground"
           >
-            {String(remaining)}
+            {String(displayCount)}
           </motion.span>
           <span className="text-xs text-muted-foreground">left</span>
         </div>
       </div>
 
-      {/* Progress Row */}
+      {/* Progress Bar */}
       <div className="flex items-center gap-2">
         <div className="flex-1">
           <Progress
@@ -209,7 +317,7 @@ export const CreditUpgradeCard = ({
         )}
       </div>
 
-      {/* Remaining context */}
+      {/* Context line */}
       <p className="text-[10px] text-muted-foreground mt-1.5">
         {remaining} of {totalLimit} {isFree ? 'messages remaining today' : 'messages remaining this month'}
       </p>
@@ -244,7 +352,7 @@ export const CreditUpgradeCard = ({
       </AnimatePresence>
 
       {/* Upgrade Link for Free Tier */}
-      {showUpgrade && !showEarnButton && (
+      {isFree && !showEarnButton && (
         <motion.button
           onClick={() => navigate('/pricing')}
           initial={{ opacity: 0 }}
