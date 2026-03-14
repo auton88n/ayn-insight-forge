@@ -173,12 +173,8 @@ export const CenterStageLayout = ({
   const isMobile = useIsMobile();
 
   const creditsExhausted = useMemo(() => {
-    if (isUnlimited) return false;
-    if (limit === null || limit === undefined || limit < 0) return false;
-    const totalLimit = limit + bonusCredits;
-    if (totalLimit <= 0) return false;
-    return (currentUsage ?? 0) >= totalLimit;
-  }, [isUnlimited, limit, bonusCredits, currentUsage]);
+    return !allowed;
+  }, [allowed]);
 
   const {
     setEmotion,
