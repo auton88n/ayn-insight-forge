@@ -143,7 +143,7 @@ export function AICostDashboard() {
     fetchStats();
   }, []);
 
-  // Estimated costs based on Lovable gateway billing ($3.07 / 176 calls ≈ $0.0174/msg)
+  // Estimated costs based on AI gateway billing
   // This is a rough estimate - adjust based on actual billing
   const ESTIMATED_COST_PER_MSG = 0.0174;
   const estimatedCostToday = stats.today * ESTIMATED_COST_PER_MSG;

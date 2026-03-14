@@ -151,7 +151,7 @@ export function LLMManagement() {
 
   const getProviderColor = (provider: string) => {
     switch (provider) {
-      case 'lovable': return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+      case 'lovable': return 'bg-primary/10 text-primary border-primary/20';
       case 'openrouter': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       default: return 'bg-muted text-muted-foreground border-border';
     }

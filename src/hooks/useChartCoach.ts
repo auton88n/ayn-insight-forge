@@ -77,7 +77,7 @@ function detectSearchIntent(message: string, ticker?: string): string | null {
 const LEAK_PATTERNS = [
   /\d+%\s*success/i, /bulkowski/i, /base.*rate/i,
   /supabase/i, /edge function/i, /gemini/i,
-  /firecrawl/i, /system prompt/i, /lovable/i,
+  /firecrawl/i, /system prompt/i,
 ];
 
 function sanitizeResponse(response: string): string {
