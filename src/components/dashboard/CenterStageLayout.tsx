@@ -67,11 +67,13 @@ interface CenterStageLayoutProps {
   lastSuggestedEmotion?: string | null;
   uploadFailed?: boolean;
   onRetryUpload?: () => void;
-  currentUsage?: number;
-  limit?: number | null;
-  bonusCredits?: number;
+  remaining?: number;
+  totalLimit?: number;
+  allowed?: boolean;
+  isFree?: boolean;
   isUnlimited?: boolean;
-  usageResetDate?: string | null;
+  resetsAt?: string | null;
+  tier?: string;
   isLoadingFromHistory?: boolean;
   currentSessionId?: string;
   isTransitioningToChat?: boolean;
@@ -128,11 +130,13 @@ export const CenterStageLayout = ({
   lastSuggestedEmotion,
   uploadFailed,
   onRetryUpload,
-  currentUsage,
-  limit,
-  bonusCredits = 0,
+  remaining = 0,
+  totalLimit = 5,
+  allowed = true,
+  isFree = true,
   isUnlimited,
-  usageResetDate,
+  resetsAt,
+  tier,
   isLoadingFromHistory,
   currentSessionId,
   isTransitioningToChat,
@@ -169,12 +173,8 @@ export const CenterStageLayout = ({
   const isMobile = useIsMobile();
 
   const creditsExhausted = useMemo(() => {
-    if (isUnlimited) return false;
-    if (limit === null || limit === undefined || limit < 0) return false;
-    const totalLimit = limit + bonusCredits;
-    if (totalLimit <= 0) return false;
-    return (currentUsage ?? 0) >= totalLimit;
-  }, [isUnlimited, limit, bonusCredits, currentUsage]);
+    return !allowed;
+  }, [allowed]);
 
   const {
     setEmotion,
@@ -746,10 +746,10 @@ export const CenterStageLayout = ({
       >
         <SystemNotificationBanner
           maintenanceConfig={maintenanceConfig}
-          currentUsage={currentUsage ?? 0}
-          dailyLimit={limit ?? null}
+          remaining={remaining}
+          totalLimit={totalLimit}
           isUnlimited={isUnlimited ?? false}
-          usageResetDate={usageResetDate ?? null}
+          resetsAt={resetsAt ?? null}
         />
 
         <ChatInput

@@ -14,22 +14,20 @@ interface MaintenanceConfig {
 }
 
 interface SystemNotificationBannerProps {
-  // Maintenance props
   maintenanceConfig?: MaintenanceConfig;
-  // Usage props
-  currentUsage?: number;
-  dailyLimit?: number | null;
+  remaining?: number;
+  totalLimit?: number;
   isUnlimited?: boolean;
-  usageResetDate?: string | null;
+  resetsAt?: string | null;
   className?: string;
 }
 
 export const SystemNotificationBanner = ({
   maintenanceConfig,
-  currentUsage = 0,
-  dailyLimit,
+  remaining = 0,
+  totalLimit = 5,
   isUnlimited = false,
-  usageResetDate,
+  resetsAt,
   className,
 }: SystemNotificationBannerProps) => {
   const [isDismissed, setIsDismissed] = useState(false);
@@ -37,13 +35,13 @@ export const SystemNotificationBanner = ({
 
   // Auto-dismiss usage warning after 5 seconds
   useEffect(() => {
-    if (!isDismissed && !isUnlimited && dailyLimit !== null && dailyLimit !== undefined) {
+    if (!isDismissed && !isUnlimited && totalLimit > 0) {
       const timer = setTimeout(() => {
         setIsDismissed(true);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [isDismissed, isUnlimited, dailyLimit]);
+  }, [isDismissed, isUnlimited, totalLimit]);
 
   // Priority 1: Active Maintenance (NOT dismissible, blocks chat)
   if (maintenanceConfig?.enabled) {
@@ -76,7 +74,6 @@ export const SystemNotificationBanner = ({
             </span>
           )}
         </span>
-        {/* No dismiss button - maintenance is NOT dismissible */}
       </motion.div>
     );
   }
@@ -128,25 +125,23 @@ export const SystemNotificationBanner = ({
   }
 
   // Priority 3: Usage Warning (dismissible) - skip for unlimited users
-  if (!isDismissed && !isUnlimited && dailyLimit !== null && dailyLimit !== undefined) {
-    const remaining = dailyLimit - currentUsage;
-    const usagePercentage = (currentUsage / dailyLimit) * 100;
+  if (!isDismissed && !isUnlimited && totalLimit > 0) {
+    const usagePercentage = ((totalLimit - remaining) / totalLimit) * 100;
     
-    // Only show when approaching limit (>80% used) or <= 10 remaining
+    // Only show when approaching limit (>80% used) or <= 5 remaining
     const shouldShow = usagePercentage >= 80 || remaining <= 5;
     
     if (!shouldShow || remaining < 0) return null;
     
     // Format the reset time nicely
     let formattedResetTime = 'tomorrow';
-    if (usageResetDate) {
-      const reset = new Date(usageResetDate);
+    if (resetsAt) {
+      const reset = new Date(resetsAt);
       const now = new Date();
       const hoursLeft = Math.max(0, Math.ceil((reset.getTime() - now.getTime()) / (1000 * 60 * 60)));
       formattedResetTime = hoursLeft > 24 ? format(reset, "MMM d") : `${hoursLeft}h`;
     }
 
-    // Determine urgency level for styling
     const isUrgent = remaining <= 3;
     const isWarning = remaining <= 10 && !isUrgent;
 
@@ -161,7 +156,6 @@ export const SystemNotificationBanner = ({
             "flex items-center justify-center gap-2 px-4 py-2.5 mx-4 mb-2",
             "rounded-xl border backdrop-blur-sm",
             "text-sm font-medium",
-            // Soft, neutral styling - non-alarming
             isUrgent && "bg-muted/60 border-border text-muted-foreground",
             isWarning && "bg-muted/50 border-border/80 text-muted-foreground",
             !isUrgent && !isWarning && "bg-muted/50 border-border/50 text-muted-foreground",

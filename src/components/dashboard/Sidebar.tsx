@@ -100,11 +100,13 @@ export const Sidebar = ({
   recentChats,
   showChatSelection,
   selectedChats,
-  currentUsage = 0,
-  dailyLimit = null,
-  bonusCredits: bonusCreditsProp = 0,
+  remaining = 0,
+  totalLimit = 5,
+  allowed = true,
+  isFree = true,
   isUnlimited: isUnlimitedProp = false,
-  usageResetDate = null,
+  resetsAt = null,
+  tier: tierProp = 'free',
   onModeSelect,
   onNewChat,
   onLoadChat,
@@ -141,11 +143,6 @@ export const Sidebar = ({
   const { pinnedChats, togglePin } = usePinnedChats(userId, accessToken);
   
   // Use props from DashboardContainer (single source of truth)
-  const usageFromHook = currentUsage;
-  const limitFromHook = dailyLimit;
-  const bonusFromHook = bonusCreditsProp;
-  const isUnlimitedFromHook = isUnlimitedProp;
-  const resetFromHook = usageResetDate ?? null;
   const isUsageLoading = false;
   
   // Fetch user subscription tier
@@ -372,12 +369,13 @@ export const Sidebar = ({
           <SidebarGroup className="flex-shrink-0 px-4 pt-4 pb-2">
             <SidebarGroupContent>
               <CreditUpgradeCard 
-                currentUsage={usageFromHook}
-                monthlyLimit={limitFromHook}
-                bonusCredits={bonusFromHook}
-                isUnlimited={isUnlimitedFromHook}
-                resetDate={resetFromHook}
-                currentTier={subscriptionTier}
+                remaining={remaining}
+                totalLimit={totalLimit}
+                allowed={allowed}
+                resetsAt={resetsAt}
+                tier={subscriptionTier || tierProp}
+                isFree={isFree}
+                isUnlimited={isUnlimitedProp}
                 userId={userId}
                 onOpenFeedback={onOpenFeedback}
                 rewardAmount={betaFeedbackReward}
