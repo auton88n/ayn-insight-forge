@@ -37,9 +37,6 @@ export const CreditUpgradeCard = ({
   const [displayCount, setDisplayCount] = useState(remaining);
   const [hasSubmittedFeedback, setHasSubmittedFeedback] = useState<boolean | null>(null);
 
-  // Don't render anything for unlimited users
-  if (isUnlimited) return null;
-
   const showUpgrade = isFree;
 
   // Check if user has already submitted feedback
