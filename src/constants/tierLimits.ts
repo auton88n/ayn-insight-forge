@@ -13,21 +13,21 @@ export const TIER_LIMITS = {
     isDaily: true,
   },
   starter: {
-    credits: 500,
+    credits: 1000,
     storage: 500 * 1024 * 1024, // 500MB
     retention: 90,
     maxSessions: 50,
     maxUploadsPerDay: 20,
   },
   pro: {
-    credits: 1000,
+    credits: 5000,
     storage: 2 * 1024 * 1024 * 1024, // 2GB
     retention: 365,
     maxSessions: 200,
     maxUploadsPerDay: 50,
   },
   business: {
-    credits: 3000,
+    credits: 15000,
     storage: 10 * 1024 * 1024 * 1024, // 10GB
     retention: -1, // unlimited
     maxSessions: -1, // unlimited

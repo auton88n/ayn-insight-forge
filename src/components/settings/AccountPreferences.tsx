@@ -11,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ProfileAvatarUpload } from '@/components/dashboard/ProfileAvatarUpload';
 import { UsageCard } from '@/components/dashboard/UsageCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Key } from 'lucide-react';
+import { Loader2, Key, Plus } from 'lucide-react';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { Badge } from '@/components/ui/badge';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 
@@ -156,7 +158,10 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
 
   const hasVisibleFields = showContactPerson || showCompanyName || showEmail || showBusinessType || showBusinessContext || showAvatar || showUsage;
 
-  return (
+    const { tier: subscriptionTier } = useSubscription();
+    const isPaidUser = subscriptionTier !== 'free';
+
+    return (
     <div className="space-y-6">
       {/* Usage & Limits Card */}
       {showUsage && (
@@ -171,6 +176,26 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
             tier={usage.tier}
             bonusCredits={usage.bonusCredits}
           />
+
+          {/* Top Up — paid users only */}
+          {isPaidUser && (
+            <div className="mt-4 p-4 rounded-xl border border-border/50 bg-muted/30 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-foreground">Need more messages?</p>
+                <p className="text-xs text-muted-foreground">Get 500 extra messages for $10 — one-time purchase</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                className="shrink-0 gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Top Up
+                <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">Coming Soon</Badge>
+              </Button>
+            </div>
+          )}
         </Card>
       )}
 
