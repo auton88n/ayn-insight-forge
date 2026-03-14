@@ -365,7 +365,7 @@ export const Sidebar = ({
 
       <SidebarContent className="flex flex-col overflow-hidden">
         {/* Unified Credit & Upgrade Card */}
-        {hasAccess && !isUsageLoading && (
+        {userId && (
           <SidebarGroup className="flex-shrink-0 px-4 pt-4 pb-2">
             <SidebarGroupContent>
               <CreditUpgradeCard 

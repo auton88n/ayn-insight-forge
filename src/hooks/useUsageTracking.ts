@@ -2,21 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UsageData {
-  /** Messages remaining in current period */
   remaining: number;
-  /** Total limit for the period */
   totalLimit: number;
-  /** Whether the user is allowed to send messages */
   allowed: boolean;
-  /** ISO timestamp when limits reset */
   resetsAt: string | null;
-  /** User's subscription tier */
   tier: string;
-  /** True if user is on the free (daily) plan */
   isFree: boolean;
-  /** True if user has unlimited messages */
   isUnlimited: boolean;
-  /** Loading state */
   isLoading: boolean;
 }
 
@@ -39,76 +31,114 @@ export const useUsageTracking = (userId: string | null): UsageData & { refreshUs
       setUsageData(prev => ({ ...prev, isLoading: false }));
       return;
     }
-    
-    try {
-      const { data, error } = await supabase.rpc('check_user_ai_limit', {
-        _user_id: userId,
-      });
 
-      if (error) {
-        if (import.meta.env.DEV) {
-          console.error('[useUsageTracking] RPC error:', error);
-        }
+    try {
+      // Read directly from tables — never call check_user_ai_limit here
+      // That RPC increments usage and should only be called when sending a message
+      const [limitsRes, subRes] = await Promise.all([
+        supabase
+          .from('user_ai_limits')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        supabase
+          .from('user_subscriptions')
+          .select('subscription_tier')
+          .eq('user_id', userId)
+          .maybeSingle(),
+      ]);
+
+      const limits = limitsRes.data;
+      const tier = subRes.data?.subscription_tier || 'free';
+
+      if (!limits) {
         setUsageData(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
-      // The RPC returns a JSON object
-      const result = typeof data === 'string' ? JSON.parse(data) : data;
+      const isFree = tier === 'free';
+      const isUnlimited = limits.is_unlimited === true;
+
+      if (isUnlimited) {
+        setUsageData({
+          remaining: -1,
+          totalLimit: -1,
+          allowed: true,
+          resetsAt: null,
+          tier,
+          isFree: false,
+          isUnlimited: true,
+          isLoading: false,
+        });
+        return;
+      }
+
+      let remaining: number;
+      let totalLimit: number;
+      let resetsAt: string | null;
+
+      if (isFree) {
+        const dailyResetAt = limits.daily_reset_at ? new Date(limits.daily_reset_at) : null;
+        const isExpired = !dailyResetAt || dailyResetAt <= new Date();
+        const used = isExpired ? 0 : (limits.current_daily_messages || 0);
+        const limit = limits.daily_messages || 5;
+        remaining = Math.max(0, limit - used);
+        totalLimit = limit;
+        resetsAt = isExpired
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          : limits.daily_reset_at;
+      } else {
+        const monthlyResetAt = limits.monthly_reset_at ? new Date(limits.monthly_reset_at) : null;
+        const isExpired = !monthlyResetAt || monthlyResetAt <= new Date();
+        const used = isExpired ? 0 : (limits.current_monthly_messages || 0);
+        const limit = (limits.monthly_messages || 1000) + (limits.bonus_credits || 0);
+        remaining = Math.max(0, limit - used);
+        totalLimit = limit;
+        resetsAt = limits.monthly_reset_at;
+      }
 
       setUsageData({
-        remaining: result.remaining ?? 0,
-        totalLimit: result.total_limit ?? 5,
-        allowed: result.allowed ?? true,
-        resetsAt: result.resets_at ?? null,
-        tier: result.tier ?? 'free',
-        isFree: result.is_free ?? true,
-        isUnlimited: result.is_unlimited ?? false,
+        remaining,
+        totalLimit,
+        allowed: remaining > 0,
+        resetsAt,
+        tier,
+        isFree,
+        isUnlimited: false,
         isLoading: false,
       });
     } catch (err) {
       if (import.meta.env.DEV) {
-        console.error('[useUsageTracking] Error fetching usage:', err);
+        console.error('[useUsageTracking] Error:', err);
       }
       setUsageData(prev => ({ ...prev, isLoading: false }));
     }
   }, [userId]);
 
-  // Initial fetch
   useEffect(() => {
     fetchUsage();
   }, [fetchUsage]);
 
-  // Real-time subscription for usage updates
+  // Real-time updates when user_ai_limits changes
   useEffect(() => {
     if (!userId) return;
 
-    const channelName = `usage-${userId.slice(0, 8)}`;
-    
     const channel = supabase
-      .channel(channelName)
+      .channel(`usage-${userId.slice(0, 8)}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'user_ai_limits',
-          filter: `user_id=eq.${userId}`
+          filter: `user_id=eq.${userId}`,
         },
-        () => {
-          // Re-fetch from the RPC to get computed values
-          fetchUsage();
-        }
+        () => fetchUsage()
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [userId, fetchUsage]);
 
-  return {
-    ...usageData,
-    refreshUsage: fetchUsage,
-  };
+  return { ...usageData, refreshUsage: fetchUsage };
 };
