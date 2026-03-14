@@ -70,7 +70,7 @@ const SubscriptionSuccess = () => {
                 
                 <p className="text-muted-foreground mb-6">
                   Your subscription has been activated successfully. 
-                  You now have access to {tierConfig.limits.monthlyCredits.toLocaleString()} credits per month.
+                  You now have access to {tierConfig.limits.monthlyCredits.toLocaleString()} messages per month.
                 </p>
 
                 <div className="bg-muted/50 rounded-lg p-4 mb-6">

@@ -59,7 +59,7 @@ export const UpgradeBanner = ({ currentTier = 'free', className }: UpgradeBanner
 
         {/* Description */}
         <p className="text-[11px] text-muted-foreground leading-relaxed pr-4">
-          Get 1,000 credits/mo, priority support & more
+          Get 5,000 messages/mo, priority support & more
         </p>
 
         {/* CTA Button */}
