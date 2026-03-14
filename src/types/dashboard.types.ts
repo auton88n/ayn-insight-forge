@@ -318,11 +318,13 @@ export interface SidebarProps {
   recentChats: ChatHistory[];
   showChatSelection: boolean;
   selectedChats: Set<number>;
-  currentUsage?: number;
-  dailyLimit?: number | null;
-  bonusCredits?: number;
+  remaining?: number;
+  totalLimit?: number;
+  allowed?: boolean;
+  isFree?: boolean;
   isUnlimited?: boolean;
-  usageResetDate?: string | null;
+  resetsAt?: string | null;
+  tier?: string;
   onModeSelect: (mode: AIMode) => void;
   onNewChat: () => void;
   onLoadChat: (chat: ChatHistory) => void;

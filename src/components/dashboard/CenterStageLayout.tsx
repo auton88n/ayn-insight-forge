@@ -746,10 +746,10 @@ export const CenterStageLayout = ({
       >
         <SystemNotificationBanner
           maintenanceConfig={maintenanceConfig}
-          currentUsage={currentUsage ?? 0}
-          dailyLimit={limit ?? null}
+          remaining={remaining}
+          totalLimit={totalLimit}
           isUnlimited={isUnlimited ?? false}
-          usageResetDate={usageResetDate ?? null}
+          resetsAt={resetsAt ?? null}
         />
 
         <ChatInput

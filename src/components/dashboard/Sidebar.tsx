@@ -369,12 +369,13 @@ export const Sidebar = ({
           <SidebarGroup className="flex-shrink-0 px-4 pt-4 pb-2">
             <SidebarGroupContent>
               <CreditUpgradeCard 
-                currentUsage={usageFromHook}
-                monthlyLimit={limitFromHook}
-                bonusCredits={bonusFromHook}
-                isUnlimited={isUnlimitedFromHook}
-                resetDate={resetFromHook}
-                currentTier={subscriptionTier}
+                remaining={remaining}
+                totalLimit={totalLimit}
+                allowed={allowed}
+                resetsAt={resetsAt}
+                tier={subscriptionTier || tierProp}
+                isFree={isFree}
+                isUnlimited={isUnlimitedProp}
                 userId={userId}
                 onOpenFeedback={onOpenFeedback}
                 rewardAmount={betaFeedbackReward}
