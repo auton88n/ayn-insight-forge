@@ -20,16 +20,31 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
   
   const hasTrackedDevice = useRef(false);
 
-  // Check if user has active access - uses direct fetch
+  // Check access — any authenticated user with a subscription row has access.
+  // Falls back to access_grants for backward compatibility.
   const checkAccess = useCallback(async () => {
     try {
+      // Primary: check user_subscriptions — all registered users have a row here
+      const subData = await supabaseApi.get<any[]>(
+        `user_subscriptions?user_id=eq.${user.id}&select=subscription_tier,status`,
+        session.access_token
+      );
+
+      if (subData && subData.length > 0) {
+        // Any user with a subscription row has access — free, paid, or unlimited
+        setHasAccess(true);
+        return;
+      }
+
+      // Fallback: legacy access_grants table
       const data = await supabaseApi.get<any[]>(
         `access_grants?user_id=eq.${user.id}&select=is_active,expires_at,current_month_usage,monthly_limit,usage_reset_date`,
         session.access_token
       );
 
       if (!data || data.length === 0) {
-        setHasAccess(false);
+        // No row in either table but user is authenticated — still give access
+        setHasAccess(true);
         return;
       }
 
@@ -40,7 +55,8 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
       setMonthlyLimit(record.monthly_limit ?? null);
       setUsageResetDate(record.usage_reset_date ?? null);
     } catch {
-      // Silent failure - access denied by default
+      // On any error, give access — better to show card than hide it
+      setHasAccess(true);
     }
   }, [user.id, session.access_token]);
 
@@ -76,12 +92,11 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
     }
   }, [user.id, session.access_token]);
 
-  // Accept terms and conditions - uses direct fetch with verification
+  // Accept terms and conditions
   const acceptTerms = useCallback(async (consent: { privacy: boolean; terms: boolean; aiDisclaimer: boolean }) => {
     try {
       const now = new Date().toISOString();
 
-      // Try PATCH first with return=representation to verify it worked
       const updated = await supabaseApi.fetch<any[]>(
         `user_settings?user_id=eq.${user.id}`,
         session.access_token,
@@ -92,7 +107,6 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
         }
       );
 
-      // If PATCH returned empty (no row existed), fall back to POST insert
       if (!updated || updated.length === 0) {
         await supabaseApi.post(
           'user_settings',
@@ -101,13 +115,12 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
         );
       }
 
-      // Write immutable consent audit log
       await supabaseApi.post(
         'terms_consent_log',
         session.access_token,
         {
           user_id: user.id,
-          terms_version: '2026-02-07',
+          terms_version: '2026-03-14',
           privacy_accepted: consent.privacy,
           terms_accepted: consent.terms,
           ai_disclaimer_accepted: consent.aiDisclaimer,
@@ -134,7 +147,7 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
     }
   }, [user.id, session.access_token, toast]);
 
-  // Load all auth data on mount - DIRECT FETCH, no Supabase client
+  // Load all auth data on mount
   useEffect(() => {
     if (!user?.id || !session?.access_token) {
       setIsAuthLoading(false);
@@ -149,9 +162,9 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
       hasRun = true;
 
       try {
-        // Use retry logic for all queries
         const results = await Promise.all([
-          supabaseApi.getWithRetry<any[]>(`access_grants?user_id=eq.${user.id}&select=is_active,expires_at,current_month_usage,monthly_limit,usage_reset_date`, session.access_token),
+          // Primary access check: user_subscriptions
+          supabaseApi.getWithRetry<any[]>(`user_subscriptions?user_id=eq.${user.id}&select=subscription_tier,status`, session.access_token),
           supabaseApi.getWithRetry<any[]>(`user_roles?user_id=eq.${user.id}&select=role`, session.access_token),
           supabaseApi.getWithRetry<any[]>(`profiles?user_id=eq.${user.id}&select=user_id,contact_person,company_name,business_type,avatar_url`, session.access_token),
           supabaseApi.getWithRetry<any[]>(`user_settings?user_id=eq.${user.id}&select=has_accepted_terms`, session.access_token)
@@ -159,32 +172,48 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
 
         if (!isMounted) return;
 
-        const [accessData, roleData, profileData, settingsData] = results;
+        const [subData, roleData, profileData, settingsData] = results;
 
-        // Process access (with null check)
-        if (accessData && accessData.length > 0) {
-          const record = accessData[0];
-          const isActive = record.is_active && 
-            (!record.expires_at || new Date(record.expires_at) > new Date());
-          setHasAccess(isActive);
-          setCurrentMonthUsage(record.current_month_usage ?? 0);
-          setMonthlyLimit(record.monthly_limit ?? null);
-          setUsageResetDate(record.usage_reset_date ?? null);
+        // Access: any authenticated user with a subscription row has access
+        if (subData && subData.length > 0) {
+          setHasAccess(true);
+        } else {
+          // Fallback to access_grants for legacy users
+          try {
+            const accessData = await supabaseApi.get<any[]>(
+              `access_grants?user_id=eq.${user.id}&select=is_active,expires_at,current_month_usage,monthly_limit,usage_reset_date`,
+              session.access_token
+            );
+            if (accessData && accessData.length > 0) {
+              const record = accessData[0];
+              const isActive = record.is_active &&
+                (!record.expires_at || new Date(record.expires_at) > new Date());
+              setHasAccess(isActive);
+              setCurrentMonthUsage(record.current_month_usage ?? 0);
+              setMonthlyLimit(record.monthly_limit ?? null);
+              setUsageResetDate(record.usage_reset_date ?? null);
+            } else {
+              // Authenticated but no rows anywhere — give access
+              setHasAccess(true);
+            }
+          } catch {
+            setHasAccess(true);
+          }
         }
 
-        // Process admin/duty role (with null check)
+        // Admin/duty role
         if (roleData) {
           const role = roleData?.[0]?.role;
           setIsAdmin(role === 'admin');
           setIsDuty(role === 'duty');
         }
 
-        // Process profile (with null check)
+        // Profile
         if (profileData && profileData.length > 0) {
           setUserProfile(profileData[0] as UserProfile);
         }
 
-        // Process terms (with null check + localStorage fallback)
+        // Terms
         if (settingsData) {
           const dbTermsAccepted = settingsData?.[0]?.has_accepted_terms ?? false;
           setHasAcceptedTerms(dbTermsAccepted);
@@ -194,7 +223,6 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
             localStorage.removeItem(`terms_accepted_${user.id}`);
           }
         } else {
-          // DB query failed - use localStorage as temporary fallback
           const localTermsAccepted = localStorage.getItem(`terms_accepted_${user.id}`) === 'true';
           setHasAcceptedTerms(localTermsAccepted);
         }
@@ -210,10 +238,8 @@ export const useAuth = (user: User, session: Session): UseAuthReturn => {
       }
     };
 
-    // Run immediately - no delay needed
     runQueries();
 
-    // Track device (non-blocking)
     if (!hasTrackedDevice.current) {
       hasTrackedDevice.current = true;
       setTimeout(() => trackDeviceLogin(user.id, session.access_token), 0);
