@@ -168,13 +168,13 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
         <Card className="p-6 bg-card/50 backdrop-blur-xl border-border/50">
           <h2 className="text-xl font-semibold mb-4">Usage & Limits</h2>
           <UsageCard
-            currentUsage={usage.currentUsage}
-            monthlyLimit={usage.limit}
-            isUnlimited={usage.isUnlimited}
-            resetDate={usage.resetDate}
-            isDaily={usage.isDaily}
+            remaining={usage.remaining}
+            totalLimit={usage.totalLimit}
+            allowed={usage.allowed}
+            resetsAt={usage.resetsAt}
             tier={usage.tier}
-            bonusCredits={usage.bonusCredits}
+            isFree={usage.isFree}
+            isUnlimited={usage.isUnlimited}
           />
 
           {/* Top Up — paid users only */}
