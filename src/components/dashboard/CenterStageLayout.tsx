@@ -67,11 +67,13 @@ interface CenterStageLayoutProps {
   lastSuggestedEmotion?: string | null;
   uploadFailed?: boolean;
   onRetryUpload?: () => void;
-  currentUsage?: number;
-  limit?: number | null;
-  bonusCredits?: number;
+  remaining?: number;
+  totalLimit?: number;
+  allowed?: boolean;
+  isFree?: boolean;
   isUnlimited?: boolean;
-  usageResetDate?: string | null;
+  resetsAt?: string | null;
+  tier?: string;
   isLoadingFromHistory?: boolean;
   currentSessionId?: string;
   isTransitioningToChat?: boolean;
