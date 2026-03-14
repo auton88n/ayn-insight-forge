@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 // Emotion state now managed by Zustand store (src/stores/emotionStore.ts)
@@ -43,7 +43,7 @@ const Support = lazy(() => import("./pages/Support"));
 // const Engineering = lazy(() => import("./pages/EngineeringWorkspacePage"));
 // const Compliance = lazy(() => import("./pages/CompliancePage"));
 // const AIGradingDesigner = lazy(() => import("./pages/AIGradingDesigner"));
-const CivilEngineering = lazy(() => import("./pages/services/CivilEngineering"));
+// HIDDEN: const CivilEngineering = lazy(() => import('./pages/services/CivilEngineering'));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
 const SubscriptionCanceled = lazy(() => import("./pages/SubscriptionCanceled"));
@@ -96,7 +96,7 @@ const AnimatedRoutes = () => {
       <Route path="/compliance" element={<Suspense fallback={<PageLoader />}><PageTransition><Compliance /></PageTransition></Suspense>} />
       <Route path="/engineering/grading" element={<Suspense fallback={<PageLoader />}><PageTransition><AIGradingDesigner /></PageTransition></Suspense>} />
       */}
-      <Route path="/services/civil-engineering" element={<Suspense fallback={<PageLoader />}><PageTransition><CivilEngineering /></PageTransition></Suspense>} />
+      <Route path="/services/civil-engineering" element={<Navigate to="/" replace />} />
       <Route path="/approval-result" element={<PageTransition><ApprovalResult /></PageTransition>} />
       <Route path="/subscription-success" element={<PageTransition><SubscriptionSuccess /></PageTransition>} />
       <Route path="/subscription-canceled" element={<PageTransition><SubscriptionCanceled /></PageTransition>} />
