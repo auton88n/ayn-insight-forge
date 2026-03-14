@@ -88,6 +88,9 @@ export const CreditUpgradeCard = ({
   const isLow = remaining < totalLimit * 0.2;
   const showEarnButton = userId && onOpenFeedback && hasSubmittedFeedback === false;
 
+  // Don't render anything for unlimited users
+  if (isUnlimited) return null;
+
   // Limit reached state
   if (!allowed) {
     return (
