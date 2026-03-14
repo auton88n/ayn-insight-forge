@@ -11,7 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ProfileAvatarUpload } from '@/components/dashboard/ProfileAvatarUpload';
 import { UsageCard } from '@/components/dashboard/UsageCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Key } from 'lucide-react';
+import { Loader2, Key, Plus } from 'lucide-react';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { Badge } from '@/components/ui/badge';
 import { useSettingsContext } from '@/contexts/SettingsContext';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 
