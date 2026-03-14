@@ -193,8 +193,33 @@ export const CreditUpgradeCard = ({
   const isLow = remaining < totalLimit * 0.2 && remaining > 0;
   const showEarnButton = userId && onOpenFeedback && hasSubmittedFeedback === false;
 
-  // Don't render for unlimited users
-  if (isUnlimited) return null;
+  // Unlimited users — show a clean status card
+  if (isUnlimited) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className={cn(
+          "relative rounded-xl overflow-hidden",
+          "bg-card/60 backdrop-blur-md",
+          "border border-border/50",
+          "p-3"
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+            <span className="font-medium text-sm text-foreground">Unlimited Plan</span>
+          </div>
+          <span className="text-xs font-semibold text-primary">∞</span>
+        </div>
+        <p className="text-[10px] text-muted-foreground mt-1.5">No message limits</p>
+      </motion.div>
+    );
+  }
 
   // Don't render while loading to avoid flash of wrong data
   if (!credits.loaded && !userId) return null;
