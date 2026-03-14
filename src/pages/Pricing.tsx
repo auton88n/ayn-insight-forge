@@ -61,24 +61,24 @@ const tierButtonStyles: Record<SubscriptionTier, string> = {
 
 const faqItems = [
   {
-    question: 'What are credits?',
-    answer: 'Credits are used for AI interactions. Free users get 5 credits per day (resets daily). Paid users receive their full monthly allowance upfront.'
+    question: 'What are messages?',
+    answer: 'Each AI interaction counts as one message. Free users get 5 messages per day (resets daily). Paid users receive their full monthly allowance upfront.'
   },
   {
     question: 'What is PDF & Excel generation?',
-    answer: 'Paid users can ask AYN to generate professional documents. PDF generation costs 30 credits and Excel costs 25 credits.'
+    answer: 'Paid users can ask AYN to generate professional documents like reports, spreadsheets, and presentations.'
   },
   {
     question: 'Can I upgrade or downgrade anytime?',
     answer: 'Yes! You can change your plan at any time. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.'
   },
   {
-    question: 'What happens if I run out of credits?',
-    answer: 'Free users wait until the next day for credits to reset. Paid users need to wait until their monthly reset or upgrade to a higher plan.'
+    question: 'What happens if I run out of messages?',
+    answer: 'Free users wait until the next day for messages to reset. Paid users can purchase a top-up of 500 extra messages for $10, or upgrade to a higher plan.'
   },
   {
     question: 'Is there a free trial?',
-    answer: 'Our Free tier gives you 5 credits per day to try AYN - no credit card required.'
+    answer: 'Our Free tier gives you 5 messages per day to try AYN — no credit card required.'
   },
   {
     question: 'What is your refund policy?',
@@ -86,7 +86,7 @@ const faqItems = [
   },
   {
     question: 'What is included in Enterprise?',
-    answer: 'Enterprise plans include custom credit limits, tailored AI solutions, and 24/7 priority support. Contact our sales team to discuss your needs.'
+    answer: 'Enterprise plans include custom message limits, tailored AI solutions, and 24/7 priority support. Contact our sales team to discuss your needs.'
   }
 ];
 
