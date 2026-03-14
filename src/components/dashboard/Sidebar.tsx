@@ -143,11 +143,6 @@ export const Sidebar = ({
   const { pinnedChats, togglePin } = usePinnedChats(userId, accessToken);
   
   // Use props from DashboardContainer (single source of truth)
-  const usageFromHook = currentUsage;
-  const limitFromHook = dailyLimit;
-  const bonusFromHook = bonusCreditsProp;
-  const isUnlimitedFromHook = isUnlimitedProp;
-  const resetFromHook = usageResetDate ?? null;
   const isUsageLoading = false;
   
   // Fetch user subscription tier
