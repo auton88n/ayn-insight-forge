@@ -14,22 +14,20 @@ interface MaintenanceConfig {
 }
 
 interface SystemNotificationBannerProps {
-  // Maintenance props
   maintenanceConfig?: MaintenanceConfig;
-  // Usage props
-  currentUsage?: number;
-  dailyLimit?: number | null;
+  remaining?: number;
+  totalLimit?: number;
   isUnlimited?: boolean;
-  usageResetDate?: string | null;
+  resetsAt?: string | null;
   className?: string;
 }
 
 export const SystemNotificationBanner = ({
   maintenanceConfig,
-  currentUsage = 0,
-  dailyLimit,
+  remaining = 0,
+  totalLimit = 5,
   isUnlimited = false,
-  usageResetDate,
+  resetsAt,
   className,
 }: SystemNotificationBannerProps) => {
   const [isDismissed, setIsDismissed] = useState(false);
