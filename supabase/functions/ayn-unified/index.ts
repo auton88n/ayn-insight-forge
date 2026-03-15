@@ -1490,17 +1490,47 @@ You may discuss trading concepts, strategy, and education freely — just don't 
         : msg.content
     }));
 
-    // If search intent, perform search first
+    // Smart web search — AYN decides naturally when current info is needed
     let enrichedMessages = [...sanitizedMessages];
-    if (intent === 'search') {
-      const searchResults = await performWebSearch(lastMessage);
-      enrichedMessages = [
-        ...sanitizedMessages.slice(0, -1),
-        {
-          role: 'user',
-          content: `${sanitizeUserPrompt(lastMessage)}\n\n[Search Results]\n${searchResults}`
-        }
+
+    const needsWebLookup = (msg: string): boolean => {
+      const l = msg.toLowerCase();
+      // Skip: clearly conversational or creative
+      const skip = [
+        /^(hi|hello|hey|thanks|thank you|ok|okay|yes|no|sure|got it|nice|cool)/i,
+        /make.*image|generate.*image|create.*image|draw/i,
+        /make.*pdf|create.*pdf|generate.*pdf|make.*excel|create.*excel/i,
+        /how are you|what can you do|who are you|what is ayn/i,
       ];
+      if (skip.some(r => r.test(l))) return false;
+      // Search: current data, prices, news, people, events
+      const search = [
+        /\b(today|tonight|yesterday|this week|this month|right now|currently|latest|recent|news|breaking)\b/i,
+        /\b(price|stock|crypto|bitcoin|btc|eth|market|rate|exchange|gold|oil)\b/i,
+        /\b(weather|temperature|forecast)\b/i,
+        /\b(who is|who are|is .* still|does .* still)\b/i,
+        /\b(ceo|president|prime minister|founder|owner|chairman)\b/i,
+        /\b(what happened|what is happening|when did|when is|where is|how much is|how many)\b/i,
+        /\b(score|result|winner|champion|standings|match|game)\b/i,
+        /\b(سعر|اخبار|اليوم|الان|حاليا|من هو|ما هو|كم|نتيجة)\b/i,
+      ];
+      if (search.some(r => r.test(l))) return true;
+      // Long questions ending with ? about the world
+      if (msg.trim().endsWith('?') && msg.split(' ').length > 5) return true;
+      return false;
+    };
+
+    if ((intent === 'search' || intent === 'chat') && needsWebLookup(lastMessage)) {
+      const searchResults = await performWebSearch(lastMessage);
+      if (searchResults && !searchResults.startsWith('Search failed') && !searchResults.startsWith('No search results')) {
+        enrichedMessages = [
+          ...sanitizedMessages.slice(0, -1),
+          {
+            role: 'user',
+            content: `${sanitizeUserPrompt(lastMessage)}\n\n[Current web results — use naturally without citing]\n${searchResults}`
+          }
+        ];
+      }
     }
 
     // Add system prompt

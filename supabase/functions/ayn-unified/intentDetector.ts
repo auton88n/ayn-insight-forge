@@ -1,16 +1,15 @@
-// Intent detection for routing requests
+// Intent detection — minimal, only for things the AI cannot decide itself
+// The model handles everything that requires judgment (search, analysis, etc.)
 
 export function detectIntent(message: string, hasImageFile = false): string {
   const lower = message.toLowerCase();
-  
-  // === IMAGE detection FIRST (prevents "make me a" hijacking) ===
+
+  // IMAGE — explicit requests only, model cannot generate images itself
   const imagePatterns = [
     /generate\s+(an?\s+)?image/,
     /create\s+(an?\s+)?image/,
     /make\s+(an?\s+)?image/,
-    /make\s+me\s+(an?\s+)?picture/,
-    /make\s+me\s+(an?\s+)?photo/,
-    /make\s+me\s+(an?\s+)?image/,
+    /make\s+me\s+(an?\s+)?(picture|photo|image)/,
     /generate\s+(an?\s+)?picture/,
     /create\s+(an?\s+)?picture/,
     /show\s+me\s+(an?\s+)?(image|picture|photo)/,
@@ -20,81 +19,41 @@ export function detectIntent(message: string, hasImageFile = false): string {
     /image\s+of/,
     /photo\s+of/,
     /illustration\s+of/,
-    /render\s+(an?\s+)?/,
     /visualize/,
-    // Broader: "I want/need an image about X"
-    /(?:i\s+(?:want|need)\s+(?:an?\s+)?)?(?:image|picture|photo)\s+(?:about|of|for)/,
-    /صورة/, /ارسم/, /ارسم لي/, /اعطني صورة/, /ابي\s*صورة/, /سوي\s*صورة/,
-    /image\s+de/, /dessine/, /montre\s+moi/, /genere\s+une\s+image/,
-    // Retry patterns specific to images
-    /try\s+again.*image/, /retry.*image/, /another\s+image/, /new\s+image/, /new\s+picture/,
-    /أعد.*صورة/, /صورة.*مرة/, /réessayer.*image/,
+    /render\s+(an?\s+)?/,
+    /صورة/, /ارسم/, /اعطني صورة/, /ابي\s*صورة/, /سوي\s*صورة/,
+    /image\s+de/, /dessine/, /genere\s+une\s+image/,
+    /another\s+image/, /new\s+image/, /new\s+picture/,
   ];
-  
   if (imagePatterns.some(rx => rx.test(lower))) return 'image';
 
-  // === DOCUMENT detection (PDF / Excel) ===
+  // DOCUMENT — explicit PDF/Excel requests only
   const documentPatterns = [
-    /create\s+(an?\s+)?pdf/,
-    /make\s+(an?\s+)?pdf/,
-    /generate\s+(an?\s+)?pdf/,
-    /give\s+me\s+(an?\s+)?pdf/,
-    /export\s+as\s+pdf/,
-    /pdf\s+(report|document|about|for|of)/,
-    // Broader: "I want/need a pdf about X", "can you make a pdf"
+    /create\s+(an?\s+)?pdf/, /make\s+(an?\s+)?pdf/, /generate\s+(an?\s+)?pdf/,
+    /give\s+me\s+(an?\s+)?pdf/, /export\s+as\s+pdf/, /pdf\s+(report|document|about|for|of)/,
     /(?:i\s+(?:want|need)\s+(?:an?\s+)?)?pdf\s+(?:about|for|on)/,
     /(?:can\s+you\s+)?(?:make|create|get)\s+(?:me\s+)?(?:an?\s+)?pdf/,
-    /create\s+(an?\s+)?(excel|exel|excell|exsel|ecxel|exl)/,
-    /make\s+(an?\s+)?(excel|exel|excell|exsel|ecxel|exl)/,
-    /give\s+me\s+(an?\s+)?(excel|exel|excell|exsel|ecxel|exl)/,
-    /(excel|exel|excell|exsel|ecxel|exl)\s+(sheet|about|for|of)/,
-    /spreadsheet/,
-    /xlsx\s+file/,
-    // Broader: "I want/need excel about X"
-    /(?:i\s+(?:want|need)\s+(?:an?\s+)?)?(?:excel|spreadsheet)\s+(?:about|for|on)/,
-    /create\s+(an?\s+)?report/,
-    /make\s+(an?\s+)?report/,
-    /generate\s+(an?\s+)?report/,
-    /create\s+(an?\s+)?table/,
-    /table\s+(about|of)/,
-    /data\s+(about|overview)/,
-    /document\s+about/,
-    /create\s+(an?\s+)?document/,
-    // Arabic
-    /اعمل\s*pdf/, /انشئ\s*pdf/, /ملف\s*pdf/, /تقرير\s*pdf/, /وثيقة\s*pdf/,
-    /اعمل\s*(اكسل|لي)/, /جدول\s*بيانات/, /ملف\s*اكسل/, /تقرير\s*عن/, /انشئ\s*تقرير/,
-    /سوي\s*لي/, /اعطني\s*ملف/, /حمل\s*لي/,
-    /جدول\s*عن/, /بيانات\s*عن/, /اكسل\s*عن/, /اكسل\s*لـ/,
+    /create\s+(an?\s+)?(excel|exel|excell)/, /make\s+(an?\s+)?(excel|exel|excell)/,
+    /give\s+me\s+(an?\s+)?(excel|exel|excell)/,
+    /(excel|exel|excell)\s+(sheet|about|for|of)/, /spreadsheet/, /xlsx/,
+    /create\s+(an?\s+)?report/, /make\s+(an?\s+)?report/, /generate\s+(an?\s+)?report/,
+    /اعمل\s*pdf/, /انشئ\s*pdf/, /ملف\s*pdf/, /تقرير\s*pdf/,
+    /اعمل\s*(اكسل|لي)/, /جدول\s*عن/, /بيانات\s*عن/, /اكسل\s*عن/,
     /ابي\s*(?:pdf|اكسل|ملف)/, /اعطني\s*(?:تقرير|ملف|جدول)/, /سوي\s*(?:pdf|اكسل|ملف)/,
-    // French
-    /créer\s+(un\s+)?pdf/, /faire\s+(un\s+)?pdf/, /rapport\s+pdf/, /document\s+pdf/, /générer\s+(un\s+)?pdf/,
-    /créer\s+(un\s+)?excel/, /feuille\s+excel/, /tableur/, /rapport\s+sur/, /faire\s+un\s+rapport/,
-    /excel\s+sur/, /excel\s+de/, /tableau\s+de/, /données\s+sur/,
-    // "make it excel", "put it in pdf", "convert it to xlsx", etc.
-    /(?:make|put|convert|turn)\s+(?:it|this|that)\s+(?:in(?:to)?|to|as)?\s*(?:an?\s+)?(?:pdf|excel|exel|excell|exsel|ecxel|exl|xlsx)/,
-    /(?:make|put|convert|turn)\s+(?:it|this|that)\s+(?:in(?:to)?|to|as)?\s*(?:an?\s+)?(?:report|document|table|spreadsheet)/,
-    // Ultra-short: "exel", "in excel", "pdf"
-    /^(?:in\s+)?(?:excel|exel|excell|exsel|exl|pdf|xlsx)\s*$/,
+    /créer\s+(un\s+)?pdf/, /faire\s+(un\s+)?pdf/, /rapport\s+pdf/,
+    /créer\s+(un\s+)?excel/, /tableur/,
+    /(?:make|put|convert|turn)\s+(?:it|this|that)\s+(?:in(?:to)?|to|as)?\s*(?:an?\s+)?(?:pdf|excel|exel|excell|xlsx)/,
+    /^(?:in\s+)?(?:excel|exel|excell|pdf|xlsx)\s*$/,
   ];
-  
   if (documentPatterns.some(rx => rx.test(lower))) return 'document';
 
-  // === Other intents ===
-  const engineeringKeywords = [
-    'beam', 'column', 'foundation', 'slab', 'retaining wall', 'grading',
-    'calculate', 'structural', 'load', 'stress', 'reinforcement', 'concrete',
-    'steel', 'moment', 'shear', 'deflection', 'design', 'span', 'kn', 'mpa', 'engineering'
-  ];
-  
-  const searchKeywords = ['search', 'find', 'look up', 'what is the latest', 'current', 'today', 'news', 'recent'];
-  const fileKeywords = ['uploaded', 'file', 'analyze this', 'summarize this'];
-
+  // FILES — when a file has been uploaded and user wants analysis
+  const fileKeywords = ['uploaded', 'analyze this', 'summarize this', 'this file', 'this document'];
   if (fileKeywords.some(kw => lower.includes(kw))) return 'files';
-  if (searchKeywords.some(kw => lower.includes(kw))) return 'search';
-  if (engineeringKeywords.some(kw => lower.includes(kw))) return 'engineering';
-  
-  // Fallback: if an image file is attached and no other intent matched, default to chat
-  if (hasImageFile) return 'chat';
-  
+  if (hasImageFile) return 'chat'; // attached image handled as chat, model sees it
+
+  // Everything else — let the model decide naturally
+  // The system prompt in ayn-unified already instructs the model to search
+  // when it needs current information it doesn't have
   return 'chat';
 }
