@@ -385,6 +385,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ayn_country_intelligence: {
+        Row: {
+          business_climate: Json | null
+          consumer: Json | null
+          country_code: string
+          country_name: string
+          economy: Json | null
+          emerging: Json | null
+          fetched_at: string | null
+          government: Json | null
+          health_sector: Json | null
+          hot_sectors: Json | null
+          id: string
+          intelligence_brief: Json | null
+          job_market: Json | null
+          opportunities: Json | null
+          region: string
+        }
+        Insert: {
+          business_climate?: Json | null
+          consumer?: Json | null
+          country_code: string
+          country_name: string
+          economy?: Json | null
+          emerging?: Json | null
+          fetched_at?: string | null
+          government?: Json | null
+          health_sector?: Json | null
+          hot_sectors?: Json | null
+          id?: string
+          intelligence_brief?: Json | null
+          job_market?: Json | null
+          opportunities?: Json | null
+          region: string
+        }
+        Update: {
+          business_climate?: Json | null
+          consumer?: Json | null
+          country_code?: string
+          country_name?: string
+          economy?: Json | null
+          emerging?: Json | null
+          fetched_at?: string | null
+          government?: Json | null
+          health_sector?: Json | null
+          hot_sectors?: Json | null
+          id?: string
+          intelligence_brief?: Json | null
+          job_market?: Json | null
+          opportunities?: Json | null
+          region?: string
+        }
+        Relationships: []
+      }
       ayn_error_log: {
         Row: {
           component: string
@@ -418,6 +472,48 @@ export type Database = {
           operation?: string | null
           resolved?: boolean | null
           severity?: string | null
+        }
+        Relationships: []
+      }
+      ayn_market_prices: {
+        Row: {
+          agriculture: Json | null
+          correlations: Json | null
+          crypto: Json | null
+          currencies: Json | null
+          energy: Json | null
+          fetched_at: string | null
+          id: string
+          indices: Json | null
+          metals: Json | null
+          narrative: Json | null
+          singleton_key: number | null
+        }
+        Insert: {
+          agriculture?: Json | null
+          correlations?: Json | null
+          crypto?: Json | null
+          currencies?: Json | null
+          energy?: Json | null
+          fetched_at?: string | null
+          id?: string
+          indices?: Json | null
+          metals?: Json | null
+          narrative?: Json | null
+          singleton_key?: number | null
+        }
+        Update: {
+          agriculture?: Json | null
+          correlations?: Json | null
+          crypto?: Json | null
+          currencies?: Json | null
+          energy?: Json | null
+          fetched_at?: string | null
+          id?: string
+          indices?: Json | null
+          metals?: Json | null
+          narrative?: Json | null
+          singleton_key?: number | null
         }
         Relationships: []
       }
@@ -601,6 +697,45 @@ export type Database = {
           yield_curve_signal?: string | null
           yield_spread_2_10?: number | null
           yield_spread_3m_10?: number | null
+        }
+        Relationships: []
+      }
+      ayn_trade_flows: {
+        Row: {
+          country_code: string
+          country_name: string
+          dependencies: Json | null
+          fetched_at: string | null
+          id: string
+          intelligence_brief: Json | null
+          opportunities: Json | null
+          top_exports: Json | null
+          top_imports: Json | null
+          trade_balance: Json | null
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          dependencies?: Json | null
+          fetched_at?: string | null
+          id?: string
+          intelligence_brief?: Json | null
+          opportunities?: Json | null
+          top_exports?: Json | null
+          top_imports?: Json | null
+          trade_balance?: Json | null
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          dependencies?: Json | null
+          fetched_at?: string | null
+          id?: string
+          intelligence_brief?: Json | null
+          opportunities?: Json | null
+          top_exports?: Json | null
+          top_imports?: Json | null
+          trade_balance?: Json | null
         }
         Relationships: []
       }
