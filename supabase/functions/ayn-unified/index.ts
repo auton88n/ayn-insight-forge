@@ -1616,8 +1616,56 @@ You may discuss trading concepts, strategy, and education freely — just don't 
     );
 
     if (effectiveStream && response instanceof Response) {
-      // Return streaming response
-      return new Response(response.body, {
+      // Return streaming response — intercept to strip MEMORY tags before they reach the user
+      const rawStream = response.body!;
+      const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+      let streamBuffer = '';
+      let fullStreamContent = '';
+
+      (async () => {
+        const reader = rawStream.getReader();
+        const writer = writable.getWriter();
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              // Flush any remaining buffer, stripping memory tags
+              if (streamBuffer) {
+                const cleaned = streamBuffer.replace(/\[MEMORY:[^\]]+\]/g, '').trimEnd();
+                if (cleaned) await writer.write(encoder.encode(cleaned));
+              }
+              // Save memories from full content after stream ends
+              if (fullStreamContent.includes('[MEMORY:') && userId) {
+                extractAndSaveMemories(supabase, userId, fullStreamContent).catch(err =>
+                  console.error('[ayn-unified] Stream memory extraction failed:', err)
+                );
+              }
+              break;
+            }
+            const chunk = decoder.decode(value, { stream: true });
+            fullStreamContent += chunk;
+            streamBuffer += chunk;
+
+            // Process complete SSE events from buffer
+            let newlineIdx: number;
+            while ((newlineIdx = streamBuffer.indexOf('\n')) !== -1) {
+              const line = streamBuffer.slice(0, newlineIdx + 1);
+              streamBuffer = streamBuffer.slice(newlineIdx + 1);
+              // Strip memory tags from each line before forwarding
+              const cleaned = line.replace(/\[MEMORY:[^\]]+\]/g, '');
+              await writer.write(encoder.encode(cleaned));
+            }
+          }
+        } catch (e) {
+          console.error('[ayn-unified] Stream processing error:', e);
+        } finally {
+          writer.close();
+        }
+      })();
+
+      return new Response(readable, {
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/event-stream',
