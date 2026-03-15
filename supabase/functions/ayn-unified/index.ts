@@ -976,10 +976,52 @@ You may discuss trading concepts, strategy, and education freely — just don't 
       const brief = marketSnapshot.intelligence_brief as string[] || [];
       const ageHours = marketSnapshot.snapshot_age_hours || 'unknown';
       if (brief.length > 0) {
-        intelligenceContext = `\n\nLIVE WORLD INTELLIGENCE (updated ${ageHours}h ago):
-${brief.join('\n')}
+        // Build extended context with demographics and market data
+        const demo = marketSnapshot.demographics as any;
+        const tourismData = marketSnapshot.tourism_market as any;
+        const regIntel = marketSnapshot.regional_intel as any;
 
-HOW TO USE THIS: Only surface this data if it is directly relevant to the user's question. Do not mention it otherwise. When it IS relevant, connect it specifically to their situation — do not just recite the numbers. For example, if someone asks about a business in Saudi Arabia, the relevant signals are: consumer confidence, money flow, global travel demand, and whether people are spending or saving. The crypto and stock prices are irrelevant unless they're asking about investments.`;
+        let marketContext = '';
+
+        // Demographics context
+        if (demo?.insights?.length > 0) {
+          marketContext += `\n\nSAUDI MARKET DEMOGRAPHICS (World Bank data):\n${(demo.insights as string[]).join('\n')}`;
+          if (demo.gcc_populations) {
+            const gcc = Object.entries(demo.gcc_populations as Record<string, any>)
+              .map(([k, v]) => `${v.name}: ${v.population}`)
+              .join(', ');
+            marketContext += `\nGCC populations: ${gcc}`;
+          }
+        }
+
+        // Tourism market data
+        if (tourismData?.international_arrivals?.latest) {
+          const arr = tourismData.international_arrivals.latest;
+          marketContext += `\n\nSAUDI TOURISM MARKET:\n- International arrivals: ${(arr.value/1000000).toFixed(1)}M (${arr.year}, ${tourismData.international_arrivals.trend})`;
+        }
+        if (tourismData?.tourism_receipts?.latest) {
+          const rec = tourismData.tourism_receipts.latest;
+          marketContext += `\n- Tourism revenue: $${(rec.value/1000000000).toFixed(1)}B (${rec.year})`;
+        }
+
+        // Regional competitor intel
+        if (regIntel?.adventure_tourism_pricing?.results?.length > 0) {
+          const hits = (regIntel.adventure_tourism_pricing.results as any[]).slice(0, 2);
+          marketContext += `\n\nCOMPETITOR PRICING INTELLIGENCE:\n${hits.map((h: any) => `- ${h.title}: ${h.snippet?.substring(0, 200)}`).join('\n')}`;
+        }
+        if (regIntel?.saudi_luxury_travel?.results?.length > 0) {
+          const hits = (regIntel.saudi_luxury_travel.results as any[]).slice(0, 2);
+          marketContext += `\n\nLUXURY TRAVEL MARKET SIGNALS:\n${hits.map((h: any) => `- ${h.title}: ${h.snippet?.substring(0, 200)}`).join('\n')}`;
+        }
+        if (regIntel?.saudi_expat_spending?.results?.length > 0) {
+          const hits = (regIntel.saudi_expat_spending.results as any[]).slice(0, 1);
+          marketContext += `\n\nEXPAT SPENDING SIGNALS:\n${hits.map((h: any) => `- ${h.title}: ${h.snippet?.substring(0, 200)}`).join('\n')}`;
+        }
+
+        intelligenceContext = `\n\nLIVE WORLD INTELLIGENCE (updated ${ageHours}h ago):
+${brief.join('\n')}${marketContext}
+
+HOW TO USE THIS: Only surface data that is directly relevant to the user's question. When relevant, connect signals specifically to their situation — name real numbers, real demographics, real competitor data. Never just recite the numbers without connecting them to what the user is trying to do.`;
       }
     }
 

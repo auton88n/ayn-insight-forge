@@ -381,6 +381,9 @@ function synthesizeSnapshot(data: {
   polymarket: Record<string, unknown>;
   gdelt: Record<string, unknown>;
   institutional: Record<string, unknown>;
+  demographics?: Record<string, unknown>;
+  regional?: Record<string, unknown>;
+  tourism?: Record<string, unknown>;
 }): Record<string, unknown> {
   
   const snapshot: Record<string, unknown> = {
@@ -432,10 +435,224 @@ function synthesizeSnapshot(data: {
     brief.push(`Gold: ${alpha.gold.signal}`);
   }
 
+  // Demographics signals
+  const demo = data.demographics as any;
+  if (demo?.insights?.length > 0) {
+    brief.push(...demo.insights.slice(0, 4));
+  }
+
+  // Tourism market signals
+  const tour = data.tourism as any;
+  if (tour?.international_arrivals?.latest?.value) {
+    const arr = tour.international_arrivals.latest;
+    brief.push(`Saudi international tourists: ${(arr.value/1000000).toFixed(1)}M arrivals (${arr.year}, ${tour.international_arrivals.trend})`);
+  }
+  if (tour?.tourism_receipts?.latest?.value) {
+    const rec = tour.tourism_receipts.latest;
+    brief.push(`Saudi tourism revenue: $${(rec.value/1000000000).toFixed(1)}B (${rec.year})`);
+  }
+
+  // Regional competitor market intel
+  const reg = data.regional as any;
+  if (reg?.adventure_tourism_pricing?.results?.length > 0) {
+    const pricing = reg.adventure_tourism_pricing.results[0];
+    brief.push(`Competitor pricing intel: ${pricing.snippet?.substring(0, 150) || pricing.title}`);
+  }
+  if (reg?.saudi_luxury_travel?.results?.length > 0) {
+    const luxury = reg.saudi_luxury_travel.results[0];
+    brief.push(`Luxury travel market: ${luxury.snippet?.substring(0, 150) || luxury.title}`);
+  }
+
+  // Store full structured data in snapshot
+  snapshot.demographics = data.demographics || {};
+  snapshot.tourism_market = data.tourism || {};
+  snapshot.regional_intel = data.regional || {};
+
   snapshot.intelligence_brief = brief;
   snapshot.brief_generated_at = new Date().toISOString();
 
   return snapshot;
+}
+
+
+// ─── WORLD BANK DEMOGRAPHICS ─────────────────────────────────────────────────
+// Fetches population, age structure, gender, income data for GCC countries
+async function fetchWorldBankDemographics(): Promise<Record<string, unknown>> {
+  const countries = ['SA', 'AE', 'QA', 'KW', 'BH', 'OM']; // GCC
+  const indicators = [
+    { id: 'SP.POP.TOTL', label: 'population', name: 'Total Population' },
+    { id: 'SP.POP.1564.TO.ZS', label: 'working_age_pct', name: 'Working Age (15-64) %' },
+    { id: 'SP.POP.65UP.TO.ZS', label: 'elderly_pct', name: 'Population 65+ %' },
+    { id: 'SP.POP.0014.TO.ZS', label: 'youth_pct', name: 'Population 0-14 %' },
+    { id: 'SP.POP.GROW', label: 'pop_growth', name: 'Population Growth Rate' },
+    { id: 'NY.GNP.PCAP.CD', label: 'gni_per_capita', name: 'GNI per Capita (USD)' },
+    { id: 'SP.URB.TOTL.IN.ZS', label: 'urban_pct', name: 'Urban Population %' },
+    { id: 'SP.POP.TOTL.FE.ZS', label: 'female_pct', name: 'Female Population %' },
+  ];
+
+  const results: Record<string, unknown> = {};
+
+  // Fetch Saudi Arabia detailed data (primary market)
+  await Promise.all(indicators.map(async (ind) => {
+    try {
+      const url = `https://api.worldbank.org/v2/country/SA/indicator/${ind.id}?format=json&mrv=1&per_page=1`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      const value = data[1]?.[0]?.value;
+      if (value !== null && value !== undefined) {
+        results[ind.label] = {
+          name: ind.name,
+          value: Math.round(value * 100) / 100,
+          year: data[1]?.[0]?.date,
+          country: 'Saudi Arabia'
+        };
+      }
+    } catch {}
+  }));
+
+  // GCC population overview
+  const gccPop: Record<string, unknown> = {};
+  await Promise.all(countries.map(async (code) => {
+    try {
+      const url = `https://api.worldbank.org/v2/country/${code}/indicator/SP.POP.TOTL?format=json&mrv=1&per_page=1`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      const pop = data[1]?.[0]?.value;
+      const countryName = data[1]?.[0]?.country?.value;
+      if (pop) gccPop[code] = { name: countryName, population: Math.round(pop / 1000) + 'K' };
+    } catch {}
+  }));
+  results.gcc_populations = gccPop;
+
+  // Derived insights
+  const pop = (results.population as any)?.value;
+  const youthPct = (results.youth_pct as any)?.value;
+  const workingAgePct = (results.working_age_pct as any)?.value;
+  const femalePct = (results.female_pct as any)?.value;
+  const urbanPct = (results.urban_pct as any)?.value;
+  const gni = (results.gni_per_capita as any)?.value;
+
+  const insights: string[] = [];
+  if (pop) insights.push(`Saudi population: ${(pop/1000000).toFixed(1)}M people`);
+  if (youthPct) insights.push(`Youth (0-14): ${youthPct.toFixed(1)}% — large young consumer base`);
+  if (workingAgePct) insights.push(`Working age (15-64): ${workingAgePct.toFixed(1)}% — primary spending demographic`);
+  if (femalePct) insights.push(`Female population: ${femalePct.toFixed(1)}% (significant shift in spending power post-2017 reforms)`);
+  if (urbanPct) insights.push(`Urban population: ${urbanPct.toFixed(1)}% — concentrated market in Riyadh, Jeddah, Dammam`);
+  if (gni) insights.push(`GNI per capita: $${gni.toLocaleString()} — high-income market`);
+
+  results.insights = insights;
+  return results;
+}
+
+// ─── REGIONAL MARKET INTELLIGENCE ────────────────────────────────────────────
+// Uses Brave Search to scan competitor pricing, tourism trends, market data
+async function fetchRegionalMarketIntel(braveApiKey: string): Promise<Record<string, unknown>> {
+  const results: Record<string, unknown> = {};
+
+  const searches = [
+    {
+      key: 'saudi_tourism_spending',
+      query: 'Saudi Arabia tourism visitor spending per capita 2024 2025',
+      label: 'Tourism Spending Data'
+    },
+    {
+      key: 'adventure_tourism_pricing',
+      query: 'AlUla adventure tour price Husaak desert camp Saudi Arabia cost',
+      label: 'Competitor Pricing'
+    },
+    {
+      key: 'saudi_luxury_travel',
+      query: 'Saudi Arabia luxury travel market size growth 2025 Vision 2030',
+      label: 'Luxury Travel Market'
+    },
+    {
+      key: 'saudi_expat_spending',
+      query: 'Saudi Arabia expat population spending leisure entertainment Riyadh 2025',
+      label: 'Expat Market Size'
+    },
+    {
+      key: 'middle_class_saudi',
+      query: 'Saudi Arabia middle class consumer spending growth 2025',
+      label: 'Middle Class Growth'
+    }
+  ];
+
+  await Promise.allSettled(searches.map(async (s) => {
+    try {
+      const url = `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(s.query)}&count=3`;
+      const res = await fetch(url, {
+        headers: { 'Accept': 'application/json', 'X-Subscription-Token': braveApiKey }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const hits = (data.web?.results || []).slice(0, 3).map((r: any) => ({
+        title: r.title,
+        snippet: r.description?.substring(0, 200),
+        url: r.url
+      }));
+      if (hits.length > 0) {
+        results[s.key] = { label: s.label, results: hits };
+      }
+    } catch {}
+  }));
+
+  return results;
+}
+
+// ─── TOURISM & HOSPITALITY MARKET DATA ───────────────────────────────────────
+// Fetches World Bank tourism data + regional pricing benchmarks
+async function fetchTourismMarketData(): Promise<Record<string, unknown>> {
+  const results: Record<string, unknown> = {};
+
+  // World Bank tourism indicators for Saudi Arabia
+  const tourismIndicators = [
+    { id: 'ST.INT.ARVL', label: 'international_arrivals', name: 'International Tourist Arrivals' },
+    { id: 'ST.INT.RCPT.CD', label: 'tourism_receipts', name: 'International Tourism Receipts (USD)' },
+    { id: 'ST.INT.XPND.CD', label: 'tourism_expenditure', name: 'Tourism Expenditure by Residents' },
+  ];
+
+  await Promise.all(tourismIndicators.map(async (ind) => {
+    try {
+      const url = `https://api.worldbank.org/v2/country/SA/indicator/${ind.id}?format=json&mrv=3&per_page=3`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      const entries = (data[1] || []).filter((e: any) => e.value !== null);
+      if (entries.length > 0) {
+        results[ind.label] = {
+          name: ind.name,
+          latest: { value: entries[0].value, year: entries[0].date },
+          trend: entries.length > 1
+            ? (entries[0].value > entries[1].value ? 'growing' : 'declining')
+            : 'stable'
+        };
+      }
+    } catch {}
+  }));
+
+  // GCC tourism comparison
+  const gccTourism: Record<string, unknown> = {};
+  const gccCountries = [
+    { code: 'SA', name: 'Saudi Arabia' },
+    { code: 'AE', name: 'UAE' },
+    { code: 'QA', name: 'Qatar' },
+  ];
+
+  await Promise.all(gccCountries.map(async (c) => {
+    try {
+      const url = `https://api.worldbank.org/v2/country/${c.code}/indicator/ST.INT.ARVL?format=json&mrv=1&per_page=1`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      const val = data[1]?.[0]?.value;
+      if (val) gccTourism[c.code] = { name: c.name, arrivals: Math.round(val / 1000) + 'K', year: data[1]?.[0]?.date };
+    } catch {}
+  }));
+
+  results.gcc_tourism_comparison = gccTourism;
+  return results;
 }
 
 // ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
@@ -453,19 +670,23 @@ Deno.serve(async (req) => {
     const ALPHA_VANTAGE_API_KEY = Deno.env.get('ALPHA_VANTAGE_API_KEY');
     const PIONEX_API_KEY = Deno.env.get('PIONEX_API_KEY');
     const PIONEX_API_SECRET = Deno.env.get('PIONEX_API_SECRET');
+    const BRAVE_API_KEY = Deno.env.get('BRAVE_API_KEY');
 
     console.log('[ayn-pulse-engine] Starting data fetch...');
     const startTime = Date.now();
 
     // Fetch all sources in parallel
-    const [fred, alpha, pionex, fearGreed, polymarket, gdelt, institutional] = await Promise.allSettled([
+    const [fred, alpha, pionex, fearGreed, polymarket, gdelt, institutional, demographics, regional, tourism] = await Promise.allSettled([
       FRED_API_KEY ? fetchFREDData(FRED_API_KEY) : Promise.resolve({}),
       ALPHA_VANTAGE_API_KEY ? fetchAlphaVantageData(ALPHA_VANTAGE_API_KEY) : Promise.resolve({}),
       PIONEX_API_KEY && PIONEX_API_SECRET ? fetchPionexData(PIONEX_API_KEY, PIONEX_API_SECRET) : Promise.resolve({}),
       fetchFearGreed(),
       fetchPolymarket(),
       fetchGDELT(),
-      fetchInstitutionalSignals()
+      fetchInstitutionalSignals(),
+      fetchWorldBankDemographics(),
+      BRAVE_API_KEY ? fetchRegionalMarketIntel(BRAVE_API_KEY) : Promise.resolve({}),
+      fetchTourismMarketData()
     ]);
 
     const sourcesUsed: string[] = [];
@@ -488,7 +709,10 @@ Deno.serve(async (req) => {
       fearGreed: getData(fearGreed, 'FearGreed'),
       polymarket: getData(polymarket, 'Polymarket'),
       gdelt: getData(gdelt, 'GDELT'),
-      institutional: getData(institutional, 'Firecrawl/Institutional')
+      institutional: getData(institutional, 'Firecrawl/Institutional'),
+      demographics: getData(demographics, 'WorldBank/Demographics'),
+      regional: getData(regional, 'Brave/RegionalMarket'),
+      tourism: getData(tourism, 'WorldBank/Tourism')
     });
 
     const duration = Date.now() - startTime;
