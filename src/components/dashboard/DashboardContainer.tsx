@@ -165,6 +165,9 @@ export const DashboardContainer = ({ user, session, auth, isAdmin, hasDutyAccess
 
   // Handle load chat - decouple eye animation from data rendering
   const handleLoadChat = useCallback((chat: ChatHistory) => {
+    // Block chat switching while AYN is responding — prevents shaking/state corruption
+    if (messagesHook.isTyping) return;
+
     // Trigger eye shrink IMMEDIATELY — zero main-thread work before this
     setIsTransitioningToChat(true);
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
@@ -174,7 +177,7 @@ export const DashboardContainer = ({ user, session, auth, isAdmin, hasDutyAccess
       messagesHook.setMessagesFromHistory(loadedMessages);
       setIsTransitioningToChat(false);
     }, 280);
-  }, [chatSession, messagesHook]);
+  }, [chatSession, messagesHook, messagesHook.isTyping]);
 
   // Handle new chat
   const handleNewChat = useCallback(() => {

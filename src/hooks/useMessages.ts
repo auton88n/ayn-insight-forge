@@ -372,7 +372,6 @@ export const useMessages = (
       // Detect intent based on mode and content
       const detectIntent = (): string => {
         if (selectedMode === 'LAB' || selectedMode === 'Vision Lab') return 'image';
-        if (selectedMode === 'Civil Engineering') return 'engineering';
         if (selectedMode === 'Research Pro') return 'search';
         if (selectedMode === 'PDF Analyst') return 'files';
         
@@ -404,8 +403,7 @@ export const useMessages = (
         if (attachment && attachment.type.startsWith('image/') && /chart|trading|signal|technical\s+analysis|analyze|شارت|تحليل\s*فني|graphique|analyse\s+technique/.test(lower)) return 'chart_analysis';
         
         // Other intent detection
-        if (/search|find|look up|latest|news/.test(lower)) return 'search';
-        if (/beam|column|foundation|slab|calculate|structural/.test(lower)) return 'engineering';
+        if (/search|find|look up|latest|current|today|news|price|weather|what happened|who is|when did|where is/.test(lower)) return 'search';
         
         // Fallback: if image is attached and no other intent matched, default to chart analysis
         if (attachment && attachment.type.startsWith('image/')) return 'chart_analysis';
@@ -448,13 +446,18 @@ export const useMessages = (
 
       // Build context for ayn-unified
       const context: Record<string, unknown> = {
-        buildingCode: userProfile?.business_type ? 'ACI 318-25' : undefined,
         fileContext: attachment ? {
           name: attachment.name,
           type: attachment.type,
           url: attachment.url
         } : undefined,
-        emotionHistory: emotionHistory.slice(-5)
+        emotionHistory: emotionHistory.slice(-5),
+        // User profile context so AYN can personalize
+        userProfile: userProfile ? {
+          name: userProfile.contact_person,
+          company: userProfile.company_name,
+          businessType: userProfile.business_type,
+        } : undefined,
       };
 
       // Call ayn-unified with timeout and retry

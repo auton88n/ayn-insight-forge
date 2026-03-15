@@ -498,12 +498,12 @@ export const Sidebar = ({
 return <SidebarMenuItem key={chat.sessionId} className={cn("relative", index > 0 && "before:absolute before:top-0 before:left-4 before:right-4 before:h-px before:bg-border/30")}>
                         <div className="flex items-center gap-2 w-full group">
                           {showChatSelection && <Checkbox checked={selectedChats.has(originalIndex)} onCheckedChange={() => onToggleChatSelection(originalIndex)} className="ml-2" />}
-                          <div onClick={() => !showChatSelection && onLoadChat(chat)} role="button" tabIndex={0} onKeyDown={e => {
+                          <div onClick={() => !showChatSelection && !isTyping && onLoadChat(chat)} role="button" tabIndex={isTyping ? -1 : 0} onKeyDown={e => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        if (!showChatSelection) onLoadChat(chat);
+                        if (!showChatSelection && !isTyping) onLoadChat(chat);
                       }
-                    }} className={cn("flex-1 h-auto py-2 px-3 pr-5 rounded-lg cursor-pointer", "hover:bg-muted/40", "active:scale-[0.99]", "transition-all duration-150 ease-out", isPinned && "bg-muted/20")}>
+                    }} className={cn("flex-1 h-auto py-2 px-3 pr-5 rounded-lg", isTyping ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-muted/40 active:scale-[0.99]", "transition-all duration-150 ease-out", isPinned && "bg-muted/20")}>
                             <div className="w-full min-w-0">
                               {/* Row 1: Icon + Title + Time + Star */}
                               <div className="flex items-center justify-between gap-2">
