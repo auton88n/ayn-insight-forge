@@ -441,6 +441,47 @@ async function getUserContext(supabase: ReturnType<typeof createClient>, userId:
   }
 }
 
+// Detect countries mentioned in user message
+function detectCountries(message: string): string[] {
+  const countryMap: Record<string, string> = {
+    'saudi': 'SA', 'ksa': 'SA', 'riyadh': 'SA', 'jeddah': 'SA', 'alula': 'SA', 'neom': 'SA',
+    'uae': 'AE', 'dubai': 'AE', 'abu dhabi': 'AE',
+    'qatar': 'QA', 'doha': 'QA',
+    'usa': 'US', 'united states': 'US', 'america': 'US', 'new york': 'US', 'los angeles': 'US', 'silicon valley': 'US',
+    'canada': 'CA', 'toronto': 'CA', 'vancouver': 'CA', 'montreal': 'CA',
+    'uk': 'GB', 'britain': 'GB', 'england': 'GB', 'london': 'GB',
+    'france': 'FR', 'paris': 'FR',
+    'germany': 'DE', 'berlin': 'DE',
+    'japan': 'JP', 'tokyo': 'JP',
+    'singapore': 'SG',
+    'india': 'IN', 'mumbai': 'IN', 'bangalore': 'IN',
+  };
+  const lower = message.toLowerCase();
+  const found = new Set<string>();
+  for (const [keyword, code] of Object.entries(countryMap)) {
+    if (lower.includes(keyword)) found.add(code);
+  }
+  return Array.from(found).slice(0, 3); // max 3 countries per message
+}
+
+// Fetch country intelligence profiles
+async function getCountryIntelligence(
+  supabase: ReturnType<typeof createClient>,
+  countryCodes: string[]
+): Promise<Record<string, unknown>[]> {
+  if (countryCodes.length === 0) return [];
+  try {
+    const { data, error } = await supabase
+      .from('ayn_country_intelligence')
+      .select('country_code, country_name, region, economy, government, hot_sectors, opportunities, job_market, health_sector, consumer, emerging, intelligence_brief, fetched_at')
+      .in('country_code', countryCodes);
+    if (error || !data) return [];
+    return data;
+  } catch {
+    return [];
+  }
+}
+
 // Check and send credit warning email if user crossed 90% threshold
 async function checkAndSendCreditWarning(
   supabase: ReturnType<typeof createClient>,
@@ -846,7 +887,10 @@ serve(async (req) => {
     const wantsAutonomousTrading = intent === 'trading-coach' &&
       autonomousTradingKeywords.some(kw => msgLower.includes(kw));
 
-    const [limitCheck, userContext, marketSnapshot, chartHistory, accountPerformance, scanResults] = await Promise.all([
+    // Detect countries mentioned in the user's message
+    const mentionedCountries = detectCountries(lastMessage);
+
+    const [limitCheck, userContext, marketSnapshot, chartHistory, accountPerformance, scanResults, countryProfiles] = await Promise.all([
       isInternalCall ? Promise.resolve({ allowed: true }) : checkUserLimit(supabase, userId, intent),
       isInternalCall ? Promise.resolve({}) : getUserContext(supabase, userId),
       getMarketSnapshot(supabase),
@@ -874,7 +918,9 @@ serve(async (req) => {
         }
       })() : Promise.resolve(null),
       // Scan market for autonomous trading
-      wantsAutonomousTrading ? scanMarketOpportunities() : Promise.resolve(null)
+      wantsAutonomousTrading ? scanMarketOpportunities() : Promise.resolve(null),
+      // Country intelligence profiles for mentioned countries
+      mentionedCountries.length > 0 ? getCountryIntelligence(supabase, mentionedCountries) : Promise.resolve([])
     ]);
 
     // Check user limits
@@ -1022,6 +1068,53 @@ You may discuss trading concepts, strategy, and education freely — just don't 
 ${brief.join('\n')}${marketContext}
 
 HOW TO USE THIS: Only surface data that is directly relevant to the user's question. When relevant, connect signals specifically to their situation — name real numbers, real demographics, real competitor data. Never just recite the numbers without connecting them to what the user is trying to do.`;
+
+        // Inject country intelligence profiles if countries were detected
+        const profiles = countryProfiles as any[];
+        if (profiles && profiles.length > 0) {
+          let countryContext = '\n\nCOUNTRY INTELLIGENCE PROFILES (live data):';
+          for (const profile of profiles) {
+            const brief = (profile.intelligence_brief as string[]) || [];
+            const eco = profile.economy as any;
+            const con = profile.consumer as any;
+            const health = profile.health_sector as any;
+            const age = profile.fetched_at ? `updated ${Math.round((Date.now() - new Date(profile.fetched_at).getTime()) / 3600000)}h ago` : '';
+
+            countryContext += `\n\n${profile.country_name} (${age}):`;
+            if (brief.length > 0) countryContext += '\n' + brief.slice(0, 8).join('\n');
+
+            // Hot sectors
+            const hot = profile.hot_sectors as any[];
+            if (hot?.length > 0) {
+              const sector = hot[0];
+              countryContext += `\nHot sectors: ${sector.snippet || sector.title || ''}`;
+            }
+
+            // Opportunities
+            const opps = profile.opportunities as any[];
+            if (opps?.length > 0) {
+              countryContext += `\nMarket gap: ${opps[0].snippet || opps[0].title || ''}`;
+            }
+
+            // Job market
+            const jobs = profile.job_market as any[];
+            if (jobs?.length > 0) {
+              countryContext += `\nJobs: ${jobs[0].snippet || jobs[0].title || ''}`;
+            }
+
+            // Health sector
+            if (health?.market_intel?.length > 0) {
+              countryContext += `\nHealth market: ${health.market_intel[0].snippet || health.market_intel[0].title || ''}`;
+            }
+
+            // Emerging
+            const emerging = profile.emerging as any[];
+            if (emerging?.length > 0) {
+              countryContext += `\nEmerging: ${emerging[0].snippet || emerging[0].title || ''}`;
+            }
+          }
+          intelligenceContext += countryContext;
+        }
       }
     }
 
