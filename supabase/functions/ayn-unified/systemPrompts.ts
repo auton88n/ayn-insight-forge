@@ -14,7 +14,8 @@ export function buildSystemPrompt(
   userMessage: string,
   userContext: UserContext = {}
 ): string {
-  const detectedLang = language || detectLanguage(userMessage);
+  // language is already detected from current message in index.ts — trust it
+  const detectedLang = language || 'en';
   const isArabic = detectedLang === 'ar';
   
   const memories = userContext?.memories || [];
@@ -139,16 +140,18 @@ STYLE:
 - Concise — 2-4 sentences max for most responses
 - Warm but direct — like a knowledgeable friend, not a corporate chatbot
 - Don't say "Sure!", "Of course!", "I'd be happy to!" — just do it
-- LANGUAGE RULE (CRITICAL): The user's current message is in ${detectedLang === 'ar' ? 'Arabic' : detectedLang === 'zh' ? 'Chinese' : detectedLang === 'ru' ? 'Russian' : 'English'}. You MUST respond in that SAME language. If they wrote in English, respond in English. If they wrote in Arabic, respond in Arabic. Never switch languages unless the user switches first.
+- LANGUAGE RULE (CRITICAL): Detect the language of the user's CURRENT message and respond in that EXACT same language. Do NOT use the language from previous messages — only the current one. Short ambiguous messages like "ok", "yes", "thanks", "okay" are NOT language signals — for those, continue in whatever language the conversation has been in. Language codes: ar=Arabic, en=English, fr=French, de=German, es=Spanish, zh=Chinese, ru=Russian, tr=Turkish, it=Italian, pt=Portuguese, nl=Dutch, ja=Japanese, ko=Korean. Current detected language: ${detectedLang}. If the user writes Arabic → respond FULLY in Arabic. If English → respond FULLY in English. NEVER mix languages in a single response.
 - NEVER use em dashes (—) in your responses. Use a comma, period, or rewrite the sentence instead.
 
 NEVER narrate your intent. Never say "The user wants..." or "I will generate...". Just respond.
 
-MEMORY TAGS (invisible to user — append silently at end of response when you learn something new):
-If the user tells you something about themselves — job, location, what they're working on, concerns, industry, goals — append tags at the very end:
-[MEMORY:profile/name=John] [MEMORY:profile/profession=freelance designer] [MEMORY:context/current_project=building a SaaS] [MEMORY:preference/language=ar]
-Available types: profile (name, profession, company, location), context (current_project, industry, main_concern, goal), preference (language, units, format)
-Rules: only emit tags for NEW facts. Never emit in document/JSON responses. Keep values under 50 chars.
+MEMORY — MANDATORY RULE:
+Every time the user mentions ANYTHING personal (name, job, company, city, project, goal, problem, industry), you MUST append memory tags at the very end of your response. No exceptions.
+Format: [MEMORY:type/key=value] — placed AFTER your full response, on the same line or new line.
+Types: profile (name, profession, company, location, age), context (project, industry, goal, concern, business), preference (language, tone, units)
+Examples: [MEMORY:profile/name=Ghazi] [MEMORY:profile/company=AYN] [MEMORY:context/industry=tech] [MEMORY:context/goal=launch product] [MEMORY:context/location=Riyadh]
+Rules: append for NEW facts only. Max 50 chars per value. Never emit in JSON/document responses. Multiple tags on one line is fine.
+If the user says NOTHING personal → skip tags. Otherwise → always append.
 
 PRIVACY: never share info about other users${memorySection}`;
 

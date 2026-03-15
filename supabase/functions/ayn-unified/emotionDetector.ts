@@ -244,6 +244,42 @@ export function detectUserEmotion(message: string): string {
 }
 
 export function detectLanguage(message: string): string {
-  if (/[\u0600-\u06FF]/.test(message)) return 'ar';
-  return 'en';
+  if (!message || message.trim().length < 2) return 'en';
+  const t = message.trim();
+  // Non-Latin scripts — high confidence from character presence
+  if (/[\u0600-\u06FF\u0750-\u077F]/.test(t)) return 'ar';   // Arabic
+  if (/[\u4E00-\u9FFF\u3400-\u4DBF]/.test(t)) return 'zh';   // Chinese
+  if (/[\u3040-\u309F\u30A0-\u30FF]/.test(t)) return 'ja';   // Japanese
+  if (/[\uAC00-\uD7AF]/.test(t))                return 'ko';   // Korean
+  if (/[\u0590-\u05FF]/.test(t))                return 'he';   // Hebrew
+  if (/[\u0E00-\u0E7F]/.test(t))                return 'th';   // Thai
+  if (/[\u0900-\u097F]/.test(t))                return 'hi';   // Hindi
+  // Cyrillic — check Ukrainian first
+  if (/[\u0400-\u04FF]/.test(t)) {
+    if (/[іїєґ]/i.test(t)) return 'uk';
+    return 'ru';
+  }
+  // Latin language detection via common words
+  const l = t.toLowerCase();
+  const words = new Set(l.match(/\b[a-z]{2,}\b/g) || []);
+  const score = (list: string[]) => list.filter(w => words.has(w)).length;
+  const scores: Record<string,number> = {
+    ar: 0, // already handled above
+    fr: score(['je','tu','nous','vous','est','sont','avec','pour','dans','que','les','des','une','sur','pas','plus','très','aussi','comme','mais','bonjour','merci']),
+    es: score(['yo','está','con','para','qué','cómo','pero','muy','también','más','todo','hola','gracias','buenos','días','usted','una','los','las','por']),
+    de: score(['ich','du','er','sie','wir','ist','sind','mit','für','auf','was','aber','auch','sehr','und','oder','nicht','guten','morgen','danke','bitte','das','ein','der','die']),
+    it: score(['io','tu','lui','lei','noi','con','per','che','chi','come','dove','perché','ma','molto','anche','più','tutto','bene','ciao','grazie','della','questo']),
+    pt: score(['eu','está','com','para','que','quem','como','onde','mas','muito','também','mais','tudo','bem','olá','obrigado','não','sim','uma','dos','você']),
+    tr: score(['ben','sen','biz','var','yok','ile','için','ne','ama','çok','ve','veya','değil','merhaba','evet','hayır','bu','bir','olan','gibi','daha']),
+    nl: score(['ik','jij','hij','zij','wij','met','voor','wat','wie','hoe','maar','ook','zeer','en','of','niet','hallo','dank','bedankt','het','een','de']),
+    pl: score(['ja','ty','on','ona','my','wy','jest','są','dla','co','kto','jak','gdzie','ale','też','bardzo','nie','być','mieć','cześć','dziękuję','tak']),
+    ru: 0, // handled by Cyrillic above
+    en: score(['the','a','an','is','are','was','were','have','has','will','would','could','should','this','that','with','from','they','what','which','who','when','where','how','but','and','for','not','you','we','it','be','do','did','can','may','just','ok','okay','yes','no','hi','hello','hey','thanks','please','help','want','need','know','think','see','get','make','go','come','tell','say']),
+  };
+  let best = 'en'; let bestScore = scores.en;
+  for (const [lang, s] of Object.entries(scores)) {
+    if (s > bestScore) { best = lang; bestScore = s; }
+  }
+  // If no word matched at all but text is clearly Latin → English
+  return bestScore > 0 ? best : 'en';
 }

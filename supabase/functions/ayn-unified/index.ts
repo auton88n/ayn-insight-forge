@@ -326,8 +326,11 @@ async function callWithFallback(
       const response = await callLLM(model, messages, stream);
       const responseTimeMs = Date.now() - startTime;
       
-      // Extract token usage from non-streaming responses
+      // Extract token usage — real for non-streaming, estimated for streaming
       const usage = (response && typeof response === 'object' && 'usage' in response) ? (response as any).usage : null;
+      // For streaming responses, estimate tokens from message length (4 chars ≈ 1 token)
+      const estimatedInputTokens = usage?.prompt_tokens || 
+        Math.round(messages.reduce((sum, m) => sum + (typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content).length), 0) / 4);
       
       // Log successful usage with token counts and response time
       try {
@@ -337,7 +340,7 @@ async function callWithFallback(
           was_fallback: i > 0,
           fallback_reason: i > 0 ? `Primary model failed, used ${model.display_name}` : null,
           model_name: model.model_id,
-          input_tokens: usage?.prompt_tokens || 0,
+          input_tokens: estimatedInputTokens,
           output_tokens: usage?.completion_tokens || 0,
           response_time_ms: responseTimeMs,
         });
@@ -1148,13 +1151,9 @@ serve(async (req) => {
       });
     }
 
-    // CRITICAL: Always detect language from the CURRENT message first.
-    // Saved preference is only a fallback — never override what the user is writing right now.
-    const detectedFromMessage = /[\u0600-\u06FF]/.test(lastMessage) ? 'ar' : 
-                                /[\u4E00-\u9FFF]/.test(lastMessage) ? 'zh' :
-                                /[\u0400-\u04FF]/.test(lastMessage) ? 'ru' : null;
-    const savedLanguagePref = (userContext as { preferences?: { language?: string } })?.preferences?.language;
-    const language = detectedFromMessage || savedLanguagePref || 'en';
+    // Language detection — always from CURRENT message, never from stale saved preference
+    // detectLanguage() now supports 15+ languages via script + word pattern matching
+    const language = detectLanguage(lastMessage);
 
     // Memory extraction now happens AFTER the AI responds (parses [MEMORY:] tags from response)
 
