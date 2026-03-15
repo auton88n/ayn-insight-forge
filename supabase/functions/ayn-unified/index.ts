@@ -29,10 +29,16 @@ const DOCUMENT_CREDIT_COST = {
 
 
 const FALLBACK_CHAINS: Record<string, LLMModel[]> = {
+  // Simple chat — Gemini 3 Flash is fast, smart, cost-effective
   chat: [
     { id: 'lovable-gemini-3-flash', provider: 'lovable', model_id: 'google/gemini-3-flash-preview', display_name: 'Gemini 3 Flash' },
     { id: 'lovable-gemini-flash', provider: 'lovable', model_id: 'google/gemini-2.5-flash', display_name: 'Gemini 2.5 Flash' },
     { id: 'lovable-gemini-flash-lite', provider: 'lovable', model_id: 'google/gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite' }
+  ],
+  // Deep analysis — Gemini 3 Pro for complex multi-step reasoning
+  deep: [
+    { id: 'lovable-gemini-3-pro', provider: 'lovable', model_id: 'google/gemini-3-pro-preview', display_name: 'Gemini 3 Pro' },
+    { id: 'lovable-gemini-3-flash', provider: 'lovable', model_id: 'google/gemini-3-flash-preview', display_name: 'Gemini 3 Flash' },
   ],
   engineering: [
     { id: 'lovable-gemini-3-flash', provider: 'lovable', model_id: 'google/gemini-3-flash-preview', display_name: 'Gemini 3 Flash' },
@@ -55,6 +61,17 @@ const FALLBACK_CHAINS: Record<string, LLMModel[]> = {
     { id: 'lovable-gemini-flash-lite', provider: 'lovable', model_id: 'google/gemini-2.5-flash-lite', display_name: 'Gemini 2.5 Flash Lite' }
   ],
 };
+
+// Detect if a message needs deep reasoning (Pro) vs fast answer (Flash)
+function needsDeepReasoning(message: string): boolean {
+  const l = message.toLowerCase();
+  // Long messages usually need more analysis
+  if (message.length > 300) return true;
+  // Complex analytical questions
+  return /\b(analyze|analysis|strategy|compare|evaluate|assess|should i|what do you think about|how should i|help me decide|pros and cons|explain why|what are the implications|business plan|investment|long.term|forecast|predict|risk|opportunity|advise me|what would you recommend)\b/i.test(l) ||
+  // Arabic equivalents
+  /\b(تحليل|استراتيجية|قارن|قيم|هل يجب|ماذا تعتقد|كيف يجب|ساعدني|إيجابيات وسلبيات|اشرح لماذا|خطة عمل|توصية|نصيحة)\b/.test(l);
+}
 
 // Generate image using Lovable AI (DALL-E 3 primary, Gemini fallback)
 async function generateImage(prompt: string): Promise<{ imageUrl: string; revisedPrompt: string }> {
@@ -292,7 +309,14 @@ async function callWithFallback(
   supabase: ReturnType<typeof createClient>,
   userId: string
 ): Promise<{ response: Response | { content: string }; modelUsed: LLMModel; wasFallback: boolean }> {
-  const chain = FALLBACK_CHAINS[intent] || FALLBACK_CHAINS.chat;
+  // Route to deep reasoning model (Gemini 3 Pro) for complex analytical questions
+  // Extract last user message for complexity detection
+  const lastUserMsg = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
+  const msgText = typeof lastUserMsg === 'string' ? lastUserMsg : JSON.stringify(lastUserMsg);
+  const useDeepReasoning = intent === 'chat' && needsDeepReasoning(msgText);
+  const effectiveIntent = useDeepReasoning ? 'deep' : intent;
+  if (useDeepReasoning) console.log('[ayn-unified] Routing to Gemini 3 Pro — deep reasoning detected');
+  const chain = FALLBACK_CHAINS[effectiveIntent] || FALLBACK_CHAINS.chat;
   
   for (let i = 0; i < chain.length; i++) {
     const model = chain[i];
