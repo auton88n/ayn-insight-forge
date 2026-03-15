@@ -441,6 +441,36 @@ async function getUserContext(supabase: ReturnType<typeof createClient>, userId:
   }
 }
 
+// Fetch live commodity/currency/crypto prices
+async function getMarketPrices(supabase: ReturnType<typeof createClient>): Promise<Record<string, unknown>> {
+  try {
+    const { data } = await supabase
+      .from('ayn_market_prices')
+      .select('metals, energy, agriculture, currencies, crypto, correlations, narrative, fetched_at')
+      .eq('singleton_key', 1)
+      .maybeSingle();
+    return data || {};
+  } catch { return {}; }
+}
+
+// Fetch trade flows for specific countries
+async function getTradeFlows(supabase: ReturnType<typeof createClient>, countryCodes: string[]): Promise<Record<string, unknown>[]> {
+  if (countryCodes.length === 0) return [];
+  try {
+    const { data } = await supabase
+      .from('ayn_trade_flows')
+      .select('country_code, country_name, top_exports, top_imports, trade_balance, opportunities, dependencies, intelligence_brief')
+      .in('country_code', countryCodes);
+    return data || [];
+  } catch { return []; }
+}
+
+// Detect if message is asking about prices/markets/trade
+function needsMarketData(message: string): boolean {
+  const l = message.toLowerCase();
+  return /\b(price|gold|oil|wheat|corn|coffee|sugar|rice|copper|silver|commodity|commodities|barrel|export|import|trade|currency|dollar|euro|pound|yen|riyal|stock|market|bitcoin|btc|crypto|raw material|supply|demand|inflation food|food prices)\b/i.test(l);
+}
+
 // Detect countries mentioned in user message
 function detectCountries(message: string): string[] {
   const countryMap: Record<string, string> = {
@@ -890,7 +920,7 @@ serve(async (req) => {
     // Detect countries mentioned in the user's message
     const mentionedCountries = detectCountries(lastMessage);
 
-    const [limitCheck, userContext, marketSnapshot, chartHistory, accountPerformance, scanResults, countryProfiles] = await Promise.all([
+    const [limitCheck, userContext, marketSnapshot, chartHistory, accountPerformance, scanResults, countryProfiles, marketPrices, tradeFlows] = await Promise.all([
       isInternalCall ? Promise.resolve({ allowed: true }) : checkUserLimit(supabase, userId, intent),
       isInternalCall ? Promise.resolve({}) : getUserContext(supabase, userId),
       getMarketSnapshot(supabase),
@@ -920,7 +950,11 @@ serve(async (req) => {
       // Scan market for autonomous trading
       wantsAutonomousTrading ? scanMarketOpportunities() : Promise.resolve(null),
       // Country intelligence profiles for mentioned countries
-      mentionedCountries.length > 0 ? getCountryIntelligence(supabase, mentionedCountries) : Promise.resolve([])
+      mentionedCountries.length > 0 ? getCountryIntelligence(supabase, mentionedCountries) : Promise.resolve([]),
+      // Market prices (commodities, currencies, crypto) - fetch when relevant
+      needsMarketData(lastMessage) ? getMarketPrices(supabase) : Promise.resolve({}),
+      // Trade flows for mentioned countries
+      mentionedCountries.length > 0 ? getTradeFlows(supabase, mentionedCountries) : Promise.resolve([])
     ]);
 
     // Check user limits
@@ -1114,6 +1148,36 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
             }
           }
           intelligenceContext += countryContext;
+        }
+
+        // Inject live commodity/market prices when relevant
+        const prices = marketPrices as any;
+        if (prices && Object.keys(prices).length > 0) {
+          const narrative = (prices.narrative as string[]) || [];
+          const corr = (prices.correlations as any)?.signals || [];
+          if (narrative.length > 0) {
+            intelligenceContext += `\n\nLIVE COMMODITY & MARKET PRICES (updated every 2h):\n${narrative.slice(0, 15).join('\n')}`;
+          }
+          if (corr.length > 0) {
+            intelligenceContext += `\n\nMARKET CORRELATIONS (what's moving together):\n${corr.join('\n')}`;
+          }
+        }
+
+        // Inject trade flows for mentioned countries
+        const flows = tradeFlows as any[];
+        if (flows && flows.length > 0) {
+          let tradeContext = '\n\nTRADE FLOWS (exports & imports):';
+          for (const flow of flows) {
+            const brief = (flow.intelligence_brief as string[]) || [];
+            if (brief.length > 0) tradeContext += '\n' + brief.join('\n');
+            const exports = flow.top_exports as any[];
+            const imports = flow.top_imports as any[];
+            if (exports?.length > 0) tradeContext += `\nTop exports: ${exports.slice(0,2).map((e: any) => e.snippet || e.title).join(' | ')}`;
+            if (imports?.length > 0) tradeContext += `\nTop imports: ${imports.slice(0,2).map((i: any) => i.snippet || i.title).join(' | ')}`;
+            const opps = flow.opportunities as any[];
+            if (opps?.length > 0) tradeContext += `\nTrade opportunity: ${opps[0].snippet || opps[0].title || ''}`;
+          }
+          intelligenceContext += tradeContext;
         }
       }
     }
