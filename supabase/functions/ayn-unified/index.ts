@@ -1490,8 +1490,35 @@ You may discuss trading concepts, strategy, and education freely — just don't 
         : msg.content
     }));
 
-    // Smart web search — AYN decides naturally when current info is needed
+    // URL detection — if user pastes a URL, AYN reads it automatically
     let enrichedMessages = [...sanitizedMessages];
+    const urlMatch = lastMessage.match(/https?:\/\/[^\s]+/);
+    if (urlMatch && (intent === 'chat' || intent === 'search' || intent === 'files')) {
+      try {
+        const { scrapeUrl: scrapeUrlFn } = await import("../_shared/firecrawlHelper.ts");
+        const { sanitizeForPrompt, FIRECRAWL_CONTENT_GUARD } = await import("../_shared/sanitizeFirecrawl.ts");
+        const detectedUrl = urlMatch[0].replace(/[.,;!?]$/, ''); // strip trailing punctuation
+        const scraped = await scrapeUrlFn(detectedUrl);
+        if (scraped.success && scraped.markdown) {
+          const title = scraped.metadata?.title || detectedUrl;
+          const safeContent = sanitizeForPrompt(scraped.markdown, 4000);
+          const urlContext = `\n\n${FIRECRAWL_CONTENT_GUARD}\nWEBSITE CONTENT (user shared: "${title}"):\n${safeContent}\n\nAnswer based on this content. If the user asked something about it, use this. If they just shared it without a question, summarize what it is.`;
+          enrichedMessages = [
+            ...sanitizedMessages.slice(0, -1),
+            {
+              role: 'user',
+              content: sanitizeUserPrompt(lastMessage) + urlContext
+            }
+          ];
+          console.log('[ayn-unified] URL scraped:', detectedUrl.substring(0, 60));
+        }
+      } catch (err) {
+        console.warn('[ayn-unified] URL scrape failed:', err);
+        // Fall through to normal processing
+      }
+    }
+
+    // Smart web search — AYN decides naturally when current info is needed
 
     const needsWebLookup = (msg: string): boolean => {
       const l = msg.toLowerCase();
