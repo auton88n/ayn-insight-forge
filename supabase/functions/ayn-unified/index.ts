@@ -970,7 +970,10 @@ You may discuss trading concepts, strategy, and education freely — just don't 
       const brief = marketSnapshot.intelligence_brief as string[] || [];
       const ageHours = marketSnapshot.snapshot_age_hours || 'unknown';
       if (brief.length > 0) {
-        intelligenceContext = `\n\nLIVE MARKET INTELLIGENCE (updated ${ageHours}h ago — use this as background context, only surface what's relevant to the user's question):\n${brief.join('\n')}\n\nFull data available: macro=${JSON.stringify(marketSnapshot.macro || {}).substring(0, 500)}, crypto=${JSON.stringify((marketSnapshot.markets as any)?.crypto || {}).substring(0, 300)}`;
+        intelligenceContext = `\n\nLIVE WORLD INTELLIGENCE (updated ${ageHours}h ago):
+${brief.join('\n')}
+
+HOW TO USE THIS: Only surface this data if it is directly relevant to the user's question. Do not mention it otherwise. When it IS relevant, connect it specifically to their situation — do not just recite the numbers. For example, if someone asks about a business in Saudi Arabia, the relevant signals are: consumer confidence, money flow, global travel demand, and whether people are spending or saving. The crypto and stock prices are irrelevant unless they're asking about investments.`;
       }
     }
 
