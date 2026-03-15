@@ -1666,7 +1666,7 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
           content: revisedPrompt,
           imageUrl,
           revisedPrompt,
-          model: 'Gemini Image',
+          model: 'AYN',
           wasFallback: false,
           intent: 'image'
         }), {
@@ -1905,8 +1905,8 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
         
         return new Response(JSON.stringify({
           content: successMessages[docLang] || successMessages.en,
-          model: llmResult.modelUsed.display_name,
-          wasFallback: llmResult.wasFallback,
+          model: 'AYN',
+          
           intent: 'document',
           documentUrl: downloadUrl,
           documentType: docType,
@@ -2133,8 +2133,8 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/event-stream',
-          'X-Model-Used': modelUsed.display_name,
-          'X-Was-Fallback': wasFallback.toString()
+          'X-Model-Used': 'AYN',
+          'X-Was-Fallback': 'false'
         }
       });
     }
@@ -2208,7 +2208,7 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
           content: revisedPrompt,
           imageUrl,
           revisedPrompt,
-          model: modelUsed.display_name,
+          model: 'AYN',
           wasFallback,
           intent: 'image'
         }), {
@@ -2232,7 +2232,7 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
     
     return new Response(JSON.stringify({
       content: responseContent,
-      model: modelUsed.display_name,
+      model: 'AYN',
       wasFallback,
       intent,
       emotion: detectedEmotion,

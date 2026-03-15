@@ -375,7 +375,7 @@ export function AdminAIAssistant() {
             <h2 className="text-lg font-semibold flex items-center gap-2">
               AYN Admin Assistant
               <Badge variant="secondary" className="text-[10px] font-normal">
-                Gemini Flash
+                AYN
               </Badge>
             </h2>
             <p className="text-sm text-muted-foreground">

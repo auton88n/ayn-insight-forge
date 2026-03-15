@@ -411,7 +411,7 @@ export const EngineeringAIChat = ({
             <h3 className="font-semibold">Engineering AI Assistant</h3>
             <p className="text-xs text-muted-foreground capitalize flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
-              {calculatorType.replace('_', ' ')} Expert • Powered by Gemini
+              {calculatorType.replace('_', ' ')} Expert 
             </p>
           </div>
         </div>
