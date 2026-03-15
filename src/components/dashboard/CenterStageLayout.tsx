@@ -425,6 +425,7 @@ export const CenterStageLayout = ({
         const eyePos = getEyePosition();
         startMessageAnimation(content, inputPos, eyePos);
 
+        // Wait for the flying animation (300ms) then trigger eye reactions
         setTimeout(() => {
           triggerBlink();
           triggerAbsorption();
@@ -433,11 +434,16 @@ export const CenterStageLayout = ({
           setIsAbsorbPulsing(true);
           setTimeout(() => setIsAbsorbPulsing(false), 300);
 
-          completeAbsorption();
           onRemoveFile();
 
           requestAnimationFrame(() => orchestrateEmotionChange("thinking"));
-        }, 300);
+        }, 350);
+
+        // Let the absorbing animation finish naturally via onAnimationComplete
+        // completeAbsorption is called by UserMessageBubble's onAnimationComplete
+        setTimeout(() => {
+          completeAbsorption();
+        }, 650);
       }, animationDelay);
     },
     [
