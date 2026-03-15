@@ -889,7 +889,13 @@ serve(async (req) => {
       });
     }
 
-    const language = (userContext as { preferences?: { language?: string } })?.preferences?.language || 'en';
+    // CRITICAL: Always detect language from the CURRENT message first.
+    // Saved preference is only a fallback — never override what the user is writing right now.
+    const detectedFromMessage = /[\u0600-\u06FF]/.test(lastMessage) ? 'ar' : 
+                                /[\u4E00-\u9FFF]/.test(lastMessage) ? 'zh' :
+                                /[\u0400-\u04FF]/.test(lastMessage) ? 'ru' : null;
+    const savedLanguagePref = (userContext as { preferences?: { language?: string } })?.preferences?.language;
+    const language = detectedFromMessage || savedLanguagePref || 'en';
 
     // Memory extraction now happens AFTER the AI responds (parses [MEMORY:] tags from response)
 
