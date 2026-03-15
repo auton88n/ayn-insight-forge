@@ -465,6 +465,159 @@ async function getTradeFlows(supabase: ReturnType<typeof createClient>, countryC
   } catch { return []; }
 }
 
+// Fetch super-brain intelligence based on what the message is about
+async function getSuperBrainIntel(
+  supabase: ReturnType<typeof createClient>,
+  message: string,
+  countryCodes: string[]
+): Promise<Record<string, unknown>> {
+  const l = message.toLowerCase();
+  const intel: Record<string, unknown> = {};
+
+  const isAbout = (terms: string[]) => terms.some(t => l.includes(t));
+
+  await Promise.allSettled([
+    // Business news - always relevant
+    (async () => {
+      if (countryCodes.length > 0) {
+        const { data } = await supabase.from('ayn_business_news')
+          .select('country_code, headlines, summary, sentiment')
+          .in('country_code', countryCodes).limit(3);
+        if (data?.length) intel.news = data;
+      }
+    })(),
+
+    // Gov policies
+    (async () => {
+      if (isAbout(['government', 'policy', 'tax', 'law', 'regulation', 'central bank', 'interest rate', 'fed', 'sanctions', 'politics', 'election', 'سياسة', 'حكومة', 'ضريبة'])) {
+        const { data } = await supabase.from('ayn_gov_policies')
+          .select('country_code, central_bank, tax_policy, intelligence_brief')
+          .in('country_code', countryCodes.length > 0 ? countryCodes : ['US', 'GB', 'SA']).limit(3);
+        if (data?.length) intel.gov = data;
+      }
+    })(),
+
+    // Sector intel
+    (async () => {
+      const sectorMap: Record<string, string[]> = {
+        'technology': ['tech', 'software', 'ai', 'app', 'startup', 'digital', 'saas'],
+        'healthcare': ['health', 'medical', 'hospital', 'pharma', 'doctor', 'clinic', 'wellness'],
+        'real estate': ['property', 'real estate', 'house', 'apartment', 'rent', 'buy home', 'عقار'],
+        'fintech': ['fintech', 'payment', 'bank', 'finance', 'lending', 'insurance'],
+        'retail': ['retail', 'ecommerce', 'shop', 'store', 'sell', 'consumer brand'],
+        'food and agriculture': ['food', 'restaurant', 'agriculture', 'farm', 'grocery', 'cafe', 'مطعم'],
+        'logistics': ['logistics', 'shipping', 'delivery', 'supply chain', 'warehouse', 'transport'],
+        'energy': ['energy', 'solar', 'oil', 'renewable', 'electricity', 'power'],
+      };
+      const matchedSectors = Object.entries(sectorMap)
+        .filter(([, keywords]) => keywords.some(k => l.includes(k)))
+        .map(([sector]) => sector).slice(0, 2);
+      if (matchedSectors.length > 0) {
+        const { data } = await supabase.from('ayn_sector_intel')
+          .select('sector, hot_markets, opportunities, intelligence_brief')
+          .in('sector', matchedSectors);
+        if (data?.length) intel.sectors = data;
+      }
+    })(),
+
+    // Startups/VC
+    (async () => {
+      if (isAbout(['startup', 'venture', 'funding', 'invest', 'vc', 'raise', 'pitch', 'founder', 'شركة ناشئة'])) {
+        const { data } = await supabase.from('ayn_startup_intel')
+          .select('hot_sectors, big_rounds, emerging_themes, intelligence_brief')
+          .eq('singleton_key', 1).maybeSingle();
+        if (data) intel.startups = data;
+      }
+    })(),
+
+    // Jobs
+    (async () => {
+      if (isAbout(['job', 'hire', 'salary', 'career', 'work', 'employ', 'skill', 'resume', 'وظيفة', 'راتب', 'توظيف'])) {
+        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'GB'];
+        const { data } = await supabase.from('ayn_job_market')
+          .select('country_code, top_roles, top_skills, salary_trends, intelligence_brief')
+          .in('country_code', codes).limit(3);
+        if (data?.length) intel.jobs = data;
+      }
+    })(),
+
+    // Supply chain
+    (async () => {
+      if (isAbout(['supply chain', 'shipping', 'logistics', 'shortage', 'bottleneck', 'port', 'freight', 'inventory', 'manufacturing'])) {
+        const { data } = await supabase.from('ayn_supply_chain')
+          .select('bottlenecks, risk_alerts, shipping_rates, intelligence_brief')
+          .eq('singleton_key', 1).maybeSingle();
+        if (data) intel.supply_chain = data;
+      }
+    })(),
+
+    // Real estate
+    (async () => {
+      if (isAbout(['real estate', 'property', 'house', 'apartment', 'rent', 'buy home', 'mortgage', 'housing', 'عقار', 'إيجار'])) {
+        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'GB', 'SA'];
+        const { data } = await supabase.from('ayn_real_estate')
+          .select('country_code, residential, rental_yields, hot_cities, intelligence_brief')
+          .in('country_code', codes).limit(3);
+        if (data?.length) intel.real_estate = data;
+      }
+    })(),
+
+    // Consumer sentiment
+    (async () => {
+      if (isAbout(['consumer', 'spending', 'retail', 'customer', 'buying', 'market demand', 'people want', 'trend'])) {
+        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'SA'];
+        const { data } = await supabase.from('ayn_consumer_sentiment')
+          .select('country_code, confidence_index, spending_trends, top_purchases, cutting_spending, intelligence_brief')
+          .in('country_code', codes).limit(3);
+        if (data?.length) intel.consumer = data;
+      }
+    })(),
+
+    // Geopolitical
+    (async () => {
+      if (isAbout(['war', 'conflict', 'sanction', 'geopolit', 'election', 'tension', 'risk', 'unstable', 'political', 'حرب', 'عقوبات'])) {
+        const { data } = await supabase.from('ayn_geopolitical')
+          .select('active_conflicts, sanctions, trade_tensions, intelligence_brief')
+          .eq('singleton_key', 1).maybeSingle();
+        if (data) intel.geopolitical = data;
+      }
+    })(),
+
+    // Health
+    (async () => {
+      if (isAbout(['health', 'medical', 'hospital', 'pharma', 'wellness', 'mental health', 'healthcare', 'clinic', 'صحة', 'مستشفى'])) {
+        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'SA'];
+        const { data } = await supabase.from('ayn_health_intel')
+          .select('country_code, growth_areas, gaps, digital_health, intelligence_brief')
+          .in('country_code', codes).limit(3);
+        if (data?.length) intel.health = data;
+      }
+    })(),
+
+    // Tech disruption
+    (async () => {
+      if (isAbout(['tech', 'ai', 'technology', 'innovation', 'disrupt', 'future', 'emerging', 'software', 'تقنية', 'ذكاء اصطناعي'])) {
+        const { data } = await supabase.from('ayn_tech_disruption')
+          .select('ai_developments, emerging_tech, disrupted_industries, intelligence_brief')
+          .eq('singleton_key', 1).maybeSingle();
+        if (data) intel.tech = data;
+      }
+    })(),
+
+    // Decision memory
+    (async () => {
+      if (isAbout(['decided', 'my decision', 'remember when', 'last time', 'i chose', 'قررت', 'قراري'])) {
+        const { data } = await supabase.from('ayn_decision_memory')
+          .select('decision, context, outcome, lesson, status, created_at')
+          .eq('user_id', '').order('created_at', { ascending: false }).limit(5);
+        if (data?.length) intel.decisions = data;
+      }
+    })(),
+  ]);
+
+  return intel;
+}
+
 // Detect if message is asking about prices/markets/trade
 function needsMarketData(message: string): boolean {
   const l = message.toLowerCase();
@@ -920,7 +1073,7 @@ serve(async (req) => {
     // Detect countries mentioned in the user's message
     const mentionedCountries = detectCountries(lastMessage);
 
-    const [limitCheck, userContext, marketSnapshot, chartHistory, accountPerformance, scanResults, countryProfiles, marketPrices, tradeFlows] = await Promise.all([
+    const [limitCheck, userContext, marketSnapshot, chartHistory, accountPerformance, scanResults, countryProfiles, marketPrices, tradeFlows, superBrainIntel] = await Promise.all([
       isInternalCall ? Promise.resolve({ allowed: true }) : checkUserLimit(supabase, userId, intent),
       isInternalCall ? Promise.resolve({}) : getUserContext(supabase, userId),
       getMarketSnapshot(supabase),
@@ -954,7 +1107,9 @@ serve(async (req) => {
       // Market prices (commodities, currencies, crypto) - fetch when relevant
       needsMarketData(lastMessage) ? getMarketPrices(supabase) : Promise.resolve({}),
       // Trade flows for mentioned countries
-      mentionedCountries.length > 0 ? getTradeFlows(supabase, mentionedCountries) : Promise.resolve([])
+      mentionedCountries.length > 0 ? getTradeFlows(supabase, mentionedCountries) : Promise.resolve([]),
+      // Super brain: news, gov, sectors, jobs, health, geo, tech, supply chain, real estate
+      getSuperBrainIntel(supabase, lastMessage, mentionedCountries)
     ]);
 
     // Check user limits
@@ -1178,6 +1333,83 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
             if (opps?.length > 0) tradeContext += `\nTrade opportunity: ${opps[0].snippet || opps[0].title || ''}`;
           }
           intelligenceContext += tradeContext;
+        }
+
+        // Inject super brain intelligence
+        const sb = superBrainIntel as any;
+        if (sb && Object.keys(sb).length > 0) {
+          let sbContext = '';
+
+          // Business news
+          if (sb.news?.length > 0) {
+            const newsItems = sb.news.flatMap((n: any) => {
+              const headlines = (n.headlines as any[] || []).slice(0, 2);
+              return headlines.map((h: any) => h.snippet || h.title).filter(Boolean);
+            }).slice(0, 4);
+            if (newsItems.length > 0) sbContext += `\n\nBUSINESS NEWS:\n${newsItems.join('\n')}`;
+          }
+
+          // Gov policies
+          if (sb.gov?.length > 0) {
+            const govBrief = sb.gov.flatMap((g: any) => (g.intelligence_brief as string[] || []).slice(0, 2)).filter(Boolean).slice(0, 4);
+            if (govBrief.length > 0) sbContext += `\n\nGOVERNMENT POLICY:\n${govBrief.join('\n')}`;
+          }
+
+          // Sector intel
+          if (sb.sectors?.length > 0) {
+            const secBrief = sb.sectors.flatMap((s: any) => (s.intelligence_brief as string[] || []).slice(0, 2)).filter(Boolean).slice(0, 3);
+            if (secBrief.length > 0) sbContext += `\n\nSECTOR INTELLIGENCE:\n${secBrief.join('\n')}`;
+          }
+
+          // Startups
+          if (sb.startups) {
+            const stBrief = (sb.startups.intelligence_brief as string[] || []).slice(0, 3).filter(Boolean);
+            if (stBrief.length > 0) sbContext += `\n\nSTARTUP & VC MARKET:\n${stBrief.join('\n')}`;
+          }
+
+          // Jobs
+          if (sb.jobs?.length > 0) {
+            const jobBrief = sb.jobs.flatMap((j: any) => (j.intelligence_brief as string[] || []).slice(0, 2)).filter(Boolean).slice(0, 4);
+            if (jobBrief.length > 0) sbContext += `\n\nJOB MARKET:\n${jobBrief.join('\n')}`;
+          }
+
+          // Supply chain
+          if (sb.supply_chain) {
+            const supBrief = (sb.supply_chain.intelligence_brief as string[] || []).slice(0, 3).filter(Boolean);
+            if (supBrief.length > 0) sbContext += `\n\nSUPPLY CHAIN:\n${supBrief.join('\n')}`;
+          }
+
+          // Real estate
+          if (sb.real_estate?.length > 0) {
+            const reBrief = sb.real_estate.flatMap((r: any) => (r.intelligence_brief as string[] || []).slice(0, 2)).filter(Boolean).slice(0, 3);
+            if (reBrief.length > 0) sbContext += `\n\nREAL ESTATE:\n${reBrief.join('\n')}`;
+          }
+
+          // Consumer
+          if (sb.consumer?.length > 0) {
+            const conBrief = sb.consumer.flatMap((c: any) => (c.intelligence_brief as string[] || []).slice(0, 2)).filter(Boolean).slice(0, 3);
+            if (conBrief.length > 0) sbContext += `\n\nCONSUMER SENTIMENT:\n${conBrief.join('\n')}`;
+          }
+
+          // Geopolitical
+          if (sb.geopolitical) {
+            const geoBrief = (sb.geopolitical.intelligence_brief as string[] || []).slice(0, 4).filter(Boolean);
+            if (geoBrief.length > 0) sbContext += `\n\nGEOPOLITICAL:\n${geoBrief.join('\n')}`;
+          }
+
+          // Health
+          if (sb.health?.length > 0) {
+            const hlBrief = sb.health.flatMap((h: any) => (h.intelligence_brief as string[] || []).slice(0, 2)).filter(Boolean).slice(0, 3);
+            if (hlBrief.length > 0) sbContext += `\n\nHEALTH SECTOR:\n${hlBrief.join('\n')}`;
+          }
+
+          // Tech
+          if (sb.tech) {
+            const techBrief = (sb.tech.intelligence_brief as string[] || []).slice(0, 3).filter(Boolean);
+            if (techBrief.length > 0) sbContext += `\n\nTECH DISRUPTION:\n${techBrief.join('\n')}`;
+          }
+
+          if (sbContext) intelligenceContext += sbContext;
         }
       }
     }
