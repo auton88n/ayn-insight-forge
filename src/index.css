@@ -413,7 +413,9 @@ button, a, input, textarea, select {
   }
 
   html.dark body {
-    background-color: hsl(var(--background));
+    background-color: #000000;
+    background-image: radial-gradient(ellipse at 50% 50%, #0A0A0F 0%, #000000 100%);
+    min-height: 100vh;
   }
 
   html:not(.dark) body {
