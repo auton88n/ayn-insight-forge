@@ -53,7 +53,7 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...appleSpring, delay: 0.1 }}
+          transition={{ duration: 0.5, ease: appleEase, delay: 0.1 }}
           className="text-base md:text-lg lg:text-xl text-muted-foreground font-normal tracking-[-0.01em] max-w-2xl mx-auto"
         >
           {language === 'ar'
