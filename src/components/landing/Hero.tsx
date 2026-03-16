@@ -45,7 +45,7 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ ...appleSpring, delay: 0 }}
+          transition={{ duration: 0.5, ease: appleEase, delay: 0 }}
           className="font-sans font-bold tracking-[-0.04em] text-foreground mb-2 md:mb-3 text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
         >
           {language === 'ar' ? 'تعرّف على AYN' : language === 'fr' ? 'Découvrez AYN' : 'Meet AYN'}
