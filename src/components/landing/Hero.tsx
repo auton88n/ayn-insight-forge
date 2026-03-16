@@ -69,7 +69,7 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
         className="relative w-full max-w-5xl flex-1 flex items-center justify-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...appleSpring, delay: 0.2 }}
+        transition={{ duration: 0.5, ease: appleEase, delay: 0.2 }}
       >
         {/* Subtle ambient glow behind eye */}
         <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] md:w-[360px] md:h-[360px] lg:w-[480px] lg:h-[480px] rounded-full -z-10 pointer-events-none bg-gradient-to-b from-transparent via-[rgba(34,197,94,0.04)] to-transparent dark:via-[rgba(34,197,94,0.06)]" />
