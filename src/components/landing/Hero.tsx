@@ -31,24 +31,24 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-[100dvh] flex flex-col items-center justify-between pt-24 md:pt-28 pb-6 md:pb-8 px-4 md:px-12 lg:px-24 overflow-x-hidden overflow-y-visible"
+      className="relative min-h-[100dvh] flex flex-col items-center justify-between pt-20 md:pt-24 pb-6 md:pb-8 px-4 md:px-12 lg:px-24 overflow-x-hidden overflow-y-visible"
       aria-label="Hero"
     >
       {/* Headline */}
-      <div className="w-full max-w-4xl text-center mb-6 md:mb-8">
+      <div className="w-full max-w-4xl text-center mb-4 md:mb-6">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0, ease: [0.22, 1, 0.36, 1] }}
-          className="font-display font-bold tracking-[-0.03em] text-foreground mb-3 md:mb-4 text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
+          transition={{ duration: 0.5, delay: 0, ease: [0.22, 1, 0.36, 1] }}
+          className="font-display font-bold tracking-[-0.02em] text-foreground mb-2 md:mb-3 text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
         >
           {language === 'ar' ? 'تعرّف على AYN' : language === 'fr' ? 'Découvrez AYN' : 'Meet AYN'}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="text-base md:text-lg lg:text-xl text-muted-foreground/70 font-light max-w-xl mx-auto leading-relaxed"
+          transition={{ duration: 0.4, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          className="text-base md:text-lg lg:text-xl text-muted-foreground font-light max-w-2xl mx-auto"
         >
           {language === 'ar'
             ? 'رفيقك الذكي الذي يساعدك على التنظيم والتخطيط والعيش بشكل أفضل.'
@@ -61,12 +61,12 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
       {/* Central eye — clean, no floating cards */}
       <motion.div
         className="relative w-full max-w-5xl flex-1 flex items-center justify-center"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Subtle light behind the eye */}
-        <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] md:w-[360px] md:h-[360px] lg:w-[480px] lg:h-[480px] rounded-full -z-10 pointer-events-none bg-gradient-to-b from-transparent via-muted/20 to-transparent" />
+        <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] md:w-[360px] md:h-[360px] lg:w-[480px] lg:h-[480px] rounded-full -z-10 pointer-events-none bg-gradient-to-b from-transparent via-muted/30 to-transparent" />
 
         {/* Eye */}
         <div
@@ -74,9 +74,9 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="absolute -inset-12 rounded-full blur-3xl pointer-events-none bg-[radial-gradient(circle,_rgba(229,229,229,0.2)_0%,_transparent_70%)] dark:bg-[radial-gradient(circle,_rgba(38,38,38,0.1)_0%,_transparent_70%)] transition-opacity duration-500" />
+          <div className="absolute -inset-8 rounded-full blur-2xl pointer-events-none bg-[radial-gradient(circle,_rgba(229,229,229,0.3)_0%,_transparent_70%)] dark:bg-[radial-gradient(circle,_rgba(38,38,38,0.15)_0%,_transparent_70%)]" />
 
-          <div className="relative w-[120px] h-[120px] sm:w-[160px] sm:h-[160px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px] rounded-full bg-card flex items-center justify-center overflow-hidden shadow-xl transition-shadow duration-500 group-hover:shadow-2xl">
+          <div className="relative w-[120px] h-[120px] sm:w-[160px] sm:h-[160px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px] rounded-full bg-card flex items-center justify-center overflow-hidden shadow-xl">
             <div className="absolute inset-2 rounded-full shadow-[inset_0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_4px_16px_rgba(0,0,0,0.25)]" />
             <div className="absolute inset-[15%] rounded-full bg-muted" />
 

@@ -296,19 +296,19 @@ const LandingPage = memo(() => {
       {/* Vertical Dropdown Navigation */}
       <nav className="fixed top-4 md:top-6 left-4 md:left-6 z-50 animate-fade-in">
         <div className="relative">
-          {/* Logo Pill — glass-backed, always visible */}
-          <div ref={menuRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="flex items-center gap-2 px-3 py-2.5 bg-card/80 backdrop-blur-xl border border-border/60 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
-            <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-foreground flex items-center justify-center">
+          {/* Logo Pill - Always visible, acts as trigger - CSS transitions instead of springs */}
+          <div ref={menuRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="flex items-center gap-2 px-3 py-2.5 bg-card border border-border rounded-full shadow-2xl cursor-pointer">
+            <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-foreground flex items-center justify-center">
               <Brain className="w-4 h-4 md:w-5 md:h-5 text-background" />
             </div>
             <span className={cn("text-lg md:text-xl font-bold tracking-tight overflow-hidden whitespace-nowrap transition-all duration-200", isMenuExpanded ? "w-auto opacity-100" : "w-0 opacity-0")}>
               AYN
             </span>
-            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", isMenuExpanded && "rotate-180")} />
+            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", isMenuExpanded && "rotate-180")} />
           </div>
 
-          {/* Dropdown Panel — glass morphism */}
-          {isMenuExpanded && <div className="absolute top-full left-0 mt-2 min-w-[200px] bg-card/80 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl overflow-hidden animate-scale-fade-in" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+          {/* Dropdown Panel - CSS transitions instead of springs */}
+          {isMenuExpanded && <div className="absolute top-full left-0 mt-2 min-w-[200px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
               {/* Navigation Links */}
               <div className="p-2">
                 <button onClick={() => scrollToSection('about')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
@@ -403,28 +403,28 @@ const LandingPage = memo(() => {
       }} />
 
       {/* About AYN - Value Proposition Section */}
-      <section id="about" className="py-20 md:py-36 px-4 md:px-6">
+      <section id="about" className="py-16 md:py-32 px-4 md:px-6">
         <div className="container mx-auto max-w-6xl text-center">
           <ScrollReveal>
-            <span className="text-xs font-mono text-muted-foreground/70 tracking-[0.2em] uppercase mb-6 block">
+            <span className="text-sm font-mono text-muted-foreground tracking-wider uppercase mb-4 block">
               {language === 'ar' ? 'من نحن' : language === 'fr' ? 'À Propos d\'AYN' : 'About AYN'}
             </span>
 
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-5 md:mb-7 tracking-tight">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
               {language === 'ar' ? 'ذكاء اصطناعي + أدوات هندسية' : language === 'fr' ? 'IA + Outils d\'Ingénierie' : 'AI Assistant + Engineering Tools'}
             </h2>
 
-            <p className="text-base md:text-lg text-muted-foreground/80 max-w-2xl mx-auto mb-14 md:mb-20 leading-relaxed">
+            <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 md:mb-16">
               {language === 'ar' ? 'AYN يتعرّف عليك ويساعدك في مهامك اليومية، بالإضافة إلى أدوات هندسية احترافية للتصميم الإنشائي.' : language === 'fr' ? 'AYN apprend vos habitudes et vous aide à rester organisé, avec des outils d\'ingénierie professionnels.' : 'AYN learns your habits and helps you stay organized, plus professional engineering tools for structural design.'}
             </p>
           </ScrollReveal>
 
           {/* 6 Value Props - 2 Rows */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             {/* Row 1: AI Capabilities */}
             <ScrollReveal delay={0.1}>
-              <div className="text-center space-y-4 md:space-y-5">
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/40 mx-auto flex items-center justify-center transition-colors duration-300 group-hover:bg-muted/60">
+              <div className="text-center space-y-3 md:space-y-4">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
                   <Brain className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
@@ -511,31 +511,31 @@ const LandingPage = memo(() => {
       </section>
 
       {/* Services Section - Bento Grid */}
-      <section id="services" className="py-20 md:py-36 px-4 md:px-6 overflow-x-hidden">
+      <section id="services" className="py-16 md:py-32 px-4 md:px-6 overflow-x-hidden">
         <div className="container mx-auto max-w-6xl">
           {/* Section header */}
           <ScrollReveal>
-            <div className="text-center mb-14 md:mb-20">
-            <span className="text-xs font-mono text-muted-foreground/70 tracking-[0.2em] uppercase mb-6 block">
+            <div className="text-center mb-12 md:mb-16">
+            <span className="text-sm font-mono text-muted-foreground tracking-wider uppercase mb-4 block">
                 {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Ce Que Nous Faisons' : 'What We Do'}
               </span>
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-5 md:mb-7 tracking-tight">
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4 md:mb-6">
                 {language === 'ar' ? <>ست طرق <span className="font-bold">لتبسيط حياتك</span></> : language === 'fr' ? <>Six Façons de <span className="font-bold">Simplifier Votre Vie</span></> : <>Six Ways We Help <span className="font-bold">Simplify Your Life</span></>}
               </h2>
             </div>
           </ScrollReveal>
 
-          {/* Bento Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Bento Grid - 4 Services */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-6">
               {/* Top Left - Content Creator Sites */}
               <ScrollReveal>
                 <Link to={`/services/${services[0].slug}`} className="block">
-                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.35,
+                    duration: 0.3,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="mb-4">
@@ -561,10 +561,10 @@ const LandingPage = memo(() => {
               {/* Bottom Left - Automation */}
               <ScrollReveal delay={0.2}>
                 <Link to={`/services/${services[2].slug}`} className="block">
-                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.35,
+                    duration: 0.3,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="flex flex-col gap-4">
@@ -592,15 +592,15 @@ const LandingPage = memo(() => {
               {/* Ticketing System - Featured Card */}
               <ScrollReveal delay={0.3}>
                 <Link to="/services/ticketing" className="block">
-                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[500px] flex flex-col group cursor-pointer overflow-hidden contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[500px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.35,
+                    duration: 0.3,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="mb-4">
-                      <span className="text-xs font-mono text-muted-foreground tracking-[0.15em] uppercase">NEW</span>
-                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors duration-300">
+                      <span className="text-xs font-mono text-purple-500 tracking-wider">NEW</span>
+                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-purple-500 transition-colors">
                         {services[5].title}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-2">
@@ -624,10 +624,10 @@ const LandingPage = memo(() => {
               {/* Top Right - AI Agents */}
               <ScrollReveal delay={0.1}>
                 <Link to={`/services/${services[1].slug}`} className="block">
-                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.35,
+                    duration: 0.3,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="flex flex-col gap-4">
@@ -655,10 +655,10 @@ const LandingPage = memo(() => {
               {/* Bottom Right - AI Employees */}
               <ScrollReveal delay={0.3}>
                 <Link to={`/services/${services[3].slug}`} className="block">
-                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.35,
+                    duration: 0.3,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="flex flex-col gap-4">
@@ -685,15 +685,15 @@ const LandingPage = memo(() => {
               {/* Engineering Tools - Featured Card */}
               <ScrollReveal delay={0.4}>
                 <Link to="/engineering" className="block">
-                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
+                  <motion.div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.35,
+                    duration: 0.3,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="mb-4">
-                      <span className="text-xs font-mono text-muted-foreground tracking-[0.15em] uppercase">NEW</span>
-                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors duration-300">
+                      <span className="text-xs font-mono text-cyan-500 tracking-wider">NEW</span>
+                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-cyan-500 transition-colors">
                         {services[4].title}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-2">
@@ -716,17 +716,17 @@ const LandingPage = memo(() => {
       </section>
 
       {/* Premium Contact Section */}
-      <section id="contact" className="py-20 md:py-36 px-4 md:px-6 bg-background">
-        <div className="container mx-auto max-w-2xl">
+      <section id="contact" className="py-16 md:py-32 px-4 md:px-6 bg-background">
+        <div className="container mx-auto max-w-3xl">
           <ScrollReveal>
-            <div className="text-center mb-12 md:mb-20">
-              <span className="text-xs font-mono text-muted-foreground/70 tracking-[0.2em] uppercase mb-6 block">
+            <div className="text-center mb-10 md:mb-16">
+              <span className="text-sm font-mono text-muted-foreground tracking-wider uppercase mb-4 block">
                 {language === 'ar' ? 'راسلنا' : language === 'fr' ? 'Contactez-Nous' : 'Get In Touch'}
               </span>
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-5 md:mb-7 tracking-tight">
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
                 {language === 'ar' ? 'دعنا نتحدث' : language === 'fr' ? 'Commençons une Conversation' : "Let's Start a Conversation"}
               </h2>
-              <p className="text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto leading-relaxed">
+              <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
                 {language === 'ar' ? 'شاركنا فكرتك، ودعنا نحوّلها إلى واقع' : language === 'fr' ? 'Parlez-nous de votre projet et nous vous aiderons à réaliser votre vision' : "Tell us about your project and we'll help transform your vision into reality"}
               </p>
             </div>
@@ -736,7 +736,7 @@ const LandingPage = memo(() => {
             {isSubmitted ?
             // Success state
             <div className="text-center py-20 animate-scale-fade-in">
-                <div className="w-16 h-16 rounded-2xl bg-foreground mx-auto mb-6 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-foreground mx-auto mb-6 flex items-center justify-center">
                   <CheckCircle className="w-8 h-8 text-background" />
                 </div>
                 <h3 className="text-2xl font-bold mb-3">
@@ -747,45 +747,45 @@ const LandingPage = memo(() => {
                 </p>
               </div> :
             // Contact form
-            <form onSubmit={handleContactSubmit} className="space-y-5">
+            <form onSubmit={handleContactSubmit} className="space-y-6">
                 {/* Name input */}
                 <div className="space-y-2 group">
-                  <label htmlFor="name" className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/70">
+                  <label htmlFor="name" className="text-sm font-mono uppercase tracking-wider text-muted-foreground">
                     {language === 'ar' ? 'الاسم' : language === 'fr' ? 'Nom' : 'Name'}
                   </label>
                   <Input id="name" type="text" value={contactForm.name} onChange={e => setContactForm({
                   ...contactForm,
                   name: e.target.value
-                })} placeholder={language === 'ar' ? 'الاسم الكامل' : language === 'fr' ? 'Votre nom complet' : 'Your full name'} className={cn("h-13 bg-muted/30 border border-border/60 rounded-2xl text-base transition-all duration-300 px-5", "focus:border-foreground/40 focus:ring-0 focus:bg-muted/50", "group-hover:border-border", contactErrors.name && "border-destructive")} disabled={isSubmitting} />
+                })} placeholder={language === 'ar' ? 'الاسم الكامل' : language === 'fr' ? 'Votre nom complet' : 'Your full name'} className={cn("h-14 bg-transparent border-2 border-border rounded-none text-base transition-all duration-300", "focus:border-foreground focus:ring-0", "group-hover:border-muted-foreground", contactErrors.name && "border-destructive")} disabled={isSubmitting} />
                   {contactErrors.name && <p className="text-sm text-destructive animate-slide-down-fade">{contactErrors.name}</p>}
                 </div>
 
                 {/* Email input */}
                 <div className="space-y-2 group">
-                  <label htmlFor="email" className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/70">
+                  <label htmlFor="email" className="text-sm font-mono uppercase tracking-wider text-muted-foreground">
                     {language === 'ar' ? 'البريد الإلكتروني' : language === 'fr' ? 'Email' : 'Email'}
                   </label>
                   <Input id="email" type="email" value={contactForm.email} onChange={e => setContactForm({
                   ...contactForm,
                   email: e.target.value
-                })} placeholder={language === 'ar' ? 'بريدك الإلكتروني' : language === 'fr' ? 'votre@email.com' : 'your@email.com'} className={cn("h-13 bg-muted/30 border border-border/60 rounded-2xl text-base transition-all duration-300 px-5", "focus:border-foreground/40 focus:ring-0 focus:bg-muted/50", "group-hover:border-border", contactErrors.email && "border-destructive")} disabled={isSubmitting} />
+                })} placeholder={language === 'ar' ? 'بريدك الإلكتروني' : language === 'fr' ? 'votre@email.com' : 'your@email.com'} className={cn("h-14 bg-transparent border-2 border-border rounded-none text-base transition-all duration-300", "focus:border-foreground focus:ring-0", "group-hover:border-muted-foreground", contactErrors.email && "border-destructive")} disabled={isSubmitting} />
                   {contactErrors.email && <p className="text-sm text-destructive animate-slide-down-fade">{contactErrors.email}</p>}
                 </div>
 
                 {/* Message textarea */}
                 <div className="space-y-2 group">
-                  <label htmlFor="message" className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/70">
+                  <label htmlFor="message" className="text-sm font-mono uppercase tracking-wider text-muted-foreground">
                     {language === 'ar' ? 'الرسالة' : language === 'fr' ? 'Message' : 'Message'}
                   </label>
                   <Textarea id="message" value={contactForm.message} onChange={e => setContactForm({
                   ...contactForm,
                   message: e.target.value
-                })} placeholder={language === 'ar' ? 'كيف يمكننا مساعدتك؟' : language === 'fr' ? 'Parlez-nous de votre projet...' : 'Tell us about your project...'} rows={6} className={cn("bg-muted/30 border border-border/60 rounded-2xl text-base transition-all duration-300 resize-none px-5 py-4", "focus:border-foreground/40 focus:ring-0 focus:bg-muted/50", "group-hover:border-border", contactErrors.message && "border-destructive")} disabled={isSubmitting} />
+                })} placeholder={language === 'ar' ? 'كيف يمكننا مساعدتك؟' : language === 'fr' ? 'Parlez-nous de votre projet...' : 'Tell us about your project...'} rows={6} className={cn("bg-transparent border-2 border-border rounded-none text-base transition-all duration-300 resize-none", "focus:border-foreground focus:ring-0", "group-hover:border-muted-foreground", contactErrors.message && "border-destructive")} disabled={isSubmitting} />
                   {contactErrors.message && <p className="text-sm text-destructive animate-slide-down-fade">{contactErrors.message}</p>}
                 </div>
 
                 {/* Submit button */}
-                <Button type="submit" size="lg" disabled={isSubmitting} className={cn("w-full h-13 rounded-2xl text-sm font-medium tracking-wide transition-all duration-300", "hover:shadow-xl active:scale-[0.98]")}>
+                <Button type="submit" size="lg" disabled={isSubmitting} className={cn("w-full h-14 rounded-none font-mono uppercase tracking-wider transition-all duration-300", "hover:shadow-2xl")}>
                   {isSubmitting ? <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {language === 'ar' ? 'جارٍ الإرسال...' : language === 'fr' ? 'Envoi...' : 'Sending...'}
@@ -799,36 +799,36 @@ const LandingPage = memo(() => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="pt-12 pb-6 border-t border-border/40">
+      {/* Professional Footer */}
+      <footer className="pt-8 pb-4">
         <div className="container max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-10 mb-10">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-6">
             {/* Column 1: Brand */}
-            <div className="space-y-4 col-span-2 sm:col-span-1">
+            <div className="space-y-3 col-span-2 sm:col-span-1">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
                   <Brain className="w-5 h-5 text-background" />
                 </div>
-                <span className="text-xl font-bold tracking-tight">AYN</span>
+                <span className="text-2xl font-bold">AYN</span>
               </div>
-              <p className="text-sm text-muted-foreground/70 leading-relaxed">
+              <p className="text-sm text-muted-foreground">
                 {language === 'ar' ? 'هندسة مدعومة بالذكاء الاصطناعي' : language === 'fr' ? 'Ingénierie propulsée par l\'IA' : 'AI-Powered Engineering'}
               </p>
             </div>
 
             {/* Column 2: Explore */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/60">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
                 {language === 'ar' ? 'استكشف' : language === 'fr' ? 'Explorer' : 'Explore'}
               </h4>
-              <ul className="space-y-2.5 text-sm text-muted-foreground/80">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 {[
                   { label: language === 'ar' ? 'حول' : language === 'fr' ? 'À propos' : 'About', id: 'about' },
                   { label: language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services', id: 'services' },
                   { label: language === 'ar' ? 'تواصل' : language === 'fr' ? 'Contact' : 'Contact', id: 'contact' },
                 ].map(link => (
                   <li key={link.id}>
-                    <button onClick={() => document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-foreground transition-colors duration-200">
+                    <button onClick={() => document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-foreground transition-colors">
                       {link.label}
                     </button>
                   </li>
@@ -837,18 +837,18 @@ const LandingPage = memo(() => {
             </div>
 
             {/* Column 3: Services (first half) */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/60">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
                 {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
               </h4>
-              <ul className="space-y-2.5 text-sm text-muted-foreground/80">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 {[
                   { label: language === 'ar' ? 'مواقع صناع المحتوى' : language === 'fr' ? 'Sites Créateurs' : 'Content Creator Sites', route: '/services/content-creator-sites' },
                   { label: language === 'ar' ? 'وكلاء ذكاء اصطناعي' : language === 'fr' ? 'Agents IA' : 'Custom AI Agents', route: '/services/ai-agents' },
                   { label: language === 'ar' ? 'أتمتة العمليات' : language === 'fr' ? 'Automatisation' : 'Process Automation', route: '/services/automation' },
                 ].map(service => (
                   <li key={service.route}>
-                    <Link to={service.route} className="hover:text-foreground transition-colors duration-200">
+                    <Link to={service.route} className="hover:text-foreground transition-colors">
                       {service.label}
                     </Link>
                   </li>
@@ -857,16 +857,16 @@ const LandingPage = memo(() => {
             </div>
 
             {/* Column 4: Services (second half) */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/60 opacity-0 pointer-events-none hidden lg:block">.</h4>
-              <ul className="space-y-2.5 text-sm text-muted-foreground/80">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground opacity-0 pointer-events-none hidden lg:block">.</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 {[
                   { label: language === 'ar' ? 'موظفون بالذكاء الاصطناعي' : language === 'fr' ? 'Employés IA' : 'AI Employees', route: '/services/ai-employee' },
                   { label: language === 'ar' ? 'الهندسة المدنية' : language === 'fr' ? 'Génie Civil' : 'Civil Engineering', route: '/services/civil-engineering' },
                   { label: language === 'ar' ? 'نظام التذاكر الذكي' : language === 'fr' ? 'Billetterie' : 'Smart Ticketing', route: '/services/ticketing' },
                 ].map(service => (
                   <li key={service.route}>
-                    <Link to={service.route} className="hover:text-foreground transition-colors duration-200">
+                    <Link to={service.route} className="hover:text-foreground transition-colors">
                       {service.label}
                     </Link>
                   </li>
@@ -875,30 +875,30 @@ const LandingPage = memo(() => {
             </div>
 
             {/* Column 5: Contact & Social */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/60">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
                 {language === 'ar' ? 'تواصل' : language === 'fr' ? 'Contact' : 'Contact'}
               </h4>
-              <ul className="space-y-2.5 text-sm text-muted-foreground/80">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 opacity-60" />
-                  <a href="mailto:info@aynn.io" className="hover:text-foreground transition-colors duration-200">info@aynn.io</a>
+                  <Mail className="w-4 h-4" />
+                  <a href="mailto:info@aynn.io" className="hover:text-foreground transition-colors">info@aynn.io</a>
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 opacity-60" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                  <a href="https://discord.gg/y2DcBegbC7" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors duration-200">Discord</a>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                  <a href="https://discord.gg/y2DcBegbC7" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Discord</a>
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 opacity-60" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                  <a href="https://x.com/AYNN_AI" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors duration-200">@AYNN_AI</a>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  <a href="https://x.com/AYNN_AI" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">@AYNN_AI</a>
                 </li>
               </ul>
             </div>
           </div>
 
           {/* Bottom bar */}
-          <div className="h-px bg-border/40 mb-6" />
-          <p className="text-center text-xs text-muted-foreground/50">
+          <Separator className="mb-6" />
+          <p className="text-center text-xs text-muted-foreground">
             © 2026 AYN AI. {language === 'ar' ? 'جميع الحقوق محفوظة.' : language === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}
           </p>
         </div>

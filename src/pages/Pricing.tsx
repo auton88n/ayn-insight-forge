@@ -2,16 +2,18 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, Crown, Zap, Building2, Sparkles, ArrowLeft, Loader2, Shield, CreditCard, ChevronDown, Brain, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useSubscription, SUBSCRIPTION_TIERS, SubscriptionTier } from '@/contexts/SubscriptionContext';
 import { SEO } from '@/components/shared/SEO';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { GlassCard, GlassButton, GlassContainer, GlassInput, GlassBadge } from '@/components/ui/glass';
 
 const tierIcons: Record<SubscriptionTier, React.ReactNode> = {
   free: <Sparkles className="w-5 h-5" />,
@@ -22,13 +24,49 @@ const tierIcons: Record<SubscriptionTier, React.ReactNode> = {
   unlimited: <Star className="w-5 h-5" />,
 };
 
-const tierAccents: Record<string, { glow: "purple" | "blue" | "orange" | "emerald" | "amber"; badge: "purple" | "blue" | "orange" | "emerald" | "amber"; check: string; btn: "default" | "primary" | "accent" | "outline"; }> = {
-  free: { glow: "blue", badge: "blue", check: "bg-[hsl(210_90%_55%)]", btn: "outline" },
-  starter: { glow: "blue", badge: "blue", check: "bg-[hsl(210_90%_55%)]", btn: "default" },
-  pro: { glow: "purple", badge: "purple", check: "bg-[hsl(270_70%_55%)]", btn: "primary" },
-  business: { glow: "emerald", badge: "emerald", check: "bg-[hsl(160_60%_45%)]", btn: "default" },
-  enterprise: { glow: "amber", badge: "amber", check: "bg-[hsl(40_95%_55%)]", btn: "accent" },
-  unlimited: { glow: "emerald", badge: "emerald", check: "bg-[hsl(160_60%_45%)]", btn: "default" },
+const tierColors: Record<string, { icon: string; border: string; glow: string; btn: string; check: string }> = {
+  free: {
+    icon: 'text-slate-400',
+    border: 'border-white/[0.06]',
+    glow: '',
+    btn: 'bg-white/10 hover:bg-white/15 text-foreground border border-white/10',
+    check: 'bg-slate-500',
+  },
+  starter: {
+    icon: 'text-sky-400',
+    border: 'border-sky-500/20',
+    glow: 'hover:border-sky-500/40 hover:shadow-[0_0_40px_-12px_rgba(56,189,248,0.25)]',
+    btn: 'bg-sky-500 hover:bg-sky-600 text-white',
+    check: 'bg-sky-500',
+  },
+  pro: {
+    icon: 'text-violet-400',
+    border: 'border-violet-500/30',
+    glow: 'shadow-[0_0_60px_-12px_rgba(139,92,246,0.3)] hover:shadow-[0_0_80px_-12px_rgba(139,92,246,0.45)]',
+    btn: 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-purple-500/20',
+    check: 'bg-violet-500',
+  },
+  business: {
+    icon: 'text-emerald-400',
+    border: 'border-emerald-500/20',
+    glow: 'hover:border-emerald-500/40 hover:shadow-[0_0_40px_-12px_rgba(52,211,153,0.25)]',
+    btn: 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white',
+    check: 'bg-emerald-500',
+  },
+  enterprise: {
+    icon: 'text-amber-400',
+    border: 'border-amber-500/20',
+    glow: 'hover:border-amber-500/40 hover:shadow-[0_0_40px_-12px_rgba(251,191,36,0.25)]',
+    btn: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white',
+    check: 'bg-amber-500',
+  },
+  unlimited: {
+    icon: 'text-emerald-400',
+    border: 'border-emerald-500/20',
+    glow: '',
+    btn: 'bg-emerald-500 hover:bg-emerald-600 text-white',
+    check: 'bg-emerald-500',
+  },
 };
 
 const faqItems = [
@@ -100,147 +138,156 @@ const Pricing = () => {
         noIndex={true}
       />
 
-      <GlassContainer gradient="aurora" className="text-white">
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Subtle background */}
+        <div className="fixed inset-0 -z-10">
+          <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-purple-500/8 rounded-full blur-[120px]" />
+          <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-blue-500/8 rounded-full blur-[120px]" />
+        </div>
+
         <div className="container max-w-7xl mx-auto px-4 py-12 relative z-10">
           {/* Back */}
-          <GlassButton variant="ghost" onClick={() => navigate('/')} className="mb-8 text-white/70 hover:text-white">
+          <Button variant="ghost" onClick={() => navigate('/')} className="mb-8 hover:bg-card/50">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
-          </GlassButton>
+          </Button>
 
           {/* Header */}
           <div className="text-center mb-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-[hsl(0_0%_100%/0.1)] backdrop-blur-xl border border-[hsl(0_0%_100%/0.15)] mb-6">
-              <Brain className="w-10 h-10 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-foreground mb-6">
+              <Brain className="w-10 h-10 text-background" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tight text-white">
+            <h1 className="text-4xl md:text-5xl font-display font-bold mb-4 tracking-tight">
               Choose Your Plan
             </h1>
-            <p className="text-lg text-white/60 max-w-xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
               Unlock the full power of AYN. Upgrade or downgrade anytime.
             </p>
           </div>
 
           {/* Cards */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-12">
               {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-[440px] rounded-3xl bg-[hsl(0_0%_100%/0.05)]" />
+                <Skeleton key={i} className="h-[440px] rounded-2xl" />
               ))}
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mb-12 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-12 items-start">
                 {displayTiers.map((tier) => {
                   const config = SUBSCRIPTION_TIERS[tier];
-                  const accent = tierAccents[tier];
+                  const colors = tierColors[tier];
                   const isCurrentPlan = tier === currentTier;
                   const isPopular = tier === 'pro';
                   const isEnterprise = tier === 'enterprise';
 
                   return (
-                    <GlassCard
+                    <div
                       key={tier}
-                      variant={isPopular ? "elevated" : "default"}
-                      glow={accent.glow}
-                      hover="glow"
                       className={cn(
-                        'flex flex-col relative',
-                        isCurrentPlan && 'ring-2 ring-white/30',
-                        isPopular && 'xl:-mt-4 xl:mb-4 ring-2 ring-[hsl(270_70%_55%/0.5)]',
+                        'relative flex flex-col rounded-2xl transition-all duration-300',
+                        'bg-card/60 backdrop-blur-xl border',
+                        colors.border,
+                        colors.glow,
+                        isCurrentPlan && 'ring-2 ring-primary/60',
+                        isPopular && 'ring-2 ring-violet-500/50 xl:-mt-4 xl:mb-4',
                       )}
                     >
                       {/* Popular badge */}
                       {isPopular && (
                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                          <GlassBadge variant="purple" className="shadow-lg shadow-[hsl(270_70%_50%/0.3)]">
-                            <Sparkles className="w-3 h-3" />
+                          <Badge className="bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3 py-1 text-xs font-medium shadow-lg shadow-purple-500/25 border-0">
+                            <Sparkles className="w-3 h-3 mr-1" />
                             Most Popular
-                          </GlassBadge>
+                          </Badge>
                         </div>
                       )}
 
                       {/* Current plan badge */}
                       {isCurrentPlan && (
                         <div className="absolute -top-3 right-4 z-10">
-                          <GlassBadge variant="blue" className="text-[10px]">
+                          <Badge className="bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 border-0">
                             Your Plan
-                          </GlassBadge>
+                          </Badge>
                         </div>
                       )}
 
-                      {/* Tier name + icon */}
-                      <div className="flex items-center gap-2.5 mb-5">
-                        <div className="p-2 rounded-xl bg-[hsl(0_0%_100%/0.08)] backdrop-blur-sm">
-                          {tierIcons[tier]}
+                      <div className="p-6 flex flex-col h-full">
+                        {/* Tier name + icon */}
+                        <div className="flex items-center gap-2.5 mb-5">
+                          <div className={cn('p-2 rounded-lg bg-white/5', colors.icon)}>
+                            {tierIcons[tier]}
+                          </div>
+                          <h3 className="text-lg font-semibold text-foreground">{config.name}</h3>
                         </div>
-                        <h3 className="text-lg font-semibold text-white">{config.name}</h3>
-                      </div>
 
-                      {/* Price */}
-                      <div className="mb-6">
-                        {isEnterprise ? (
-                          <>
-                            <span className="text-3xl font-display font-bold tracking-tight text-white">
-                              Contact Us
-                            </span>
-                            <p className="text-xs text-white/40 mt-1.5">Tailored for your business</p>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-4xl font-display font-bold tracking-tight text-white">
-                                ${config.price}
+                        {/* Price */}
+                        <div className="mb-6">
+                          {isEnterprise ? (
+                            <>
+                              <span className="text-3xl font-display font-bold tracking-tight text-foreground">
+                                Contact Us
                               </span>
-                              <span className="text-sm text-white/40">/month</span>
-                            </div>
-                            {tier !== 'free' && (
-                              <p className="text-xs text-white/40 mt-1.5">Billed monthly. Cancel anytime.</p>
-                            )}
-                          </>
-                        )}
+                              <p className="text-xs text-muted-foreground mt-1.5">Tailored for your business</p>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-4xl font-display font-bold tracking-tight text-foreground">
+                                  ${config.price}
+                                </span>
+                                <span className="text-sm text-muted-foreground">/month</span>
+                              </div>
+                              {tier !== 'free' && (
+                                <p className="text-xs text-muted-foreground mt-1.5">Billed monthly. Cancel anytime.</p>
+                              )}
+                            </>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="h-px bg-white/[0.06] mb-5" />
+
+                        {/* Features */}
+                        <ul className="space-y-3 mb-8 flex-grow">
+                          {config.features.map((feature, i) => (
+                            <li key={i} className="flex items-start gap-2.5">
+                              <div className={cn('w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5', colors.check)}>
+                                <Check className="w-2.5 h-2.5 text-white" />
+                              </div>
+                              <span className="text-sm text-foreground/70">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* CTA */}
+                        <Button
+                          onClick={() => handleAction(tier)}
+                          className={cn(
+                            'w-full h-11 rounded-xl font-medium transition-all duration-200',
+                            isCurrentPlan && !isSubscribed
+                              ? 'bg-white/5 border border-white/10 text-muted-foreground cursor-default hover:bg-white/5'
+                              : isCurrentPlan && isSubscribed
+                                ? 'bg-card border border-border hover:bg-muted text-foreground'
+                                : colors.btn
+                          )}
+                        >
+                          {isCurrentPlan && !isSubscribed ? (
+                            <span className="flex items-center gap-1.5">
+                              <Check className="w-3.5 h-3.5" />
+                              Current Plan
+                            </span>
+                          ) : getButtonText(tier)}
+                        </Button>
                       </div>
-
-                      {/* Divider */}
-                      <div className="h-px bg-[hsl(0_0%_100%/0.08)] mb-5" />
-
-                      {/* Features */}
-                      <ul className="space-y-3 mb-8 flex-grow">
-                        {config.features.map((feature, i) => (
-                          <li key={i} className="flex items-start gap-2.5">
-                            <div className={cn('w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5', accent.check)}>
-                              <Check className="w-2.5 h-2.5 text-white" />
-                            </div>
-                            <span className="text-sm text-white/60">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      {/* CTA */}
-                      <GlassButton
-                        onClick={() => handleAction(tier)}
-                        variant={isCurrentPlan && !isSubscribed ? "ghost" : accent.btn}
-                        size="default"
-                        className={cn(
-                          'w-full',
-                          isCurrentPlan && !isSubscribed && 'text-white/40 cursor-default hover:bg-transparent',
-                        )}
-                        disabled={isCurrentPlan && !isSubscribed}
-                      >
-                        {isCurrentPlan && !isSubscribed ? (
-                          <span className="flex items-center gap-1.5">
-                            <Check className="w-3.5 h-3.5" />
-                            Current Plan
-                          </span>
-                        ) : getButtonText(tier)}
-                      </GlassButton>
-                    </GlassCard>
+                    </div>
                   );
                 })}
               </div>
 
               {/* Trust */}
-              <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-white/40 mb-6">
+              <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground mb-6">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4" />
                   <span>Secure Payments</span>
@@ -255,15 +302,15 @@ const Pricing = () => {
                 </div>
               </div>
 
-              <p className="text-center text-xs text-white/30 mb-20">
+              <p className="text-center text-xs text-muted-foreground/60 mb-20">
                 By subscribing, you agree to our Terms of Service and No Refund Policy.
               </p>
             </>
           )}
 
           {/* FAQ */}
-          <div className="max-w-2xl mx-auto pb-12">
-            <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8 text-white">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">
               Frequently Asked Questions
             </h2>
             <div className="space-y-3">
@@ -273,15 +320,15 @@ const Pricing = () => {
                   open={openFaq === index}
                   onOpenChange={() => setOpenFaq(openFaq === index ? null : index)}
                 >
-                  <GlassCard size="sm" hover="none" className="overflow-hidden">
-                    <CollapsibleTrigger className="w-full flex items-center justify-between text-left p-0">
-                      <span className="font-medium text-white/90">{item.question}</span>
-                      <ChevronDown className={cn("w-5 h-5 text-white/40 transition-transform duration-200 shrink-0 ml-4", openFaq === index && "rotate-180")} />
+                  <div className="rounded-2xl bg-card/60 backdrop-blur-sm border border-border/50 overflow-hidden transition-all duration-200 hover:bg-card/80">
+                    <CollapsibleTrigger className="w-full p-5 flex items-center justify-between text-left">
+                      <span className="font-medium">{item.question}</span>
+                      <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform duration-200", openFaq === index && "rotate-180")} />
                     </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <p className="text-white/50 text-sm leading-relaxed mt-3 pt-3 border-t border-[hsl(0_0%_100%/0.08)]">{item.answer}</p>
+                    <CollapsibleContent className="px-5 pb-5">
+                      <p className="text-muted-foreground text-sm leading-relaxed">{item.answer}</p>
                     </CollapsibleContent>
-                  </GlassCard>
+                  </div>
                 </Collapsible>
               ))}
             </div>
@@ -290,49 +337,39 @@ const Pricing = () => {
 
         {/* Enterprise Modal */}
         <Dialog open={showEnterpriseModal} onOpenChange={setShowEnterpriseModal}>
-          <DialogContent className="sm:max-w-md bg-[hsl(260_30%_12%)] border-[hsl(0_0%_100%/0.12)] backdrop-blur-2xl text-white">
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-white">
-                <Star className="w-5 h-5 text-[hsl(40_95%_55%)]" />
+              <DialogTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-amber-400" />
                 Enterprise Inquiry
               </DialogTitle>
-              <DialogDescription className="text-white/50">
+              <DialogDescription>
                 Tell us about your business needs and we'll create a custom plan for you.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label htmlFor="companyName" className="text-white/70">Company Name *</Label>
-                <GlassInput id="companyName" placeholder="Your company name" value={enterpriseForm.companyName} onChange={(e) => setEnterpriseForm(prev => ({ ...prev, companyName: e.target.value }))} />
+                <Label htmlFor="companyName">Company Name *</Label>
+                <Input id="companyName" placeholder="Your company name" value={enterpriseForm.companyName} onChange={(e) => setEnterpriseForm(prev => ({ ...prev, companyName: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-white/70">Contact Email *</Label>
-                <GlassInput id="email" type="email" placeholder="you@company.com" value={enterpriseForm.email} onChange={(e) => setEnterpriseForm(prev => ({ ...prev, email: e.target.value }))} />
+                <Label htmlFor="email">Contact Email *</Label>
+                <Input id="email" type="email" placeholder="you@company.com" value={enterpriseForm.email} onChange={(e) => setEnterpriseForm(prev => ({ ...prev, email: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="requirements" className="text-white/70">Requirements (optional)</Label>
-                <textarea
-                  id="requirements"
-                  placeholder="Tell us about your needs..."
-                  value={enterpriseForm.requirements}
-                  onChange={(e) => setEnterpriseForm(prev => ({ ...prev, requirements: e.target.value }))}
-                  className="flex min-h-[80px] w-full rounded-2xl border bg-[hsl(0_0%_100%/0.08)] border-[hsl(0_0%_100%/0.15)] px-4 py-3 text-sm text-white backdrop-blur-sm placeholder:text-[hsl(0_0%_100%/0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(270_70%_55%/0.5)] transition-all duration-200"
-                />
+                <Label htmlFor="requirements">Requirements (optional)</Label>
+                <Textarea id="requirements" placeholder="Tell us about your specific needs..." rows={4} value={enterpriseForm.requirements} onChange={(e) => setEnterpriseForm(prev => ({ ...prev, requirements: e.target.value }))} />
               </div>
-              <GlassButton
-                variant="accent"
-                size="lg"
-                onClick={handleEnterpriseSubmit}
-                disabled={isSubmitting}
-                className="w-full"
-              >
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Submit Inquiry
-              </GlassButton>
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setShowEnterpriseModal(false)}>Cancel</Button>
+                <Button className="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-semibold" onClick={handleEnterpriseSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit'}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
-      </GlassContainer>
+      </div>
     </>
   );
 };
