@@ -762,13 +762,13 @@ const LandingPage = memo(() => {
 
                 {/* Email input */}
                 <div className="space-y-2 group">
-                  <label htmlFor="email" className="text-sm font-mono uppercase tracking-wider text-muted-foreground">
+                  <label htmlFor="email" className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/70">
                     {language === 'ar' ? 'البريد الإلكتروني' : language === 'fr' ? 'Email' : 'Email'}
                   </label>
                   <Input id="email" type="email" value={contactForm.email} onChange={e => setContactForm({
                   ...contactForm,
                   email: e.target.value
-                })} placeholder={language === 'ar' ? 'بريدك الإلكتروني' : language === 'fr' ? 'votre@email.com' : 'your@email.com'} className={cn("h-14 bg-transparent border-2 border-border rounded-none text-base transition-all duration-300", "focus:border-foreground focus:ring-0", "group-hover:border-muted-foreground", contactErrors.email && "border-destructive")} disabled={isSubmitting} />
+                })} placeholder={language === 'ar' ? 'بريدك الإلكتروني' : language === 'fr' ? 'votre@email.com' : 'your@email.com'} className={cn("h-13 bg-muted/30 border border-border/60 rounded-2xl text-base transition-all duration-300 px-5", "focus:border-foreground/40 focus:ring-0 focus:bg-muted/50", "group-hover:border-border", contactErrors.email && "border-destructive")} disabled={isSubmitting} />
                   {contactErrors.email && <p className="text-sm text-destructive animate-slide-down-fade">{contactErrors.email}</p>}
                 </div>
 
