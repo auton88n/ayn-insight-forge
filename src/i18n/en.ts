@@ -663,6 +663,10 @@ export const en: Record<string, string> = {
   'auth.forgotPasswordButton': 'Forgot Password?',
   'auth.rateLimitTitle': 'Too Many Attempts',
   'auth.rateLimitDesc': 'Please wait {time} before requesting another reset email.',
+  'auth.emailNotRegistered': 'Email Not Registered',
+  'auth.emailNotRegisteredDesc': 'This email is not registered. Please sign up first.',
+  'auth.continueWithGoogle': 'Continue with Google',
+  'auth.orDivider': 'or',
   
   // Terms Modal
   'terms.welcomeToAynAI': 'Welcome to AYN AI',

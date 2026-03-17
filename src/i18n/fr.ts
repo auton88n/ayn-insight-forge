@@ -454,6 +454,10 @@ export const fr: Record<string, string> = {
   'auth.forgotPasswordButton': 'Mot de passe oublié ?',
   'auth.rateLimitTitle': 'Trop de tentatives',
   'auth.rateLimitDesc': 'Veuillez attendre {time} avant de demander un autre email de réinitialisation.',
+  'auth.emailNotRegistered': 'Email Non Enregistré',
+  'auth.emailNotRegisteredDesc': 'Cet email n\'est pas enregistré. Veuillez d\'abord vous inscrire.',
+  'auth.continueWithGoogle': 'Continuer avec Google',
+  'auth.orDivider': 'ou',
 
   // Terms Modal
   'terms.welcomeToAynAI': 'Bienvenue sur AYN AI',
