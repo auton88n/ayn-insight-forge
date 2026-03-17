@@ -13,6 +13,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const LLM_REQUEST_TIMEOUT_MS = 45000;
+
+function createTimeoutController(timeoutMs: number) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return { controller, timeoutId };
+}
+
 // LLM Provider configs
 interface LLMModel {
   id: string;
@@ -208,94 +216,116 @@ async function callLLM(
 
   if (model.provider === 'lovable') {
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
-    
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model.model_id,
-        messages,
-        stream,
-        ...llmParams,
-      }),
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      const err = new Error(`Lovable API error ${response.status}: ${errorText}`);
-      (err as any).status = response.status;
-      throw err;
-    }
+    const { controller, timeoutId } = createTimeoutController(LLM_REQUEST_TIMEOUT_MS);
 
-    if (stream) {
-      return response;
-    }
+    try {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model.model_id,
+          messages,
+          stream,
+          ...llmParams,
+        }),
+        signal: controller.signal,
+      });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const finishReason = data.choices?.[0]?.finish_reason;
-    const usage = data.usage || null;
-    
-    // Smart follow-up detection: if truncated, invite user to continue
-    if (finishReason === 'length') {
-      return { 
-        content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
-        wasIncomplete: true,
-        usage 
-      };
+      if (!response.ok) {
+        const errorText = await response.text();
+        const err = new Error(`Lovable API error ${response.status}: ${errorText}`);
+        (err as any).status = response.status;
+        throw err;
+      }
+
+      if (stream) {
+        return response;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      const finishReason = data.choices?.[0]?.finish_reason;
+      const usage = data.usage || null;
+
+      if (finishReason === 'length') {
+        return {
+          content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
+          wasIncomplete: true,
+          usage
+        };
+      }
+
+      return { content, wasIncomplete: false, usage };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Lovable API timeout after ${LLM_REQUEST_TIMEOUT_MS}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    
-    return { content, wasIncomplete: false, usage };
   }
 
   if (model.provider === 'openrouter') {
     if (!OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY not configured');
-    
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://ayn.sa',
-        'X-Title': 'AYN AI Assistant'
-      },
-      body: JSON.stringify({
-        model: model.model_id,
-        messages,
-        stream,
-        ...llmParams,
-      }),
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      const err = new Error(`OpenRouter API error ${response.status}: ${errorText}`);
-      (err as any).status = response.status;
-      throw err;
-    }
+    const { controller, timeoutId } = createTimeoutController(LLM_REQUEST_TIMEOUT_MS);
 
-    if (stream) {
-      return response;
-    }
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://ayn.sa',
+          'X-Title': 'AYN AI Assistant'
+        },
+        body: JSON.stringify({
+          model: model.model_id,
+          messages,
+          stream,
+          ...llmParams,
+        }),
+        signal: controller.signal,
+      });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const finishReason = data.choices?.[0]?.finish_reason;
-    const usage = data.usage || null;
-    
-    // Smart follow-up detection
-    if (finishReason === 'length') {
-      return { 
-        content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
-        wasIncomplete: true,
-        usage 
-      };
+      if (!response.ok) {
+        const errorText = await response.text();
+        const err = new Error(`OpenRouter API error ${response.status}: ${errorText}`);
+        (err as any).status = response.status;
+        throw err;
+      }
+
+      if (stream) {
+        return response;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      const finishReason = data.choices?.[0]?.finish_reason;
+      const usage = data.usage || null;
+
+      if (finishReason === 'length') {
+        return {
+          content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
+          wasIncomplete: true,
+          usage
+        };
+      }
+
+      return { content, wasIncomplete: false, usage };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`OpenRouter API timeout after ${LLM_REQUEST_TIMEOUT_MS}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    
-    return { content, wasIncomplete: false, usage };
   }
 
   throw new Error(`Unknown provider: ${model.provider}`);
@@ -332,47 +362,48 @@ async function callWithFallback(
       const estimatedInputTokens = usage?.prompt_tokens || 
         Math.round(messages.reduce((sum, m) => sum + (typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content).length), 0) / 4);
       
-      // Log successful usage with token counts and response time
-      try {
-        await supabase.from('llm_usage_logs').insert({
-          user_id: userId,
-          intent_type: intent,
-          was_fallback: i > 0,
-          fallback_reason: i > 0 ? `Primary model failed, used ${model.display_name}` : null,
-          model_name: model.model_id,
-          input_tokens: estimatedInputTokens,
-          output_tokens: usage?.completion_tokens || 0,
-          response_time_ms: responseTimeMs,
-        });
-        
-        if (usage) {
-          console.log(`[ayn-unified] Token usage - input: ${usage.prompt_tokens}, output: ${usage.completion_tokens}, time: ${responseTimeMs}ms, model: ${model.model_id}`);
+      // Log successful usage without blocking the response path
+      void (async () => {
+        try {
+          await supabase.from('llm_usage_logs').insert({
+            user_id: userId,
+            intent_type: intent,
+            was_fallback: i > 0,
+            fallback_reason: i > 0 ? `Primary model failed, used ${model.display_name}` : null,
+            model_name: model.model_id,
+            input_tokens: estimatedInputTokens,
+            output_tokens: usage?.completion_tokens || 0,
+            response_time_ms: responseTimeMs,
+          });
+
+          if (usage) {
+            console.log(`[ayn-unified] Token usage - input: ${usage.prompt_tokens}, output: ${usage.completion_tokens}, time: ${responseTimeMs}ms, model: ${model.model_id}`);
+          }
+
+          if (userId !== 'internal-evaluator') {
+            await checkAndSendCreditWarning(supabase, userId);
+          }
+        } catch (logError) {
+          console.error('Failed to log usage:', logError);
         }
-        
-        // Check if user has crossed 90% credit usage - send warning email
-        if (userId !== 'internal-evaluator') {
-          checkAndSendCreditWarning(supabase, userId).catch(err => 
-            console.error('[ayn-unified] Credit warning check failed:', err)
-          );
-        }
-      } catch (logError) {
-        console.error('Failed to log usage:', logError);
-      }
+      })();
       
       return { response, modelUsed: model, wasFallback: i > 0 };
     } catch (error) {
       console.error(`${model.display_name} failed:`, error);
       
-      // Log failure
-      try {
-        await supabase.from('llm_failures').insert({
-          error_type: error instanceof Error && error.message.includes('429') ? '429' : 
-                      error instanceof Error && error.message.includes('402') ? '402' : 'error',
-          error_message: error instanceof Error ? error.message : 'Unknown error'
-        });
-      } catch (logError) {
-        console.error('Failed to log failure:', logError);
-      }
+      // Log failure without blocking fallback/response flow
+      void (async () => {
+        try {
+          await supabase.from('llm_failures').insert({
+            error_type: error instanceof Error && error.message.includes('429') ? '429' : 
+                        error instanceof Error && error.message.includes('402') ? '402' : 'error',
+            error_message: error instanceof Error ? error.message : 'Unknown error'
+          });
+        } catch (logError) {
+          console.error('Failed to log failure:', logError);
+        }
+      })();
       
       if (i === chain.length - 1) {
         // All models failed - check if any was a 402 (credits exhausted)
