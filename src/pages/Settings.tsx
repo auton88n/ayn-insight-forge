@@ -7,6 +7,7 @@ import { AccountPreferences } from '@/components/settings/AccountPreferences';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { PrivacySettings } from '@/components/settings/PrivacySettings';
 import { SessionManagement } from '@/components/settings/SessionManagement';
+import { MemoryManagement } from '@/components/settings/MemoryManagement';
 import { PageLoader } from '@/components/ui/page-loader';
 import { SEO, createBreadcrumbSchema } from '@/components/shared/SEO';
 
@@ -17,7 +18,6 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get cached session immediately (no timeout needed - it's synchronous from cache)
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       if (!currentSession?.user) {
         navigate('/');
@@ -28,7 +28,6 @@ const Settings = () => {
       setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session?.user) {
         navigate('/');
@@ -66,6 +65,7 @@ const Settings = () => {
           notifications: <NotificationSettings userId={user.id} accessToken={session.access_token} />,
           privacy: <PrivacySettings userId={user.id} session={session} />,
           sessions: <SessionManagement userId={user.id} userEmail={user.email || ''} accessToken={session.access_token} />,
+          memory: <MemoryManagement userId={user.id} />,
         }}
       </SettingsLayout>
     </>

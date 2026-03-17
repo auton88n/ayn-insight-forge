@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, User, Bell, Shield, Monitor, Search, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, User, Bell, Shield, Monitor, Search, AlertTriangle, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ interface SettingsLayoutProps {
     notifications: React.ReactNode;
     privacy: React.ReactNode;
     sessions: React.ReactNode;
+    memory: React.ReactNode;
   };
 }
 
@@ -93,7 +94,7 @@ const SettingsLayoutContent = ({ children }: SettingsLayoutProps) => {
           </div>
 
           <Tabs defaultValue="account" className="w-full" dir={language === 'ar' ? 'rtl' : 'ltr'}>
-            <TabsList className="w-full grid grid-cols-4 mb-8 bg-muted">
+            <TabsList className="w-full grid grid-cols-5 mb-8 bg-muted">
               <TabsTrigger value="account" className="gap-2">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">{t('settings.account')}</span>
@@ -110,12 +111,17 @@ const SettingsLayoutContent = ({ children }: SettingsLayoutProps) => {
                 <Monitor className="h-4 w-4" />
                 <span className="hidden sm:inline">{t('settings.sessions')}</span>
               </TabsTrigger>
+              <TabsTrigger value="memory" className="gap-2">
+                <Brain className="h-4 w-4" />
+                <span className="hidden sm:inline">Memory</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="account">{children.account}</TabsContent>
             <TabsContent value="notifications">{children.notifications}</TabsContent>
             <TabsContent value="privacy">{children.privacy}</TabsContent>
             <TabsContent value="sessions">{children.sessions}</TabsContent>
+            <TabsContent value="memory">{children.memory}</TabsContent>
           </Tabs>
         </div>
       </div>
