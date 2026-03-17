@@ -103,6 +103,21 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
 
     setIsResettingPassword(true);
     try {
+      // Check if email is registered before sending reset
+      const { data: checkData } = await supabase.functions.invoke('check-email-exists', {
+        body: { email: email.trim().toLowerCase() },
+      });
+
+      if (checkData && checkData.exists === false) {
+        toast({
+          title: t('auth.emailNotRegistered'),
+          description: t('auth.emailNotRegisteredDesc'),
+          variant: "destructive"
+        });
+        setIsResettingPassword(false);
+        return;
+      }
+
       // Call Supabase's built-in reset (required - contains the actual reset link)
       localStorage.setItem('password_reset_email', email.trim().toLowerCase());
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
