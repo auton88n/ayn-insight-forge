@@ -589,6 +589,10 @@ export const ar: Record<string, string> = {
   'auth.forgotPasswordButton': 'نسيت كلمة المرور؟',
   'auth.rateLimitTitle': 'محاولات كثيرة جداً',
   'auth.rateLimitDesc': 'يرجى الانتظار {time} قبل طلب بريد إعادة تعيين آخر.',
+  'auth.emailNotRegistered': 'البريد الإلكتروني غير مسجل',
+  'auth.emailNotRegisteredDesc': 'هذا البريد الإلكتروني غير مسجل. يرجى التسجيل أولاً.',
+  'auth.continueWithGoogle': 'المتابعة مع Google',
+  'auth.orDivider': 'أو',
 
   // Terms Modal
   'terms.welcomeToAynAI': 'مرحباً بك في AYN AI',
