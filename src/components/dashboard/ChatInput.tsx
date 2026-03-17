@@ -346,7 +346,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(({
   }, [inputMessage, setIsUserTyping, setIsAttentive, updateActivity, onLanguageChange, onTypingContentChange]);
   const handleSend = useCallback(() => {
     if (!inputMessage.trim() && !selectedFile) return;
-    if (isDisabled || isUploading || hasReachedLimit) return;
+    if (isDisabled || isUploading || hasReachedLimit || creditsExhausted) return;
     // Sound removed - consolidated to absorption in CenterStageLayout
     bumpActivity(); // Increase activity level on message send
     onSend(inputMessage.trim(), selectedFile);
