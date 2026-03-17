@@ -104,6 +104,7 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
     setIsResettingPassword(true);
     try {
       // Call Supabase's built-in reset (required - contains the actual reset link)
+      localStorage.setItem('password_reset_email', email.trim().toLowerCase());
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });

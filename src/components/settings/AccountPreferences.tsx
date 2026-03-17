@@ -346,6 +346,7 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
                 try {
                   setChangingPassword(true);
                   if (!userEmail) throw new Error('No email found');
+                  localStorage.setItem('password_reset_email', userEmail.trim().toLowerCase());
                   const { error } = await supabase.auth.resetPasswordForEmail(userEmail, {
                     redirectTo: `${window.location.origin}/reset-password`,
                   });
