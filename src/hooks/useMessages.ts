@@ -120,7 +120,8 @@ export const useMessages = (
   userProfile: UserProfile | null,
   allowPersonalization: boolean,
   session: Session | null,
-  isUnlimited: boolean = false
+  isUnlimited: boolean = false,
+  onUsageUpdated?: () => void
 ): UseMessagesReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
