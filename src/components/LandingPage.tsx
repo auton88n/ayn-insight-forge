@@ -717,10 +717,10 @@ const LandingPage = memo(() => {
 
       {/* Premium Contact Section */}
       <section id="contact" className="py-20 md:py-36 px-4 md:px-6 bg-background">
-        <div className="container mx-auto max-w-3xl">
+        <div className="container mx-auto max-w-2xl">
           <ScrollReveal>
-            <div className="text-center mb-10 md:mb-16">
-              <span className="text-sm font-mono text-muted-foreground tracking-wider uppercase mb-4 block">
+            <div className="text-center mb-12 md:mb-20">
+              <span className="text-xs font-mono text-muted-foreground/70 tracking-[0.2em] uppercase mb-6 block">
                 {language === 'ar' ? 'راسلنا' : language === 'fr' ? 'Contactez-Nous' : 'Get In Touch'}
               </span>
               <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
