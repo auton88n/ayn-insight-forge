@@ -15,7 +15,7 @@ export const SUBSCRIPTION_TIERS = {
   },
   starter: {
     name: 'Starter',
-    price: 20,
+    price: 9,
     priceId: 'price_1SsEOZDBJlSjDe8ADVHgJugk',
     productId: 'prod_TpuCGCGKRjz1QR',
     limits: { monthlyCredits: 1000, monthlyEngineering: 10 },
