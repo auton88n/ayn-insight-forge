@@ -204,7 +204,7 @@ const Pricing = () => {
                       <div className="p-6 flex flex-col h-full">
                         {/* Tier name + icon */}
                         <div className="flex items-center gap-2.5 mb-5">
-                          <div className={cn('p-2 rounded-lg bg-white/5', colors.icon)}>
+                          <div className={cn('p-2 rounded-lg bg-muted/60', colors.icon)}>
                             {tierIcons[tier]}
                           </div>
                           <h3 className="text-lg font-semibold text-foreground">{config.name}</h3>
