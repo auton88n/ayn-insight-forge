@@ -174,7 +174,7 @@ const Pricing = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-12 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-12 items-stretch">
                 {displayTiers.map((tier) => {
                   const config = SUBSCRIPTION_TIERS[tier];
                   const colors = tierColors[tier];
