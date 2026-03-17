@@ -91,7 +91,7 @@ export const useUsageTracking = (userId: string | null): UsageData & { refreshUs
         const monthlyResetAt = limits.monthly_reset_at ? new Date(limits.monthly_reset_at) : null;
         const isExpired = !monthlyResetAt || monthlyResetAt <= new Date();
         const used = isExpired ? 0 : (limits.current_monthly_messages || 0);
-        const limit = (limits.monthly_messages || 1000) + (limits.bonus_credits || 0);
+        const limit = (limits.monthly_messages || 200) + (limits.bonus_credits || 0);
         remaining = Math.max(0, limit - used);
         totalLimit = limit;
         resetsAt = limits.monthly_reset_at;
