@@ -685,15 +685,15 @@ const LandingPage = memo(() => {
               {/* Engineering Tools - Featured Card */}
               <ScrollReveal delay={0.4}>
                 <Link to="/engineering" className="block">
-                  <motion.div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
+                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.3,
+                    duration: 0.35,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="mb-4">
-                      <span className="text-xs font-mono text-cyan-500 tracking-wider">NEW</span>
-                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-cyan-500 transition-colors">
+                      <span className="text-xs font-mono text-muted-foreground tracking-[0.15em] uppercase">NEW</span>
+                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors duration-300">
                         {services[4].title}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-2">
