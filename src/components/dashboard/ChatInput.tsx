@@ -363,7 +363,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(({
     setTimeout(() => {
       triggerAttentionBlink();
     }, 100);
-  }, [inputMessage, selectedFile, isDisabled, isUploading, hasReachedLimit, onSend, triggerAttentionBlink, playSound, bumpActivity]);
+  }, [inputMessage, selectedFile, isDisabled, isUploading, hasReachedLimit, creditsExhausted, onSend, triggerAttentionBlink, playSound, bumpActivity]);
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
