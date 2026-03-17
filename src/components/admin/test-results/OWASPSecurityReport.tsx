@@ -21,8 +21,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const SUPABASE_URL = 'https://dfkoxuokfkttjhfjcecx.supabase.co';
-// SUPABASE_ANON_KEY imported from central config
+// SUPABASE_URL and SUPABASE_ANON_KEY imported from central config
 
 interface SecurityTestResult {
   name: string;
