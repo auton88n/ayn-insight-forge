@@ -23,7 +23,7 @@ export const SUBSCRIPTION_TIERS = {
   },
   pro: {
     name: 'Pro',
-    price: 49,
+    price: 29,
     priceId: 'price_1SsEP3DBJlSjDe8AednfTBY4',
     productId: 'prod_TpuDZjjDGHOFfO',
     limits: { monthlyCredits: 5000, monthlyEngineering: 50 },
