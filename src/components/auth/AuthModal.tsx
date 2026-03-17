@@ -184,6 +184,22 @@ export const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
     setResetSentToEmail('');
   };
 
+  const handleGoogleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) {
+      toast({
+        title: t('auth.authError'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
