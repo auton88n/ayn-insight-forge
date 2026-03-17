@@ -7,17 +7,16 @@ const corsHeaders = {
 };
 
 const PRODUCT_TO_TIER: Record<string, string> = {
-  'prod_TpuCGCGKRjz1QR': 'starter',
-  'prod_TpuDZjjDGHOFfO': 'pro',
-  'prod_TpuDQFgkmlTXAH': 'business',
+  'prod_UAKDh9hg4JJGTm': 'starter',
+  'prod_UAKEcB3fRQfSFX': 'pro',
+  'prod_UAKEhupZ67M3vB': 'business',
 };
 
-// Aligned with frontend SUBSCRIPTION_TIERS and check-subscription
 const TIER_LIMITS: Record<string, { monthlyCredits: number; monthlyEngineering: number }> = {
   'free': { monthlyCredits: 5, monthlyEngineering: 1 },
-  'starter': { monthlyCredits: 1000, monthlyEngineering: 10 },
-  'pro': { monthlyCredits: 5000, monthlyEngineering: 50 },
-  'business': { monthlyCredits: 15000, monthlyEngineering: 100 },
+  'starter': { monthlyCredits: 200, monthlyEngineering: 10 },
+  'pro': { monthlyCredits: 1000, monthlyEngineering: 50 },
+  'business': { monthlyCredits: 5000, monthlyEngineering: 100 },
 };
 
 const TIER_NAMES: Record<string, string> = {
@@ -29,11 +28,9 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
-// Look up user by email via auth.admin API (not profiles table)
 async function getUserByEmail(supabase: ReturnType<typeof createClient>, email: string) {
   const { data, error } = await supabase.auth.admin.listUsers({ filter: `email.eq.${email}` });
   if (error || !data?.users?.length) {
-    // Fallback: try listing all and filtering manually
     const { data: allData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
     const user = allData?.users?.find((u: { email?: string }) => u.email === email);
     if (!user) {
@@ -45,7 +42,6 @@ async function getUserByEmail(supabase: ReturnType<typeof createClient>, email: 
   return data.users[0];
 }
 
-// Update user subscription with correct column names
 async function updateUserSubscription(
   supabase: ReturnType<typeof createClient>,
   userId: string,
@@ -59,7 +55,6 @@ async function updateUserSubscription(
 ) {
   const limits = TIER_LIMITS[tier] || TIER_LIMITS['free'];
 
-  // user_subscriptions uses subscription_tier (not tier)
   const { error: subError } = await supabase
     .from('user_subscriptions')
     .upsert({
@@ -76,7 +71,6 @@ async function updateUserSubscription(
     logStep('Failed to update user_subscriptions', { userId, error: subError.message });
   }
 
-  // user_ai_limits uses monthly_messages/monthly_engineering (not monthly_limit/engineering_limit)
   const { error: limitsError } = await supabase
     .from('user_ai_limits')
     .upsert({
@@ -101,7 +95,6 @@ function sendEmailNotification(
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   
-  // Fire and forget
   fetch(`${supabaseUrl}/functions/v1/send-email`, {
     method: 'POST',
     headers: {
@@ -253,7 +246,7 @@ Deno.serve(async (req) => {
         const tier = PRODUCT_TO_TIER[productId] || 'free';
         const limits = TIER_LIMITS[tier];
 
-        // Reset usage on renewal - use correct column names
+        // Reset usage on renewal
         await supabase.from('user_ai_limits').update({
           current_monthly_messages: 0,
           current_monthly_engineering: 0,

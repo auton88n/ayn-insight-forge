@@ -8,21 +8,21 @@ const corsHeaders = {
 
 const TIER_LIMITS: Record<string, Record<string, number | boolean>> = {
   free: { dailyCredits: 5, dailyEngineering: 1, isDaily: true },
-  starter: { monthlyCredits: 1000, monthlyEngineering: 10 },
-  pro: { monthlyCredits: 5000, monthlyEngineering: 50 },
-  business: { monthlyCredits: 15000, monthlyEngineering: 100 },
+  starter: { monthlyCredits: 200, monthlyEngineering: 10 },
+  pro: { monthlyCredits: 1000, monthlyEngineering: 50 },
+  business: { monthlyCredits: 5000, monthlyEngineering: 100 },
   enterprise: { monthlyCredits: -1, monthlyEngineering: -1 },
   unlimited: { monthlyCredits: -1, monthlyEngineering: -1 },
 };
 
 const TIER_ACCESS_LIMITS: Record<string, number> = {
-  free: 5, starter: 1000, pro: 5000, business: 15000, enterprise: 999999, unlimited: 999999,
+  free: 5, starter: 200, pro: 1000, business: 5000, enterprise: 999999, unlimited: 999999,
 };
 
 const PRODUCT_TO_TIER: Record<string, string> = {
-  "prod_TpuCGCGKRjz1QR": "starter",
-  "prod_TpuDZjjDGHOFfO": "pro",
-  "prod_TpuDQFgkmlTXAH": "business",
+  "prod_UAKDh9hg4JJGTm": "starter",
+  "prod_UAKEcB3fRQfSFX": "pro",
+  "prod_UAKEhupZ67M3vB": "business",
 };
 
 const logStep = (step: string, details?: unknown) => {

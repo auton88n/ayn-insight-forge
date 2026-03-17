@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getErrorMessage, ErrorCodes } from '@/lib/errorMessages';
 
-// Tier configuration
+// Tier configuration — aligned with Stripe products and backend
 export const SUBSCRIPTION_TIERS = {
   free: {
     name: 'Free',
@@ -15,27 +15,27 @@ export const SUBSCRIPTION_TIERS = {
   },
   starter: {
     name: 'Starter',
-    price: 9,
-    priceId: 'price_1SsEOZDBJlSjDe8ADVHgJugk',
-    productId: 'prod_TpuCGCGKRjz1QR',
-    limits: { monthlyCredits: 1000, monthlyEngineering: 10 },
-    features: ['1,000 messages/month', 'PDF & Excel generation', 'Email support'],
+    price: 20,
+    priceId: 'price_1TBzZNDBJlSjDe8AwUvuHkfn',
+    productId: 'prod_UAKDh9hg4JJGTm',
+    limits: { monthlyCredits: 200, monthlyEngineering: 10 },
+    features: ['200 messages/month', 'PDF & Excel generation', 'Email support'],
   },
   pro: {
     name: 'Pro',
-    price: 29,
-    priceId: 'price_1SsEP3DBJlSjDe8AednfTBY4',
-    productId: 'prod_TpuDZjjDGHOFfO',
-    limits: { monthlyCredits: 5000, monthlyEngineering: 50 },
-    features: ['5,000 messages/month', 'PDF & Excel generation', 'Priority support'],
+    price: 49,
+    priceId: 'price_1TBzZlDBJlSjDe8AW1BAlDTg',
+    productId: 'prod_UAKEcB3fRQfSFX',
+    limits: { monthlyCredits: 1000, monthlyEngineering: 50 },
+    features: ['1,000 messages/month', 'PDF & Excel generation', 'Priority support'],
   },
   business: {
     name: 'Business',
-    price: 79,
-    priceId: 'price_1SsEPKDBJlSjDe8AoLaqnZYP',
-    productId: 'prod_TpuDQFgkmlTXAH',
-    limits: { monthlyCredits: 15000, monthlyEngineering: 100 },
-    features: ['15,000 messages/month', 'PDF & Excel generation', 'Priority support'],
+    price: 99,
+    priceId: 'price_1TBza5DBJlSjDe8AFCukqTl6',
+    productId: 'prod_UAKEhupZ67M3vB',
+    limits: { monthlyCredits: 5000, monthlyEngineering: 100 },
+    features: ['5,000 messages/month', 'PDF & Excel generation', 'Priority support'],
   },
   enterprise: {
     name: 'Enterprise',
@@ -47,7 +47,7 @@ export const SUBSCRIPTION_TIERS = {
   },
    unlimited: {
      name: 'Unlimited',
-     price: 0, // Admin-granted, no Stripe billing
+     price: 0,
      priceId: null,
      productId: null,
      limits: { monthlyCredits: -1, monthlyEngineering: -1 },
