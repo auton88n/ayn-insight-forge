@@ -216,47 +216,58 @@ async function callLLM(
 
   if (model.provider === 'lovable') {
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
-    
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model.model_id,
-        messages,
-        stream,
-        ...llmParams,
-      }),
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      const err = new Error(`Lovable API error ${response.status}: ${errorText}`);
-      (err as any).status = response.status;
-      throw err;
-    }
+    const { controller, timeoutId } = createTimeoutController(LLM_REQUEST_TIMEOUT_MS);
 
-    if (stream) {
-      return response;
-    }
+    try {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model.model_id,
+          messages,
+          stream,
+          ...llmParams,
+        }),
+        signal: controller.signal,
+      });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    const finishReason = data.choices?.[0]?.finish_reason;
-    const usage = data.usage || null;
-    
-    // Smart follow-up detection: if truncated, invite user to continue
-    if (finishReason === 'length') {
-      return { 
-        content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
-        wasIncomplete: true,
-        usage 
-      };
+      if (!response.ok) {
+        const errorText = await response.text();
+        const err = new Error(`Lovable API error ${response.status}: ${errorText}`);
+        (err as any).status = response.status;
+        throw err;
+      }
+
+      if (stream) {
+        return response;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      const finishReason = data.choices?.[0]?.finish_reason;
+      const usage = data.usage || null;
+
+      if (finishReason === 'length') {
+        return {
+          content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
+          wasIncomplete: true,
+          usage
+        };
+      }
+
+      return { content, wasIncomplete: false, usage };
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Lovable API timeout after ${LLM_REQUEST_TIMEOUT_MS}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    
-    return { content, wasIncomplete: false, usage };
   }
 
   if (model.provider === 'openrouter') {
