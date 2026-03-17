@@ -898,9 +898,19 @@ const LandingPage = memo(() => {
 
           {/* Bottom bar */}
           <Separator className="mb-6" />
-          <p className="text-center text-xs text-muted-foreground">
-            © 2026 AYN AI. {language === 'ar' ? 'جميع الحقوق محفوظة.' : language === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              © 2026 AYN AI. {language === 'ar' ? 'جميع الحقوق محفوظة.' : language === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}
+            </p>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <Link to="/privacy" className="hover:text-foreground transition-colors">
+                {language === 'ar' ? 'سياسة الخصوصية' : language === 'fr' ? 'Politique de confidentialité' : 'Privacy Policy'}
+              </Link>
+              <Link to="/terms" className="hover:text-foreground transition-colors">
+                {language === 'ar' ? 'شروط الخدمة' : language === 'fr' ? 'Conditions d\'utilisation' : 'Terms of Service'}
+              </Link>
+            </div>
+          </div>
         </div>
       </footer>
 
