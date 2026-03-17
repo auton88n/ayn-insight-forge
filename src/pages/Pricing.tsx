@@ -253,9 +253,9 @@ const Pricing = () => {
                         <Button
                           onClick={() => handleAction(tier)}
                           className={cn(
-                            'w-full h-11 rounded-xl font-medium transition-all duration-200',
+                            'w-full h-11 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md',
                             isCurrentPlan && !isSubscribed
-                              ? 'bg-white/5 border border-white/10 text-muted-foreground cursor-default hover:bg-white/5'
+                              ? 'bg-muted text-muted-foreground cursor-default hover:bg-muted'
                               : isCurrentPlan && isSubscribed
                                 ? 'bg-card border border-border hover:bg-muted text-foreground'
                                 : colors.btn
