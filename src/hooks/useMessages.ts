@@ -33,7 +33,8 @@ const fetchWithRetry = async (
       // Return on success OR known handled error codes (don't retry these)
       if (response.ok || response.status === 429 || response.status === 402 || response.status === 403) return response;
     } catch (e) {
-      if (i === retries - 1) throw e;
+      const isAbortError = e instanceof Error && e.name === 'AbortError';
+      if (isAbortError || options.signal?.aborted || i === retries - 1) throw e;
       await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
     }
   }
