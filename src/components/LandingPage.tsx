@@ -747,16 +747,16 @@ const LandingPage = memo(() => {
                 </p>
               </div> :
             // Contact form
-            <form onSubmit={handleContactSubmit} className="space-y-6">
+            <form onSubmit={handleContactSubmit} className="space-y-5">
                 {/* Name input */}
                 <div className="space-y-2 group">
-                  <label htmlFor="name" className="text-sm font-mono uppercase tracking-wider text-muted-foreground">
+                  <label htmlFor="name" className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/70">
                     {language === 'ar' ? 'الاسم' : language === 'fr' ? 'Nom' : 'Name'}
                   </label>
                   <Input id="name" type="text" value={contactForm.name} onChange={e => setContactForm({
                   ...contactForm,
                   name: e.target.value
-                })} placeholder={language === 'ar' ? 'الاسم الكامل' : language === 'fr' ? 'Votre nom complet' : 'Your full name'} className={cn("h-14 bg-transparent border-2 border-border rounded-none text-base transition-all duration-300", "focus:border-foreground focus:ring-0", "group-hover:border-muted-foreground", contactErrors.name && "border-destructive")} disabled={isSubmitting} />
+                })} placeholder={language === 'ar' ? 'الاسم الكامل' : language === 'fr' ? 'Votre nom complet' : 'Your full name'} className={cn("h-13 bg-muted/30 border border-border/60 rounded-2xl text-base transition-all duration-300 px-5", "focus:border-foreground/40 focus:ring-0 focus:bg-muted/50", "group-hover:border-border", contactErrors.name && "border-destructive")} disabled={isSubmitting} />
                   {contactErrors.name && <p className="text-sm text-destructive animate-slide-down-fade">{contactErrors.name}</p>}
                 </div>
 
