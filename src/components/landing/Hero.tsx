@@ -31,24 +31,24 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-[100dvh] flex flex-col items-center justify-between pt-20 md:pt-24 pb-6 md:pb-8 px-4 md:px-12 lg:px-24 overflow-x-hidden overflow-y-visible"
+      className="relative min-h-[100dvh] flex flex-col items-center justify-between pt-24 md:pt-28 pb-6 md:pb-8 px-4 md:px-12 lg:px-24 overflow-x-hidden overflow-y-visible"
       aria-label="Hero"
     >
       {/* Headline */}
-      <div className="w-full max-w-4xl text-center mb-4 md:mb-6">
+      <div className="w-full max-w-4xl text-center mb-6 md:mb-8">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0, ease: [0.22, 1, 0.36, 1] }}
-          className="font-display font-bold tracking-[-0.02em] text-foreground mb-2 md:mb-3 text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
+          transition={{ duration: 0.6, delay: 0, ease: [0.22, 1, 0.36, 1] }}
+          className="font-display font-bold tracking-[-0.03em] text-foreground mb-3 md:mb-4 text-5xl sm:text-6xl md:text-7xl lg:text-8xl"
         >
           {language === 'ar' ? 'تعرّف على AYN' : language === 'fr' ? 'Découvrez AYN' : 'Meet AYN'}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          className="text-base md:text-lg lg:text-xl text-muted-foreground font-light max-w-2xl mx-auto"
+          transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          className="text-base md:text-lg lg:text-xl text-muted-foreground/70 font-light max-w-xl mx-auto leading-relaxed"
         >
           {language === 'ar'
             ? 'رفيقك الذكي الذي يساعدك على التنظيم والتخطيط والعيش بشكل أفضل.'
