@@ -655,10 +655,10 @@ const LandingPage = memo(() => {
               {/* Bottom Right - AI Employees */}
               <ScrollReveal delay={0.3}>
                 <Link to={`/services/${services[3].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout" whileHover={{
+                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.3,
+                    duration: 0.35,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="flex flex-col gap-4">
