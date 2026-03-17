@@ -13,7 +13,9 @@ import { SEO } from '@/components/shared/SEO';
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [requestEmail, setRequestEmail] = useState(() => localStorage.getItem('password_reset_email') ?? '');
   const [loading, setLoading] = useState(false);
+  const [requestingLink, setRequestingLink] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [isValidating, setIsValidating] = useState(true);
@@ -34,7 +36,6 @@ const ResetPassword = () => {
         if (isMounted) setSlowValidation(true);
       }, 8000);
 
-      // Check URL for error parameters first
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
@@ -43,13 +44,14 @@ const ResetPassword = () => {
 
       if (urlError || errorDescription?.includes('expired')) {
         console.log('[ResetPassword] URL contains error, marking as expired');
-        if (isMounted) { setLinkExpired(true); setIsValidating(false); }
+        if (isMounted) {
+          setLinkExpired(true);
+          setIsValidating(false);
+        }
         return;
       }
 
-      // PKCE flow: check for ?code= query parameter
       const code = urlParams.get('code');
-      // Implicit flow: check for hash-based tokens
       const accessToken = hashParams.get('access_token');
       const refreshToken = hashParams.get('refresh_token');
       const tokenType = hashParams.get('type');
@@ -57,28 +59,28 @@ const ResetPassword = () => {
 
       console.log('[ResetPassword] PKCE code:', !!code, '| Hash recovery token:', !!hasRecoveryToken);
 
-      // Set up auth state listener BEFORE any session exchange
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, currentSession) => {
-          console.log('[ResetPassword] Auth event:', event);
-          if (!isMounted) return;
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+        console.log('[ResetPassword] Auth event:', event);
+        if (!isMounted) return;
 
-          if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && currentSession)) {
-            setSession(currentSession);
-            setLinkExpired(false);
-            setIsValidating(false);
-            if (slowTimer) clearTimeout(slowTimer);
-          }
+        if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && currentSession)) {
+          setSession(currentSession);
+          setRequestEmail((prev) => prev || currentSession?.user.email || '');
+          setLinkExpired(false);
+          setIsValidating(false);
+          if (slowTimer) clearTimeout(slowTimer);
         }
-      );
+      });
 
       try {
-        // Case 1: PKCE flow — exchange the code for a session
         if (code) {
           console.log('[ResetPassword] Exchanging PKCE code for session...');
           const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-          if (!isMounted) { subscription.unsubscribe(); return; }
+          if (!isMounted) {
+            subscription.unsubscribe();
+            return;
+          }
 
           if (error) {
             console.error('[ResetPassword] Code exchange failed:', error);
@@ -91,16 +93,15 @@ const ResetPassword = () => {
           if (data.session) {
             console.log('[ResetPassword] PKCE session established');
             setSession(data.session);
+            setRequestEmail((prev) => prev || data.session?.user.email || '');
             setIsValidating(false);
             if (slowTimer) clearTimeout(slowTimer);
-            // Clean URL
             window.history.replaceState(null, '', window.location.pathname);
             subscription.unsubscribe();
             return;
           }
         }
 
-        // Case 2: Implicit flow — hash-based tokens
         if (hasRecoveryToken && refreshToken) {
           console.log('[ResetPassword] Setting session from hash tokens...');
           const { data: sessionData, error: setError } = await supabase.auth.setSession({
@@ -108,7 +109,10 @@ const ResetPassword = () => {
             refresh_token: refreshToken,
           });
 
-          if (!isMounted) { subscription.unsubscribe(); return; }
+          if (!isMounted) {
+            subscription.unsubscribe();
+            return;
+          }
 
           if (setError) {
             console.error('[ResetPassword] Hash session set failed:', setError);
@@ -117,6 +121,7 @@ const ResetPassword = () => {
           } else if (sessionData.session) {
             console.log('[ResetPassword] Hash session set successfully');
             setSession(sessionData.session);
+            setRequestEmail((prev) => prev || sessionData.session?.user.email || '');
             setIsValidating(false);
             window.history.replaceState(null, '', window.location.pathname);
           } else {
@@ -128,10 +133,12 @@ const ResetPassword = () => {
           return;
         }
 
-        // Case 3: No code or hash tokens — check for existing session
         const { data: { session: existingSession }, error } = await supabase.auth.getSession();
 
-        if (!isMounted) { subscription.unsubscribe(); return; }
+        if (!isMounted) {
+          subscription.unsubscribe();
+          return;
+        }
 
         if (error) {
           console.error('[ResetPassword] Session check error:', error);
@@ -144,13 +151,13 @@ const ResetPassword = () => {
         if (existingSession) {
           console.log('[ResetPassword] Found existing session');
           setSession(existingSession);
+          setRequestEmail((prev) => prev || existingSession.user.email || '');
           setIsValidating(false);
           if (slowTimer) clearTimeout(slowTimer);
           subscription.unsubscribe();
           return;
         }
 
-        // No session found — wait briefly for auth event then give up
         console.log('[ResetPassword] Waiting for auth event...');
         setTimeout(() => {
           if (isMounted) {
@@ -160,10 +167,12 @@ const ResetPassword = () => {
           }
           subscription.unsubscribe();
         }, 3000);
-
       } catch (e) {
         console.error('[ResetPassword] Validation error:', e);
-        if (isMounted) { setLinkExpired(true); setIsValidating(false); }
+        if (isMounted) {
+          setLinkExpired(true);
+          setIsValidating(false);
+        }
       }
     };
 
@@ -175,27 +184,42 @@ const ResetPassword = () => {
       if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current);
       if (linkExpired) localStorage.removeItem('password_recovery_in_progress');
     };
-  }, []);
+  }, [linkExpired]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      toast({ title: 'Error', description: 'Passwords do not match', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive',
+      });
       return;
     }
+
     if (newPassword.length < 6) {
-      toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: 'Password must be at least 6 characters',
+        variant: 'destructive',
+      });
       return;
     }
 
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
+
       if (error) throw error;
 
-      toast({ title: 'Success', description: 'Your password has been updated successfully' });
+      toast({
+        title: 'Success',
+        description: 'Your password has been updated successfully',
+      });
+
       localStorage.removeItem('password_recovery_in_progress');
+      localStorage.removeItem('password_reset_email');
       navigateTimerRef.current = setTimeout(() => {
         navigate('/');
         navigateTimerRef.current = null;
@@ -211,12 +235,81 @@ const ResetPassword = () => {
     }
   };
 
-  const handleRequestNewLink = () => {
-    toast({ title: 'Request New Link', description: 'Please use the "Forgot Password" option to request a new reset link.' });
-    navigate('/');
+  const handleRequestNewLink = async () => {
+    const normalizedEmail = requestEmail.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      toast({
+        title: 'Email Required',
+        description: 'Enter your email address to receive a new reset link.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setRequestingLink(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      localStorage.setItem('password_reset_email', normalizedEmail);
+      toast({
+        title: 'Reset Link Sent',
+        description: 'Check your email for a new password reset link.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Unable to Send Link',
+        description: error instanceof Error ? error.message : 'Please try again in a moment.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRequestingLink(false);
+    }
   };
 
-  // Loading state
+  const handleReload = () => {
+    window.location.reload();
+  };
+
+  const requestLinkForm = (
+    <div className="space-y-4">
+      <div className="space-y-2 text-left">
+        <Label htmlFor="requestEmail">Email Address</Label>
+        <Input
+          id="requestEmail"
+          type="email"
+          autoComplete="email"
+          placeholder="Enter your email"
+          value={requestEmail}
+          onChange={(e) => setRequestEmail(e.target.value)}
+          disabled={requestingLink}
+        />
+      </div>
+      <Button
+        onClick={handleRequestNewLink}
+        className="w-full"
+        variant="default"
+        disabled={requestingLink}
+      >
+        {requestingLink ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Sending Link...
+          </>
+        ) : (
+          <>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Request New Link
+          </>
+        )}
+      </Button>
+    </div>
+  );
+
   if (isValidating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
@@ -228,16 +321,22 @@ const ResetPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Validating Reset Link</CardTitle>
             <CardDescription className="text-center">
-              {slowValidation ? "This is taking longer than expected..." : "Please wait while we verify your password reset link..."}
+              {slowValidation
+                ? 'This is taking longer than expected...'
+                : 'Please wait while we verify your password reset link...'}
             </CardDescription>
           </CardHeader>
           {slowValidation && (
             <CardContent className="space-y-4">
-              <Button onClick={() => window.location.reload()} className="w-full" variant="default">
-                <RefreshCw className="mr-2 h-4 w-4" /> Reload Page
-              </Button>
-              <Button onClick={handleRequestNewLink} className="w-full" variant="outline">
-                Request New Link
+              {requestLinkForm}
+              <Button
+                onClick={handleReload}
+                className="w-full"
+                variant="outline"
+                disabled={requestingLink}
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reload Page
               </Button>
             </CardContent>
           )}
@@ -246,7 +345,6 @@ const ResetPassword = () => {
     );
   }
 
-  // Expired or invalid link
   if (linkExpired || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
@@ -257,15 +355,20 @@ const ResetPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Reset Link Expired</CardTitle>
             <CardDescription className="text-center">
-              This password reset link has expired or is invalid. Reset links are valid for 1 hour after they are sent.
+              This password reset link has expired or is invalid.
+              Reset links are valid for 1 hour after they are sent.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={handleRequestNewLink} className="w-full" variant="default">
-              <RefreshCw className="mr-2 h-4 w-4" /> Request New Link
-            </Button>
-            <Button onClick={() => navigate('/')} className="w-full" variant="outline">
-              <Home className="mr-2 h-4 w-4" /> Back to Home
+            {requestLinkForm}
+            <Button
+              onClick={() => navigate('/')}
+              className="w-full"
+              variant="outline"
+              disabled={requestingLink}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Back to Home
             </Button>
           </CardContent>
         </Card>
@@ -273,7 +376,6 @@ const ResetPassword = () => {
     );
   }
 
-  // Valid session — password reset form
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
       <Card className="w-full max-w-md">
@@ -282,7 +384,9 @@ const ResetPassword = () => {
             <Lock className="h-12 w-12 text-primary" />
           </div>
           <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
-          <CardDescription className="text-center">Enter your new password below</CardDescription>
+          <CardDescription className="text-center">
+            Enter your new password below
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
@@ -307,10 +411,15 @@ const ResetPassword = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
                 >
-                  {showPassword ? <EyeOff className="h-3.5 w-3.5 text-muted-foreground" /> : <Eye className="h-3.5 w-3.5 text-muted-foreground" />}
+                  {showPassword ? (
+                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                 </Button>
               </div>
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -324,10 +433,21 @@ const ResetPassword = () => {
                 disabled={loading}
               />
             </div>
+
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating Password...</>) : 'Update Password'}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating Password...
+                </>
+              ) : (
+                'Update Password'
+              )}
             </Button>
-            <div className="text-center text-sm text-muted-foreground">Password must be at least 6 characters</div>
+
+            <div className="text-center text-sm text-muted-foreground">
+              Password must be at least 6 characters
+            </div>
           </form>
         </CardContent>
       </Card>
