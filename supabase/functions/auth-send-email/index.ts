@@ -13,7 +13,7 @@ const hookSecret = rawSecret.includes("whsec_")
 // AYN branded email header - clean minimal design
 const AYN_HEADER = `
 <div style="background: #1a1a1a; padding: 50px 20px 30px; text-align: center;">
-  <h1 style="font-size: 48px; font-weight: 800; letter-spacing: 3px; color: #ffffff; margin: 0;">AYN</h1>
+  <h1 style="font-size: 48px; font-weight: 800; letter-spacing: 1px; color: #ffffff; margin: 0;">AYN</h1>
   <div style="width: 60px; height: 3px; background: #ffffff; margin: 20px auto 0;"></div>
 </div>
 `;

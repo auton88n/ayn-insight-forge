@@ -17,8 +17,9 @@ const Index = () => {
   useEffect(() => {
     // Skip auth handling if on password reset flow - let ResetPassword page handle it
     const isRecoveryFlow = window.location.pathname === '/reset-password' ||
-                           window.location.hash.includes('type=recovery');
-    
+                           window.location.hash.includes('type=recovery') ||
+                           (window.location.pathname === '/reset-password' && new URLSearchParams(window.location.search).has('code'));
+
     if (isRecoveryFlow) {
       if (import.meta.env.DEV) {
         console.log('[Index] Recovery flow detected, skipping auth intercept');
