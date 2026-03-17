@@ -774,18 +774,18 @@ const LandingPage = memo(() => {
 
                 {/* Message textarea */}
                 <div className="space-y-2 group">
-                  <label htmlFor="message" className="text-sm font-mono uppercase tracking-wider text-muted-foreground">
+                  <label htmlFor="message" className="text-xs font-mono uppercase tracking-[0.15em] text-muted-foreground/70">
                     {language === 'ar' ? 'الرسالة' : language === 'fr' ? 'Message' : 'Message'}
                   </label>
                   <Textarea id="message" value={contactForm.message} onChange={e => setContactForm({
                   ...contactForm,
                   message: e.target.value
-                })} placeholder={language === 'ar' ? 'كيف يمكننا مساعدتك؟' : language === 'fr' ? 'Parlez-nous de votre projet...' : 'Tell us about your project...'} rows={6} className={cn("bg-transparent border-2 border-border rounded-none text-base transition-all duration-300 resize-none", "focus:border-foreground focus:ring-0", "group-hover:border-muted-foreground", contactErrors.message && "border-destructive")} disabled={isSubmitting} />
+                })} placeholder={language === 'ar' ? 'كيف يمكننا مساعدتك؟' : language === 'fr' ? 'Parlez-nous de votre projet...' : 'Tell us about your project...'} rows={6} className={cn("bg-muted/30 border border-border/60 rounded-2xl text-base transition-all duration-300 resize-none px-5 py-4", "focus:border-foreground/40 focus:ring-0 focus:bg-muted/50", "group-hover:border-border", contactErrors.message && "border-destructive")} disabled={isSubmitting} />
                   {contactErrors.message && <p className="text-sm text-destructive animate-slide-down-fade">{contactErrors.message}</p>}
                 </div>
 
                 {/* Submit button */}
-                <Button type="submit" size="lg" disabled={isSubmitting} className={cn("w-full h-14 rounded-none font-mono uppercase tracking-wider transition-all duration-300", "hover:shadow-2xl")}>
+                <Button type="submit" size="lg" disabled={isSubmitting} className={cn("w-full h-13 rounded-2xl text-sm font-medium tracking-wide transition-all duration-300", "hover:shadow-xl active:scale-[0.98]")}>
                   {isSubmitting ? <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {language === 'ar' ? 'جارٍ الإرسال...' : language === 'fr' ? 'Envoi...' : 'Sending...'}
