@@ -13,7 +13,7 @@ const hookSecret = rawSecret.includes("whsec_")
 // AYN branded email header - clean minimal design
 const AYN_HEADER = `
 <div style="background: #1a1a1a; padding: 50px 20px 30px; text-align: center;">
-  <h1 style="font-size: 48px; font-weight: 800; letter-spacing: 8px; color: #ffffff; margin: 0;">AYN</h1>
+  <h1 style="font-size: 48px; font-weight: 800; letter-spacing: 3px; color: #ffffff; margin: 0;">AYN</h1>
   <div style="width: 60px; height: 3px; background: #ffffff; margin: 20px auto 0;"></div>
 </div>
 `;
@@ -237,7 +237,13 @@ Deno.serve(async (req) => {
     console.log(`[auth-send-email] Processing ${email_data.email_action_type} for ${user.email}`);
 
     // Build the confirmation URL
-    const confirmationUrl = `https://dfkoxuokfkttjhfjcecx.supabase.co/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to || email_data.site_url)}`;
+    // For recovery emails, ensure redirect goes to /reset-password
+    let redirectTo = email_data.redirect_to || email_data.site_url;
+    if (email_data.email_action_type === 'recovery' && !redirectTo.includes('/reset-password')) {
+      const baseUrl = redirectTo.replace(/\/$/, '');
+      redirectTo = `${baseUrl}/reset-password`;
+    }
+    const confirmationUrl = `https://dfkoxuokfkttjhfjcecx.supabase.co/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(redirectTo)}`;
 
     // Get the appropriate template
     const { subject, html } = getTemplate(email_data.email_action_type, user, confirmationUrl);
