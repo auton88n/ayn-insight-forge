@@ -296,19 +296,19 @@ const LandingPage = memo(() => {
       {/* Vertical Dropdown Navigation */}
       <nav className="fixed top-4 md:top-6 left-4 md:left-6 z-50 animate-fade-in">
         <div className="relative">
-          {/* Logo Pill - Always visible, acts as trigger - CSS transitions instead of springs */}
-          <div ref={menuRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="flex items-center gap-2 px-3 py-2.5 bg-card border border-border rounded-full shadow-2xl cursor-pointer">
-            <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-foreground flex items-center justify-center">
+          {/* Logo Pill — glass-backed, always visible */}
+          <div ref={menuRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className="flex items-center gap-2 px-3 py-2.5 bg-card/80 backdrop-blur-xl border border-border/60 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer">
+            <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-foreground flex items-center justify-center">
               <Brain className="w-4 h-4 md:w-5 md:h-5 text-background" />
             </div>
             <span className={cn("text-lg md:text-xl font-bold tracking-tight overflow-hidden whitespace-nowrap transition-all duration-200", isMenuExpanded ? "w-auto opacity-100" : "w-0 opacity-0")}>
               AYN
             </span>
-            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", isMenuExpanded && "rotate-180")} />
+            <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-300", isMenuExpanded && "rotate-180")} />
           </div>
 
-          {/* Dropdown Panel - CSS transitions instead of springs */}
-          {isMenuExpanded && <div className="absolute top-full left-0 mt-2 min-w-[200px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+          {/* Dropdown Panel — glass morphism */}
+          {isMenuExpanded && <div className="absolute top-full left-0 mt-2 min-w-[200px] bg-card/80 backdrop-blur-xl border border-border/60 rounded-2xl shadow-2xl overflow-hidden animate-scale-fade-in" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
               {/* Navigation Links */}
               <div className="p-2">
                 <button onClick={() => scrollToSection('about')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
