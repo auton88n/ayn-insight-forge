@@ -362,32 +362,31 @@ async function callWithFallback(
       const estimatedInputTokens = usage?.prompt_tokens || 
         Math.round(messages.reduce((sum, m) => sum + (typeof m.content === 'string' ? m.content.length : JSON.stringify(m.content).length), 0) / 4);
       
-      // Log successful usage with token counts and response time
-      try {
-        await supabase.from('llm_usage_logs').insert({
-          user_id: userId,
-          intent_type: intent,
-          was_fallback: i > 0,
-          fallback_reason: i > 0 ? `Primary model failed, used ${model.display_name}` : null,
-          model_name: model.model_id,
-          input_tokens: estimatedInputTokens,
-          output_tokens: usage?.completion_tokens || 0,
-          response_time_ms: responseTimeMs,
-        });
-        
-        if (usage) {
-          console.log(`[ayn-unified] Token usage - input: ${usage.prompt_tokens}, output: ${usage.completion_tokens}, time: ${responseTimeMs}ms, model: ${model.model_id}`);
+      // Log successful usage without blocking the response path
+      void (async () => {
+        try {
+          await supabase.from('llm_usage_logs').insert({
+            user_id: userId,
+            intent_type: intent,
+            was_fallback: i > 0,
+            fallback_reason: i > 0 ? `Primary model failed, used ${model.display_name}` : null,
+            model_name: model.model_id,
+            input_tokens: estimatedInputTokens,
+            output_tokens: usage?.completion_tokens || 0,
+            response_time_ms: responseTimeMs,
+          });
+
+          if (usage) {
+            console.log(`[ayn-unified] Token usage - input: ${usage.prompt_tokens}, output: ${usage.completion_tokens}, time: ${responseTimeMs}ms, model: ${model.model_id}`);
+          }
+
+          if (userId !== 'internal-evaluator') {
+            await checkAndSendCreditWarning(supabase, userId);
+          }
+        } catch (logError) {
+          console.error('Failed to log usage:', logError);
         }
-        
-        // Check if user has crossed 90% credit usage - send warning email
-        if (userId !== 'internal-evaluator') {
-          checkAndSendCreditWarning(supabase, userId).catch(err => 
-            console.error('[ayn-unified] Credit warning check failed:', err)
-          );
-        }
-      } catch (logError) {
-        console.error('Failed to log usage:', logError);
-      }
+      })();
       
       return { response, modelUsed: model, wasFallback: i > 0 };
     } catch (error) {
