@@ -736,7 +736,7 @@ const LandingPage = memo(() => {
             {isSubmitted ?
             // Success state
             <div className="text-center py-20 animate-scale-fade-in">
-                <div className="w-16 h-16 rounded-full bg-foreground mx-auto mb-6 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-foreground mx-auto mb-6 flex items-center justify-center">
                   <CheckCircle className="w-8 h-8 text-background" />
                 </div>
                 <h3 className="text-2xl font-bold mb-3">
