@@ -237,7 +237,13 @@ Deno.serve(async (req) => {
     console.log(`[auth-send-email] Processing ${email_data.email_action_type} for ${user.email}`);
 
     // Build the confirmation URL
-    const confirmationUrl = `https://dfkoxuokfkttjhfjcecx.supabase.co/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to || email_data.site_url)}`;
+    // For recovery emails, ensure redirect goes to /reset-password
+    let redirectTo = email_data.redirect_to || email_data.site_url;
+    if (email_data.email_action_type === 'recovery' && !redirectTo.includes('/reset-password')) {
+      const baseUrl = redirectTo.replace(/\/$/, '');
+      redirectTo = `${baseUrl}/reset-password`;
+    }
+    const confirmationUrl = `https://dfkoxuokfkttjhfjcecx.supabase.co/auth/v1/verify?token=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(redirectTo)}`;
 
     // Get the appropriate template
     const { subject, html } = getTemplate(email_data.email_action_type, user, confirmationUrl);
