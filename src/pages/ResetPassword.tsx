@@ -28,196 +28,132 @@ const ResetPassword = () => {
   useEffect(() => {
     let isMounted = true;
     let slowTimer: ReturnType<typeof setTimeout> | null = null;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
     localStorage.setItem('password_recovery_in_progress', 'true');
 
-    const validateSession = async () => {
-      slowTimer = setTimeout(() => {
-        if (isMounted) setSlowValidation(true);
-      }, 8000);
+    // Show slow-loading hint after 8s
+    slowTimer = setTimeout(() => {
+      if (isMounted && isValidating) setSlowValidation(true);
+    }, 8000);
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    // Check URL for error parameters first
+    const urlParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const urlError = urlParams.get('error') || hashParams.get('error');
+    const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
 
-      const urlError = urlParams.get('error') || hashParams.get('error');
-      const errorDescription = urlParams.get('error_description') || hashParams.get('error_description');
+    if (urlError || errorDescription?.includes('expired')) {
+      console.log('[ResetPassword] URL contains error, marking as expired');
+      setLinkExpired(true);
+      setIsValidating(false);
+      return;
+    }
 
-      if (urlError || errorDescription?.includes('expired')) {
-        console.log('[ResetPassword] URL contains error, marking as expired');
-        if (isMounted) {
-          setLinkExpired(true);
-          setIsValidating(false);
-        }
-        return;
-      }
+    // Detect if we have a code or hash tokens (just for logging/fallback timing)
+    const hasCode = urlParams.has('code');
+    const hasHashToken = hashParams.has('access_token') && hashParams.get('type') === 'recovery';
+    console.log('[ResetPassword] hasCode:', hasCode, '| hasHashToken:', hasHashToken);
 
-      const code = urlParams.get('code');
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
-      const tokenType = hashParams.get('type');
-      const hasRecoveryToken = accessToken && tokenType === 'recovery';
-
-      console.log('[ResetPassword] PKCE code:', !!code, '| Hash recovery token:', !!hasRecoveryToken);
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+    // Set up auth state listener FIRST — this catches the PASSWORD_RECOVERY
+    // event fired by Supabase's auto detectSessionInUrl (PKCE) or hash detection.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
         console.log('[ResetPassword] Auth event:', event);
         if (!isMounted) return;
 
-        if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && currentSession)) {
+        if (event === 'PASSWORD_RECOVERY' && currentSession) {
+          // This is the primary success path for password reset
+          console.log('[ResetPassword] PASSWORD_RECOVERY event received');
           setSession(currentSession);
-          setRequestEmail((prev) => prev || currentSession?.user.email || '');
+          setRequestEmail(prev => prev || currentSession.user.email || '');
           setLinkExpired(false);
           setIsValidating(false);
           if (slowTimer) clearTimeout(slowTimer);
-        }
-      });
-
-      try {
-        if (code) {
-          console.log('[ResetPassword] Exchanging PKCE code for session...');
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-          if (!isMounted) {
-            subscription.unsubscribe();
-            return;
-          }
-
-          if (error) {
-            console.error('[ResetPassword] Code exchange failed:', error);
-            setLinkExpired(true);
-            setIsValidating(false);
-            subscription.unsubscribe();
-            return;
-          }
-
-          if (data.session) {
-            console.log('[ResetPassword] PKCE session established');
-            setSession(data.session);
-            setRequestEmail((prev) => prev || data.session?.user.email || '');
-            setIsValidating(false);
-            if (slowTimer) clearTimeout(slowTimer);
+          if (fallbackTimer) clearTimeout(fallbackTimer);
+          // Clean URL
+          if (window.location.hash || window.location.search) {
             window.history.replaceState(null, '', window.location.pathname);
-            subscription.unsubscribe();
-            return;
           }
-        }
-
-        if (hasRecoveryToken && refreshToken) {
-          console.log('[ResetPassword] Setting session from hash tokens...');
-          const { data: sessionData, error: setError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (!isMounted) {
-            subscription.unsubscribe();
-            return;
-          }
-
-          if (setError) {
-            console.error('[ResetPassword] Hash session set failed:', setError);
-            setLinkExpired(true);
-            setIsValidating(false);
-          } else if (sessionData.session) {
-            console.log('[ResetPassword] Hash session set successfully');
-            setSession(sessionData.session);
-            setRequestEmail((prev) => prev || sessionData.session?.user.email || '');
-            setIsValidating(false);
-            window.history.replaceState(null, '', window.location.pathname);
-          } else {
-            setLinkExpired(true);
-            setIsValidating(false);
-          }
-          if (slowTimer) clearTimeout(slowTimer);
-          subscription.unsubscribe();
-          return;
-        }
-
-        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
-
-        if (!isMounted) {
-          subscription.unsubscribe();
-          return;
-        }
-
-        if (error) {
-          console.error('[ResetPassword] Session check error:', error);
-          setLinkExpired(true);
+        } else if (event === 'SIGNED_IN' && currentSession) {
+          // SIGNED_IN can also fire for recovery — accept it as valid
+          console.log('[ResetPassword] SIGNED_IN event received (recovery context)');
+          setSession(currentSession);
+          setRequestEmail(prev => prev || currentSession.user.email || '');
+          setLinkExpired(false);
           setIsValidating(false);
-          subscription.unsubscribe();
-          return;
+          if (slowTimer) clearTimeout(slowTimer);
+          if (fallbackTimer) clearTimeout(fallbackTimer);
+          if (window.location.hash || window.location.search) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
         }
+      }
+    );
+
+    // Also check for an existing session (e.g., user refreshed the page after
+    // the code was already exchanged by detectSessionInUrl)
+    const checkExistingSession = async () => {
+      try {
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        if (!isMounted) return;
 
         if (existingSession) {
           console.log('[ResetPassword] Found existing session');
           setSession(existingSession);
-          setRequestEmail((prev) => prev || existingSession.user.email || '');
+          setRequestEmail(prev => prev || existingSession.user.email || '');
           setIsValidating(false);
           if (slowTimer) clearTimeout(slowTimer);
-          subscription.unsubscribe();
+          if (fallbackTimer) clearTimeout(fallbackTimer);
           return;
         }
-
-        console.log('[ResetPassword] Waiting for auth event...');
-        setTimeout(() => {
-          if (isMounted) {
-            console.log('[ResetPassword] Timeout waiting for auth event');
-            setLinkExpired(true);
-            setIsValidating(false);
-          }
-          subscription.unsubscribe();
-        }, 3000);
       } catch (e) {
-        console.error('[ResetPassword] Validation error:', e);
-        if (isMounted) {
+        console.error('[ResetPassword] getSession error:', e);
+      }
+
+      // If no session yet and we have a code/token, the auto-detection should
+      // handle it. Give it time, then fall back to expired state.
+      const waitTime = (hasCode || hasHashToken) ? 8000 : 3000;
+      fallbackTimer = setTimeout(() => {
+        if (isMounted && isValidating) {
+          console.log('[ResetPassword] Timeout — no session established');
           setLinkExpired(true);
           setIsValidating(false);
         }
-      }
+      }, waitTime);
     };
 
-    validateSession();
+    checkExistingSession();
 
     return () => {
       isMounted = false;
+      subscription.unsubscribe();
       if (slowTimer) clearTimeout(slowTimer);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
       if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current);
       if (linkExpired) localStorage.removeItem('password_recovery_in_progress');
     };
-  }, [linkExpired]);
+  }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      toast({
-        title: 'Error',
-        description: 'Passwords do not match',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Passwords do not match', variant: 'destructive' });
       return;
     }
 
     if (newPassword.length < 6) {
-      toast({
-        title: 'Error',
-        description: 'Password must be at least 6 characters',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
       return;
     }
 
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: 'Your password has been updated successfully',
-      });
-
+      toast({ title: 'Success', description: 'Your password has been updated successfully' });
       localStorage.removeItem('password_recovery_in_progress');
       localStorage.removeItem('password_reset_email');
       navigateTimerRef.current = setTimeout(() => {
@@ -237,13 +173,8 @@ const ResetPassword = () => {
 
   const handleRequestNewLink = async () => {
     const normalizedEmail = requestEmail.trim().toLowerCase();
-
     if (!normalizedEmail) {
-      toast({
-        title: 'Email Required',
-        description: 'Enter your email address to receive a new reset link.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Email Required', description: 'Enter your email address to receive a new reset link.', variant: 'destructive' });
       return;
     }
 
@@ -252,14 +183,10 @@ const ResetPassword = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-
       if (error) throw error;
 
       localStorage.setItem('password_reset_email', normalizedEmail);
-      toast({
-        title: 'Reset Link Sent',
-        description: 'Check your email for a new password reset link.',
-      });
+      toast({ title: 'Reset Link Sent', description: 'Check your email for a new password reset link.' });
     } catch (error) {
       toast({
         title: 'Unable to Send Link',
@@ -271,10 +198,7 @@ const ResetPassword = () => {
     }
   };
 
-  const handleReload = () => {
-    window.location.reload();
-  };
-
+  // Reusable "request new link" form for expired/slow states
   const requestLinkForm = (
     <div className="space-y-4">
       <div className="space-y-2 text-left">
@@ -289,26 +213,17 @@ const ResetPassword = () => {
           disabled={requestingLink}
         />
       </div>
-      <Button
-        onClick={handleRequestNewLink}
-        className="w-full"
-        variant="default"
-        disabled={requestingLink}
-      >
+      <Button onClick={handleRequestNewLink} className="w-full" variant="default" disabled={requestingLink}>
         {requestingLink ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Sending Link...
-          </>
+          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending Link...</>
         ) : (
-          <>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Request New Link
-          </>
+          <><RefreshCw className="mr-2 h-4 w-4" /> Request New Link</>
         )}
       </Button>
     </div>
   );
+
+  // --- RENDER STATES ---
 
   if (isValidating) {
     return (
@@ -321,22 +236,14 @@ const ResetPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Validating Reset Link</CardTitle>
             <CardDescription className="text-center">
-              {slowValidation
-                ? 'This is taking longer than expected...'
-                : 'Please wait while we verify your password reset link...'}
+              {slowValidation ? 'This is taking longer than expected...' : 'Please wait while we verify your password reset link...'}
             </CardDescription>
           </CardHeader>
           {slowValidation && (
             <CardContent className="space-y-4">
               {requestLinkForm}
-              <Button
-                onClick={handleReload}
-                className="w-full"
-                variant="outline"
-                disabled={requestingLink}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Reload Page
+              <Button onClick={() => window.location.reload()} className="w-full" variant="outline">
+                <RefreshCw className="mr-2 h-4 w-4" /> Reload Page
               </Button>
             </CardContent>
           )}
@@ -355,20 +262,13 @@ const ResetPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Reset Link Expired</CardTitle>
             <CardDescription className="text-center">
-              This password reset link has expired or is invalid.
-              Reset links are valid for 1 hour after they are sent.
+              This password reset link has expired or is invalid. Reset links are valid for 1 hour after they are sent.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {requestLinkForm}
-            <Button
-              onClick={() => navigate('/')}
-              className="w-full"
-              variant="outline"
-              disabled={requestingLink}
-            >
-              <Home className="mr-2 h-4 w-4" />
-              Back to Home
+            <Button onClick={() => navigate('/')} className="w-full" variant="outline" disabled={requestingLink}>
+              <Home className="mr-2 h-4 w-4" /> Back to Home
             </Button>
           </CardContent>
         </Card>
@@ -376,6 +276,7 @@ const ResetPassword = () => {
     );
   }
 
+  // Valid session — show password reset form
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted p-4">
       <Card className="w-full max-w-md">
@@ -384,9 +285,7 @@ const ResetPassword = () => {
             <Lock className="h-12 w-12 text-primary" />
           </div>
           <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
-          <CardDescription className="text-center">
-            Enter your new password below
-          </CardDescription>
+          <CardDescription className="text-center">Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
@@ -411,15 +310,10 @@ const ResetPassword = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-                  ) : (
-                    <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                  )}
+                  {showPassword ? <EyeOff className="h-3.5 w-3.5 text-muted-foreground" /> : <Eye className="h-3.5 w-3.5 text-muted-foreground" />}
                 </Button>
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -433,21 +327,10 @@ const ResetPassword = () => {
                 disabled={loading}
               />
             </div>
-
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating Password...
-                </>
-              ) : (
-                'Update Password'
-              )}
+              {loading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating Password...</>) : 'Update Password'}
             </Button>
-
-            <div className="text-center text-sm text-muted-foreground">
-              Password must be at least 6 characters
-            </div>
+            <div className="text-center text-sm text-muted-foreground">Password must be at least 6 characters</div>
           </form>
         </CardContent>
       </Card>

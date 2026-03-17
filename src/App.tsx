@@ -78,7 +78,7 @@ const AnimatedRoutes = () => {
       <Route path="/settings" element={<Suspense fallback={<PageLoader />}><Settings /></Suspense>} />
       <Route path="/pricing" element={<Suspense fallback={<PageLoader />}><Pricing /></Suspense>} />
       
-      <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
+      <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><PageTransition><ResetPassword /></PageTransition></Suspense>} />
       
       <Route path="/services/ai-employee" element={<Suspense fallback={<PageLoader />}><PageTransition><AIEmployee /></PageTransition></Suspense>} />
       <Route path="/services/ai-employee/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><AIEmployeeApply /></PageTransition></Suspense>} />
