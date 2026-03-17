@@ -61,8 +61,8 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
       {/* Central eye — clean, no floating cards */}
       <motion.div
         className="relative w-full max-w-5xl flex-1 flex items-center justify-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Subtle light behind the eye */}
