@@ -403,28 +403,28 @@ const LandingPage = memo(() => {
       }} />
 
       {/* About AYN - Value Proposition Section */}
-      <section id="about" className="py-16 md:py-32 px-4 md:px-6">
+      <section id="about" className="py-20 md:py-36 px-4 md:px-6">
         <div className="container mx-auto max-w-6xl text-center">
           <ScrollReveal>
-            <span className="text-sm font-mono text-muted-foreground tracking-wider uppercase mb-4 block">
+            <span className="text-xs font-mono text-muted-foreground/70 tracking-[0.2em] uppercase mb-6 block">
               {language === 'ar' ? 'من نحن' : language === 'fr' ? 'À Propos d\'AYN' : 'About AYN'}
             </span>
 
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-5 md:mb-7 tracking-tight">
               {language === 'ar' ? 'ذكاء اصطناعي + أدوات هندسية' : language === 'fr' ? 'IA + Outils d\'Ingénierie' : 'AI Assistant + Engineering Tools'}
             </h2>
 
-            <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 md:mb-16">
+            <p className="text-base md:text-lg text-muted-foreground/80 max-w-2xl mx-auto mb-14 md:mb-20 leading-relaxed">
               {language === 'ar' ? 'AYN يتعرّف عليك ويساعدك في مهامك اليومية، بالإضافة إلى أدوات هندسية احترافية للتصميم الإنشائي.' : language === 'fr' ? 'AYN apprend vos habitudes et vous aide à rester organisé, avec des outils d\'ingénierie professionnels.' : 'AYN learns your habits and helps you stay organized, plus professional engineering tools for structural design.'}
             </p>
           </ScrollReveal>
 
           {/* 6 Value Props - 2 Rows */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-16">
             {/* Row 1: AI Capabilities */}
             <ScrollReveal delay={0.1}>
-              <div className="text-center space-y-3 md:space-y-4">
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
+              <div className="text-center space-y-4 md:space-y-5">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/40 mx-auto flex items-center justify-center transition-colors duration-300 group-hover:bg-muted/60">
                   <Brain className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
