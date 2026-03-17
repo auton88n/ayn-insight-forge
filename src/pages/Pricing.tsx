@@ -178,8 +178,7 @@ const Pricing = () => {
                         'bg-card border border-border/40',
                         'shadow-[0_2px_20px_-4px_hsl(var(--foreground)/0.08)]',
                         'hover:shadow-[0_8px_40px_-8px_hsl(var(--foreground)/0.15)] hover:-translate-y-1',
-                        isCurrentPlan && 'shadow-[0_4px_30px_-6px_hsl(var(--primary)/0.2)] border-primary/30',
-                        isPopular && 'shadow-[0_8px_50px_-10px_hsl(var(--foreground)/0.12)] border-border/60 xl:-mt-4 xl:mb-4',
+                        isPopular && 'shadow-[0_8px_50px_-10px_hsl(var(--foreground)/0.12)] border-border/60',
                       )}
                     >
                       {/* Popular badge */}
