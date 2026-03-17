@@ -3,11 +3,11 @@ import { DashboardContainer } from './dashboard/DashboardContainer';
 import { TermsModal } from '@/components/shared/TermsModal';
 import { AdminPinGate } from './admin/AdminPinGate';
 import { useAuth } from '@/hooks/useAuth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle, Clock } from 'lucide-react';
-import { AdminPanel } from './AdminPanel';
+const AdminPanel = lazy(() => import('./AdminPanel').then(m => ({ default: m.AdminPanel })));
 
 interface DashboardProps {
   user: User;
@@ -209,12 +209,14 @@ export default function Dashboard({ user, session }: DashboardProps) {
       {/* Main Content - conditionally render based on active view */}
       {activeView === 'admin' && auth.hasDutyAccess && isAdminUnlocked ? (
         <div className="fixed inset-0 bg-background overflow-hidden z-50">
-          <AdminPanel 
-            session={session} 
-            onBackClick={() => setActiveView('chat')} 
-            isAdmin={auth.isAdmin}
-            isDuty={auth.isDuty}
-          />
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+            <AdminPanel 
+              session={session} 
+              onBackClick={() => setActiveView('chat')} 
+              isAdmin={auth.isAdmin}
+              isDuty={auth.isDuty}
+            />
+          </Suspense>
         </div>
       ) : (
         <SidebarProvider>

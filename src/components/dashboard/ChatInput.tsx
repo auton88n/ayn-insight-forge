@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -193,6 +194,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(({
   creditsExhausted = false,
   isTyping = false
 }, ref) => {
+  const navigate = useNavigate();
   const [inputMessage, setInputMessage] = useState('');
   const visibleSuggestions = suggestions.filter(s => s.isVisible);
   const handleSuggestionClickInternal = (suggestion: Suggestion, e: React.MouseEvent<HTMLButtonElement>) => {
@@ -439,7 +441,7 @@ export const ChatInput = forwardRef<HTMLDivElement, ChatInputProps>(({
               <p className="text-sm text-muted-foreground text-center">
                 You've used all your credits for this period.
               </p>
-              <Button onClick={() => window.location.href = '/pricing'} size="sm" className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0">
+              <Button onClick={() => navigate('/pricing')} size="sm" className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0">
                 <Sparkles className="w-4 h-4" />
                 Upgrade Plan
               </Button>

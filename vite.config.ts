@@ -17,9 +17,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Strip console.log/debug in production but keep console.error
     sourcemap: false,
     minify: 'esbuild',
     rollupOptions: {
+      // Tree-shake and optimize
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],

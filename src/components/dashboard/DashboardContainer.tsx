@@ -127,6 +127,14 @@ export const DashboardContainer = ({ user, session, auth, isAdmin, hasDutyAccess
       await chatSession.loadRecentChats();
       
       return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      toast({
+        title: 'Message Failed',
+        description: message.includes('limit') ? message : 'Failed to send message. Please try again.',
+        variant: 'destructive',
+      });
+      return false;
     } finally {
       // Always clear the file state, even if sending fails
       fileUpload.removeFile();
