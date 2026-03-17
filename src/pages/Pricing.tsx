@@ -174,18 +174,18 @@ const Pricing = () => {
                     <div
                       key={tier}
                       className={cn(
-                        'relative flex flex-col rounded-2xl transition-all duration-300',
-                        'bg-card/60 backdrop-blur-xl border',
-                        colors.border,
-                        colors.glow,
-                        isCurrentPlan && 'ring-2 ring-primary/60',
-                        isPopular && 'ring-2 ring-violet-500/50 xl:-mt-4 xl:mb-4',
+                        'relative flex flex-col rounded-2xl transition-all duration-500',
+                        'bg-card border border-border/40',
+                        'shadow-[0_2px_20px_-4px_hsl(var(--foreground)/0.08)]',
+                        'hover:shadow-[0_8px_40px_-8px_hsl(var(--foreground)/0.15)] hover:-translate-y-1',
+                        isCurrentPlan && 'shadow-[0_4px_30px_-6px_hsl(var(--primary)/0.2)] border-primary/30',
+                        isPopular && 'shadow-[0_8px_50px_-10px_hsl(var(--foreground)/0.12)] border-border/60 xl:-mt-4 xl:mb-4',
                       )}
                     >
                       {/* Popular badge */}
                       {isPopular && (
                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                          <Badge className="bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3 py-1 text-xs font-medium shadow-lg shadow-purple-500/25 border-0">
+                          <Badge className="bg-foreground text-background px-4 py-1.5 text-xs font-medium shadow-xl border-0">
                             <Sparkles className="w-3 h-3 mr-1" />
                             Most Popular
                           </Badge>
@@ -195,7 +195,7 @@ const Pricing = () => {
                       {/* Current plan badge */}
                       {isCurrentPlan && (
                         <div className="absolute -top-3 right-4 z-10">
-                          <Badge className="bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 border-0">
+                          <Badge className="bg-foreground text-background text-[10px] px-2.5 py-0.5 border-0 shadow-lg">
                             Your Plan
                           </Badge>
                         </div>
