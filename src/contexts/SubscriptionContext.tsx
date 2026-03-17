@@ -31,7 +31,7 @@ export const SUBSCRIPTION_TIERS = {
   },
   business: {
     name: 'Business',
-    price: 99,
+    price: 79,
     priceId: 'price_1SsEPKDBJlSjDe8AoLaqnZYP',
     productId: 'prod_TpuDQFgkmlTXAH',
     limits: { monthlyCredits: 15000, monthlyEngineering: 100 },
