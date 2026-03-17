@@ -5040,6 +5040,10 @@ export type Database = {
         Args: { _intent_type?: string; _user_id: string }
         Returns: Json
       }
+      check_user_exists_by_email: {
+        Args: { p_email: string }
+        Returns: boolean
+      }
       check_visitor_analytics_rate_limit: {
         Args: { _visitor_id: string }
         Returns: boolean
