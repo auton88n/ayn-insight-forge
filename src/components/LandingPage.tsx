@@ -833,6 +833,16 @@ const LandingPage = memo(() => {
                     </button>
                   </li>
                 ))}
+                <li>
+                  <Link to="/privacy" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'سياسة الخصوصية' : language === 'fr' ? 'Confidentialité' : 'Privacy Policy'}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/terms" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'الشروط والأحكام' : language === 'fr' ? 'Conditions' : 'Terms of Service'}
+                  </Link>
+                </li>
               </ul>
             </div>
 
