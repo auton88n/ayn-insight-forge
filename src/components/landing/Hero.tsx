@@ -66,7 +66,7 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
         transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Subtle light behind the eye */}
-        <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] md:w-[360px] md:h-[360px] lg:w-[480px] lg:h-[480px] rounded-full -z-10 pointer-events-none bg-gradient-to-b from-transparent via-muted/30 to-transparent" />
+        <div className="absolute w-[200px] h-[200px] sm:w-[280px] sm:h-[280px] md:w-[360px] md:h-[360px] lg:w-[480px] lg:h-[480px] rounded-full -z-10 pointer-events-none bg-gradient-to-b from-transparent via-muted/20 to-transparent" />
 
         {/* Eye */}
         <div
