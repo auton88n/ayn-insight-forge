@@ -392,16 +392,18 @@ async function callWithFallback(
     } catch (error) {
       console.error(`${model.display_name} failed:`, error);
       
-      // Log failure
-      try {
-        await supabase.from('llm_failures').insert({
-          error_type: error instanceof Error && error.message.includes('429') ? '429' : 
-                      error instanceof Error && error.message.includes('402') ? '402' : 'error',
-          error_message: error instanceof Error ? error.message : 'Unknown error'
-        });
-      } catch (logError) {
-        console.error('Failed to log failure:', logError);
-      }
+      // Log failure without blocking fallback/response flow
+      void (async () => {
+        try {
+          await supabase.from('llm_failures').insert({
+            error_type: error instanceof Error && error.message.includes('429') ? '429' : 
+                        error instanceof Error && error.message.includes('402') ? '402' : 'error',
+            error_message: error instanceof Error ? error.message : 'Unknown error'
+          });
+        } catch (logError) {
+          console.error('Failed to log failure:', logError);
+        }
+      })();
       
       if (i === chain.length - 1) {
         // All models failed - check if any was a 402 (credits exhausted)
