@@ -235,7 +235,7 @@ const Pricing = () => {
                         </div>
 
                         {/* Divider */}
-                        <div className="h-px bg-white/[0.06] mb-5" />
+                        <div className="h-px bg-border/50 mb-5" />
 
                         {/* Features */}
                         <ul className="space-y-3 mb-8 flex-grow">
