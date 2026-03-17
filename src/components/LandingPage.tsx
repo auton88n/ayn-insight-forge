@@ -723,10 +723,10 @@ const LandingPage = memo(() => {
               <span className="text-xs font-mono text-muted-foreground/70 tracking-[0.2em] uppercase mb-6 block">
                 {language === 'ar' ? 'راسلنا' : language === 'fr' ? 'Contactez-Nous' : 'Get In Touch'}
               </span>
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-5 md:mb-7 tracking-tight">
                 {language === 'ar' ? 'دعنا نتحدث' : language === 'fr' ? 'Commençons une Conversation' : "Let's Start a Conversation"}
               </h2>
-              <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto">
+              <p className="text-base md:text-lg text-muted-foreground/80 max-w-lg mx-auto leading-relaxed">
                 {language === 'ar' ? 'شاركنا فكرتك، ودعنا نحوّلها إلى واقع' : language === 'fr' ? 'Parlez-nous de votre projet et nous vous aiderons à réaliser votre vision' : "Tell us about your project and we'll help transform your vision into reality"}
               </p>
             </div>
