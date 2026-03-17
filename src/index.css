@@ -440,8 +440,8 @@ button, a, input, textarea, select {
 
   /* Glass morphism effects */
   .glass {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: hsl(var(--glass-bg));
+    border: 1px solid hsl(var(--glass-border));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: var(--glass-shadow);
@@ -452,19 +452,55 @@ button, a, input, textarea, select {
   }
 
   .glass-hover:hover {
-    background: hsla(0, 0%, 95%, 1);
-    border-color: hsla(0, 0%, 80%, 1);
-    box-shadow: 0 12px 40px hsla(0, 0%, 0%, 0.1);
+    background: hsl(var(--glass-bg-elevated));
+    border-color: hsl(var(--glass-border-strong));
+    box-shadow: var(--glass-shadow-elevated);
   }
 
-  .dark .glass-hover:hover {
-    background: rgba(255, 255, 255, 0.9);
-    color: black;
+  /* Animated gradient blobs for GlassContainer */
+  .glass-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    will-change: transform;
+    animation: glass-blob-float 20s ease-in-out infinite;
   }
 
-  .dark .glass-hover:hover h3,
-  .dark .glass-hover:hover p {
-    color: black;
+  .glass-blob-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, hsl(270 70% 40% / 0.4), transparent 70%);
+    top: -10%;
+    left: -5%;
+    animation-delay: 0s;
+  }
+
+  .glass-blob-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, hsl(210 90% 45% / 0.35), transparent 70%);
+    top: 40%;
+    right: -10%;
+    animation-delay: -7s;
+    animation-duration: 25s;
+  }
+
+  .glass-blob-3 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, hsl(25 95% 50% / 0.25), transparent 70%);
+    bottom: -5%;
+    left: 30%;
+    animation-delay: -14s;
+    animation-duration: 22s;
+  }
+
+  @keyframes glass-blob-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -40px) scale(1.05); }
+    50% { transform: translate(-20px, 20px) scale(0.95); }
+    75% { transform: translate(40px, 30px) scale(1.03); }
   }
 
   /* Gradient text styles */
