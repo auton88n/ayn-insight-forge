@@ -24,46 +24,34 @@ const tierIcons: Record<SubscriptionTier, React.ReactNode> = {
   unlimited: <Star className="w-5 h-5" />,
 };
 
-const tierColors: Record<string, { icon: string; border: string; glow: string; btn: string; check: string }> = {
+const tierColors: Record<string, { icon: string; btn: string; check: string }> = {
   free: {
-    icon: 'text-slate-400',
-    border: 'border-white/[0.06]',
-    glow: '',
-    btn: 'bg-white/10 hover:bg-white/15 text-foreground border border-white/10',
-    check: 'bg-slate-500',
+    icon: 'text-muted-foreground',
+    btn: 'bg-muted hover:bg-muted/80 text-foreground',
+    check: 'bg-muted-foreground',
   },
   starter: {
     icon: 'text-sky-400',
-    border: 'border-sky-500/20',
-    glow: 'hover:border-sky-500/40 hover:shadow-[0_0_40px_-12px_rgba(56,189,248,0.25)]',
     btn: 'bg-sky-500 hover:bg-sky-600 text-white',
     check: 'bg-sky-500',
   },
   pro: {
     icon: 'text-violet-400',
-    border: 'border-violet-500/30',
-    glow: 'shadow-[0_0_60px_-12px_rgba(139,92,246,0.3)] hover:shadow-[0_0_80px_-12px_rgba(139,92,246,0.45)]',
-    btn: 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-purple-500/20',
+    btn: 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white',
     check: 'bg-violet-500',
   },
   business: {
     icon: 'text-emerald-400',
-    border: 'border-emerald-500/20',
-    glow: 'hover:border-emerald-500/40 hover:shadow-[0_0_40px_-12px_rgba(52,211,153,0.25)]',
     btn: 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white',
     check: 'bg-emerald-500',
   },
   enterprise: {
     icon: 'text-amber-400',
-    border: 'border-amber-500/20',
-    glow: 'hover:border-amber-500/40 hover:shadow-[0_0_40px_-12px_rgba(251,191,36,0.25)]',
     btn: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white',
     check: 'bg-amber-500',
   },
   unlimited: {
     icon: 'text-emerald-400',
-    border: 'border-emerald-500/20',
-    glow: '',
     btn: 'bg-emerald-500 hover:bg-emerald-600 text-white',
     check: 'bg-emerald-500',
   },
@@ -186,18 +174,18 @@ const Pricing = () => {
                     <div
                       key={tier}
                       className={cn(
-                        'relative flex flex-col rounded-2xl transition-all duration-300',
-                        'bg-card/60 backdrop-blur-xl border',
-                        colors.border,
-                        colors.glow,
-                        isCurrentPlan && 'ring-2 ring-primary/60',
-                        isPopular && 'ring-2 ring-violet-500/50 xl:-mt-4 xl:mb-4',
+                        'relative flex flex-col rounded-2xl transition-all duration-500',
+                        'bg-card border border-border/40',
+                        'shadow-[0_2px_20px_-4px_hsl(var(--foreground)/0.08)]',
+                        'hover:shadow-[0_8px_40px_-8px_hsl(var(--foreground)/0.15)] hover:-translate-y-1',
+                        isCurrentPlan && 'shadow-[0_4px_30px_-6px_hsl(var(--primary)/0.2)] border-primary/30',
+                        isPopular && 'shadow-[0_8px_50px_-10px_hsl(var(--foreground)/0.12)] border-border/60 xl:-mt-4 xl:mb-4',
                       )}
                     >
                       {/* Popular badge */}
                       {isPopular && (
                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                          <Badge className="bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3 py-1 text-xs font-medium shadow-lg shadow-purple-500/25 border-0">
+                          <Badge className="bg-foreground text-background px-4 py-1.5 text-xs font-medium shadow-xl border-0">
                             <Sparkles className="w-3 h-3 mr-1" />
                             Most Popular
                           </Badge>
@@ -207,7 +195,7 @@ const Pricing = () => {
                       {/* Current plan badge */}
                       {isCurrentPlan && (
                         <div className="absolute -top-3 right-4 z-10">
-                          <Badge className="bg-primary text-primary-foreground text-[10px] px-2.5 py-0.5 border-0">
+                          <Badge className="bg-foreground text-background text-[10px] px-2.5 py-0.5 border-0 shadow-lg">
                             Your Plan
                           </Badge>
                         </div>
@@ -216,7 +204,7 @@ const Pricing = () => {
                       <div className="p-6 flex flex-col h-full">
                         {/* Tier name + icon */}
                         <div className="flex items-center gap-2.5 mb-5">
-                          <div className={cn('p-2 rounded-lg bg-white/5', colors.icon)}>
+                          <div className={cn('p-2 rounded-lg bg-muted/60', colors.icon)}>
                             {tierIcons[tier]}
                           </div>
                           <h3 className="text-lg font-semibold text-foreground">{config.name}</h3>
@@ -247,7 +235,7 @@ const Pricing = () => {
                         </div>
 
                         {/* Divider */}
-                        <div className="h-px bg-white/[0.06] mb-5" />
+                        <div className="h-px bg-border/50 mb-5" />
 
                         {/* Features */}
                         <ul className="space-y-3 mb-8 flex-grow">
@@ -265,9 +253,9 @@ const Pricing = () => {
                         <Button
                           onClick={() => handleAction(tier)}
                           className={cn(
-                            'w-full h-11 rounded-xl font-medium transition-all duration-200',
+                            'w-full h-11 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md',
                             isCurrentPlan && !isSubscribed
-                              ? 'bg-white/5 border border-white/10 text-muted-foreground cursor-default hover:bg-white/5'
+                              ? 'bg-muted text-muted-foreground cursor-default hover:bg-muted'
                               : isCurrentPlan && isSubscribed
                                 ? 'bg-card border border-border hover:bg-muted text-foreground'
                                 : colors.btn
