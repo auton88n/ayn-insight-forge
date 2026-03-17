@@ -511,31 +511,31 @@ const LandingPage = memo(() => {
       </section>
 
       {/* Services Section - Bento Grid */}
-      <section id="services" className="py-16 md:py-32 px-4 md:px-6 overflow-x-hidden">
+      <section id="services" className="py-20 md:py-36 px-4 md:px-6 overflow-x-hidden">
         <div className="container mx-auto max-w-6xl">
           {/* Section header */}
           <ScrollReveal>
-            <div className="text-center mb-12 md:mb-16">
-            <span className="text-sm font-mono text-muted-foreground tracking-wider uppercase mb-4 block">
+            <div className="text-center mb-14 md:mb-20">
+            <span className="text-xs font-mono text-muted-foreground/70 tracking-[0.2em] uppercase mb-6 block">
                 {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Ce Que Nous Faisons' : 'What We Do'}
               </span>
-              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4 md:mb-6">
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-5 md:mb-7 tracking-tight">
                 {language === 'ar' ? <>ست طرق <span className="font-bold">لتبسيط حياتك</span></> : language === 'fr' ? <>Six Façons de <span className="font-bold">Simplifier Votre Vie</span></> : <>Six Ways We Help <span className="font-bold">Simplify Your Life</span></>}
               </h2>
             </div>
           </ScrollReveal>
 
-          {/* Bento Grid - 4 Services */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Bento Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {/* Left Column */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-5">
               {/* Top Left - Content Creator Sites */}
               <ScrollReveal>
                 <Link to={`/services/${services[0].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
+                  <motion.div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout hover:border-border/80 transition-colors duration-300" whileHover={{
                     y: -4
                   }} transition={{
-                    duration: 0.3,
+                    duration: 0.35,
                     ease: [0.32, 0.72, 0, 1]
                   }}>
                     <div className="mb-4">
