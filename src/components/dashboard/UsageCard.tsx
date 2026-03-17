@@ -1,12 +1,12 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
-import { Sparkles, Zap, Infinity as InfinityIcon } from 'lucide-react';
+import { Sparkles, Zap, Infinity as InfinityIcon, ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { differenceInDays, format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface UsageCardProps {
-  // All props optional — component fetches its own live data
   remaining?: number;
   totalLimit?: number;
   allowed?: boolean;
@@ -38,6 +38,7 @@ export const UsageCard = ({
   isFree: propIsFree,
   isUnlimited: propIsUnlimited,
 }: UsageCardProps) => {
+  const navigate = useNavigate();
   const prevRemainingRef = useRef(0);
   const [showPulse, setShowPulse] = useState(false);
   const [displayCount, setDisplayCount] = useState(0);
@@ -53,85 +54,91 @@ export const UsageCard = ({
     loaded: false,
   });
 
-  // Fetch live data directly from Supabase
+  // Sync from props when they change (from useUsageTracking with realtime)
+  useEffect(() => {
+    if (propRemaining !== undefined) {
+      setCredits(prev => ({
+        ...prev,
+        remaining: propRemaining ?? prev.remaining,
+        totalLimit: propTotalLimit ?? prev.totalLimit,
+        allowed: propAllowed ?? prev.allowed,
+        resetsAt: propResetsAt ?? prev.resetsAt,
+        tier: propTier ?? prev.tier,
+        isFree: propIsFree ?? prev.isFree,
+        isUnlimited: propIsUnlimited ?? prev.isUnlimited,
+        loaded: true,
+      }));
+    }
+  }, [propRemaining, propTotalLimit, propAllowed, propResetsAt, propTier, propIsFree, propIsUnlimited]);
+
+  const fetchCredits = async () => {
+    if (!userId) return;
+    try {
+      const [limitsRes, subRes] = await Promise.all([
+        supabase.from('user_ai_limits').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('user_subscriptions').select('subscription_tier').eq('user_id', userId).maybeSingle(),
+      ]);
+
+      const limits = limitsRes.data;
+      if (limitsRes.error || !limits) return;
+
+      const tier = subRes.data?.subscription_tier || 'free';
+      const isFree = tier === 'free';
+      const isUnlimited = limits.is_unlimited === true;
+
+      if (isUnlimited) {
+        setCredits(prev => ({ ...prev, isUnlimited: true, loaded: true }));
+        return;
+      }
+
+      let remaining: number, totalLimit: number, resetsAt: string | null, allowed: boolean;
+
+      if (isFree) {
+        const dailyResetAt = limits.daily_reset_at ? new Date(limits.daily_reset_at) : null;
+        const isExpired = !dailyResetAt || dailyResetAt <= new Date();
+        const used = isExpired ? 0 : (limits.current_daily_messages || 0);
+        const limit = limits.daily_messages || 5;
+        remaining = Math.max(0, limit - used);
+        totalLimit = limit;
+        resetsAt = isExpired ? new Date(Date.now() + 86400000).toISOString() : limits.daily_reset_at;
+        allowed = remaining > 0;
+      } else {
+        const monthlyResetAt = limits.monthly_reset_at ? new Date(limits.monthly_reset_at) : null;
+        const isExpired = !monthlyResetAt || monthlyResetAt <= new Date();
+        const used = isExpired ? 0 : (limits.current_monthly_messages || 0);
+        const limit = (limits.monthly_messages || 1000) + (limits.bonus_credits || 0);
+        remaining = Math.max(0, limit - used);
+        totalLimit = limit;
+        resetsAt = limits.monthly_reset_at;
+        allowed = remaining > 0;
+      }
+
+      setCredits({ remaining, totalLimit, allowed, resetsAt, tier, isFree, isUnlimited: false, loaded: true });
+    } catch {
+      setCredits(prev => ({ ...prev, loaded: true }));
+    }
+  };
+
+  // Only self-fetch if no props are being passed (standalone mode)
+  useEffect(() => {
+    if (propRemaining !== undefined || !userId) return;
+    fetchCredits();
+  }, [userId, propRemaining]);
+
+  // Realtime subscription for instant updates
   useEffect(() => {
     if (!userId) return;
 
-    const fetchCredits = async () => {
-      try {
-        const { data: limitsData, error } = await supabase
-          .from('user_ai_limits')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle();
+    const channel = supabase
+      .channel(`usage-card-${userId.slice(0, 8)}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_ai_limits', filter: `user_id=eq.${userId}` },
+        () => fetchCredits()
+      )
+      .subscribe();
 
-        const { data: subData } = await supabase
-          .from('user_subscriptions')
-          .select('subscription_tier')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (error || !limitsData) return;
-
-        const tier = subData?.subscription_tier || 'free';
-        const isFree = tier === 'free';
-        const isUnlimited = limitsData.is_unlimited === true;
-
-        if (isUnlimited) {
-          setCredits(prev => ({ ...prev, isUnlimited: true, loaded: true }));
-          return;
-        }
-
-        let remaining: number;
-        let totalLimit: number;
-        let resetsAt: string | null;
-        let allowed: boolean;
-
-        if (isFree) {
-          const dailyResetAt = limitsData.daily_reset_at
-            ? new Date(limitsData.daily_reset_at)
-            : null;
-          const isExpired = !dailyResetAt || dailyResetAt <= new Date();
-          const used = isExpired ? 0 : (limitsData.current_daily_messages || 0);
-          const limit = limitsData.daily_messages || 5;
-          remaining = Math.max(0, limit - used);
-          totalLimit = limit;
-          resetsAt = isExpired
-            ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-            : limitsData.daily_reset_at;
-          allowed = remaining > 0;
-        } else {
-          const monthlyResetAt = limitsData.monthly_reset_at
-            ? new Date(limitsData.monthly_reset_at)
-            : null;
-          const isExpired = !monthlyResetAt || monthlyResetAt <= new Date();
-          const used = isExpired ? 0 : (limitsData.current_monthly_messages || 0);
-          const limit =
-            (limitsData.monthly_messages || 1000) + (limitsData.bonus_credits || 0);
-          remaining = Math.max(0, limit - used);
-          totalLimit = limit;
-          resetsAt = limitsData.monthly_reset_at;
-          allowed = remaining > 0;
-        }
-
-        setCredits({
-          remaining,
-          totalLimit,
-          allowed,
-          resetsAt,
-          tier,
-          isFree,
-          isUnlimited: false,
-          loaded: true,
-        });
-      } catch {
-        setCredits(prev => ({ ...prev, loaded: true }));
-      }
-    };
-
-    fetchCredits();
-    const interval = setInterval(fetchCredits, 60000);
-    return () => clearInterval(interval);
+    return () => { supabase.removeChannel(channel); };
   }, [userId]);
 
   // Animate counter on change
@@ -165,23 +172,19 @@ export const UsageCard = ({
   }, [credits.loaded]);
 
   const { remaining, totalLimit, allowed, isFree, isUnlimited, resetsAt } = credits;
-  const used = totalLimit - remaining;
-  const percentage = totalLimit > 0 ? Math.min((used / totalLimit) * 100, 100) : 0;
+  const percentage = totalLimit > 0 ? Math.min(((totalLimit - remaining) / totalLimit) * 100, 100) : 0;
   const isLow = !isUnlimited && remaining < totalLimit * 0.2;
 
-  const { formattedResetTime } = useMemo(() => {
-    let formattedTime = '';
-    if (resetsAt) {
-      const reset = new Date(resetsAt);
-      const diffDays = differenceInDays(reset, new Date());
-      formattedTime =
-        diffDays > 7
-          ? format(reset, 'MMM d')
-          : diffDays > 0
-          ? `${diffDays}d`
-          : 'today';
-    }
-    return { formattedResetTime: formattedTime };
+  const formattedResetTime = useMemo(() => {
+    if (!resetsAt) return '';
+    const reset = new Date(resetsAt);
+    const diffDays = differenceInDays(reset, new Date());
+    if (diffDays > 7) return format(reset, 'MMM d');
+    if (diffDays > 0) return `${diffDays}d`;
+    // Calculate hours
+    const diffMs = reset.getTime() - Date.now();
+    const diffHours = Math.max(0, Math.floor(diffMs / 3600000));
+    return diffHours > 0 ? `${diffHours}h` : 'soon';
   }, [resetsAt]);
 
   // Unlimited users
@@ -233,57 +236,33 @@ export const UsageCard = ({
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div
-          className={cn(
-            'w-10 h-10 rounded-full flex items-center justify-center',
-            isLow ? 'bg-destructive/10' : 'bg-muted dark:bg-neutral-800'
-          )}
-        >
-          <Zap
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div
             className={cn(
-              'w-5 h-5',
-              isLow ? 'text-destructive' : 'text-primary dark:text-white'
+              'w-10 h-10 rounded-full flex items-center justify-center',
+              isLow ? 'bg-destructive/10' : 'bg-muted dark:bg-neutral-800'
             )}
-          />
+          >
+            <Zap className={cn('w-5 h-5', isLow ? 'text-destructive' : 'text-primary dark:text-white')} />
+          </div>
+          <div>
+            <p className="text-base font-semibold text-foreground">{periodType} Messages</p>
+            {resetsAt && (
+              <p className="text-xs text-muted-foreground">Resets {formattedResetTime}</p>
+            )}
+          </div>
         </div>
-        <div>
-          <p className="text-base font-semibold text-foreground">{periodType} Messages</p>
-          {resetsAt && (
-            <p className="text-xs text-muted-foreground">
-              Resets in {formattedResetTime}
-            </p>
-          )}
+        <div className="text-right">
+          <span className="text-2xl font-bold text-foreground tabular-nums">{displayCount}</span>
+          <span className="text-sm text-muted-foreground ml-1">left</span>
         </div>
       </div>
 
-      {/* Limit reached banner */}
-      {!allowed && (
-        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
-          <p className="text-sm font-medium text-destructive mb-1">Limit Reached</p>
-          <p className="text-xs text-muted-foreground">
-            {isFree
-              ? "You've used all 5 messages for today. Come back tomorrow."
-              : "You've reached your monthly limit. Top up or wait for renewal."}
-          </p>
-        </div>
-      )}
-
-      {/* Usage Row */}
+      {/* Progress Bar */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {remaining} of {totalLimit} remaining {periodLabel}
-          </span>
-        </div>
-
-        {/* Progress Bar */}
-        <div
-          className={`h-2 rounded-full bg-muted dark:bg-neutral-800 overflow-hidden ${
-            isLow ? 'animate-pulse' : ''
-          }`}
-        >
+        <div className={`h-2 rounded-full bg-muted dark:bg-neutral-800 overflow-hidden ${isLow ? 'animate-pulse' : ''}`}>
           <motion.div
             className={`h-full rounded-full ${
               isLow
@@ -295,35 +274,39 @@ export const UsageCard = ({
             transition={{ duration: 0.5, ease: 'easeOut' }}
           />
         </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">
+            {remaining} of {totalLimit} remaining {periodLabel}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <div className={cn('w-2 h-2 rounded-full', allowed ? 'bg-emerald-500' : 'bg-destructive')} />
+            <span className="text-xs text-muted-foreground">{allowed ? 'Active' : 'Paused'}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Stats Boxes */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="p-3 rounded-xl bg-muted/80 dark:bg-neutral-800/80 text-center">
-          <p className="text-2xl font-bold text-foreground tabular-nums">
-            {displayCount}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">Remaining</p>
-        </div>
-        <div className="p-3 rounded-xl bg-muted/80 dark:bg-neutral-800/80 text-center">
-          <div
-            className={cn(
-              'w-6 h-6 rounded-full flex items-center justify-center mx-auto',
-              allowed ? 'bg-emerald-500/20' : 'bg-destructive/20'
-            )}
-          >
-            <div
-              className={cn(
-                'w-3 h-3 rounded-full',
-                allowed ? 'bg-emerald-500' : 'bg-destructive'
-              )}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground mt-1.5">
-            {allowed ? 'Active' : 'Paused'}
+      {/* Limit reached banner */}
+      {!allowed && (
+        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20">
+          <p className="text-sm font-medium text-destructive mb-1">Limit Reached</p>
+          <p className="text-xs text-muted-foreground">
+            {isFree
+              ? "You've used all messages for today. Come back tomorrow."
+              : "You've reached your monthly limit. Top up or wait for renewal."}
           </p>
         </div>
-      </div>
+      )}
+
+      {/* Upgrade CTA for free users */}
+      {isFree && (
+        <button
+          onClick={() => navigate('/pricing')}
+          className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors pt-1"
+        >
+          Upgrade for more messages
+          <ArrowUpRight className="w-3.5 h-3.5" />
+        </button>
+      )}
     </motion.div>
   );
 };
