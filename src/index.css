@@ -283,21 +283,27 @@ button, a, input, textarea, select {
     --transition-smooth: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    /* Glass morphism variables */
-    --glass-bg: hsla(0, 0%, 0%, 0.6);
-    --glass-border: hsla(0, 0%, 100%, 0.15);
-    --glass-shadow: 0 4px 24px hsla(0, 0%, 0%, 0.2);
+    /* Glass morphism variables — light mode */
+    --glass-bg: 0 0% 100% / 0.08;
+    --glass-bg-elevated: 0 0% 100% / 0.15;
+    --glass-bg-subtle: 0 0% 100% / 0.04;
+    --glass-border: 0 0% 100% / 0.15;
+    --glass-border-strong: 0 0% 100% / 0.25;
+    --glass-border-subtle: 0 0% 100% / 0.08;
+    --glass-shadow: 0 8px 32px hsla(0, 0%, 0%, 0.12);
+    --glass-shadow-elevated: 0 16px 48px hsla(0, 0%, 0%, 0.18);
+    --glass-glow: 0 0 40px hsla(270, 60%, 50%, 0.15), 0 0 80px hsla(210, 80%, 50%, 0.08);
   }
 
   .dark {
     /* Premium Black & White Dark Mode */
-    --background: 0 0% 4%;             /* Near black */
-    --foreground: 0 0% 98%;            /* Off-white */
-    --card: 0 0% 6%;                   /* Dark card */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 4%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;               /* Light accent */
+    --primary: 0 0% 98%;
     --primary-foreground: 0 0% 8%;
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
@@ -318,7 +324,7 @@ button, a, input, textarea, select {
     --plan-ngl: 142 71% 35%;
     --plan-dl: 0 84% 45%;
 
-    --border: 0 0% 15%;                /* Subtle dark borders */
+    --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 0 0% 98%;
     --sidebar-background: 0 0% 6%;
@@ -330,10 +336,16 @@ button, a, input, textarea, select {
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 0 0% 98%;
 
-    /* Glass morphism variables */
-    --glass-bg: hsla(0, 0%, 0%, 0.7);
-    --glass-border: hsla(0, 0%, 100%, 0.2);
-    --glass-shadow: 0 4px 24px hsla(0, 0%, 0%, 0.3);
+    /* Glass morphism variables — dark mode */
+    --glass-bg: 0 0% 100% / 0.06;
+    --glass-bg-elevated: 0 0% 100% / 0.12;
+    --glass-bg-subtle: 0 0% 100% / 0.03;
+    --glass-border: 0 0% 100% / 0.12;
+    --glass-border-strong: 0 0% 100% / 0.22;
+    --glass-border-subtle: 0 0% 100% / 0.06;
+    --glass-shadow: 0 8px 32px hsla(0, 0%, 0%, 0.25);
+    --glass-shadow-elevated: 0 16px 48px hsla(0, 0%, 0%, 0.35);
+    --glass-glow: 0 0 40px hsla(270, 60%, 50%, 0.2), 0 0 80px hsla(210, 80%, 50%, 0.12);
   }
 }
 
@@ -428,8 +440,8 @@ button, a, input, textarea, select {
 
   /* Glass morphism effects */
   .glass {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: hsl(var(--glass-bg));
+    border: 1px solid hsl(var(--glass-border));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     box-shadow: var(--glass-shadow);
@@ -440,19 +452,55 @@ button, a, input, textarea, select {
   }
 
   .glass-hover:hover {
-    background: hsla(0, 0%, 95%, 1);
-    border-color: hsla(0, 0%, 80%, 1);
-    box-shadow: 0 12px 40px hsla(0, 0%, 0%, 0.1);
+    background: hsl(var(--glass-bg-elevated));
+    border-color: hsl(var(--glass-border-strong));
+    box-shadow: var(--glass-shadow-elevated);
   }
 
-  .dark .glass-hover:hover {
-    background: rgba(255, 255, 255, 0.9);
-    color: black;
+  /* Animated gradient blobs for GlassContainer */
+  .glass-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.5;
+    will-change: transform;
+    animation: glass-blob-float 20s ease-in-out infinite;
   }
 
-  .dark .glass-hover:hover h3,
-  .dark .glass-hover:hover p {
-    color: black;
+  .glass-blob-1 {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, hsl(270 70% 40% / 0.4), transparent 70%);
+    top: -10%;
+    left: -5%;
+    animation-delay: 0s;
+  }
+
+  .glass-blob-2 {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, hsl(210 90% 45% / 0.35), transparent 70%);
+    top: 40%;
+    right: -10%;
+    animation-delay: -7s;
+    animation-duration: 25s;
+  }
+
+  .glass-blob-3 {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, hsl(25 95% 50% / 0.25), transparent 70%);
+    bottom: -5%;
+    left: 30%;
+    animation-delay: -14s;
+    animation-duration: 22s;
+  }
+
+  @keyframes glass-blob-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -40px) scale(1.05); }
+    50% { transform: translate(-20px, 20px) scale(0.95); }
+    75% { transform: translate(40px, 30px) scale(1.03); }
   }
 
   /* Gradient text styles */
