@@ -26,61 +26,14 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Rate limit: check recent calls from this email
-    const { count } = await supabaseAdmin
-      .from('security_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('action', 'check_email_exists')
-      .gte('created_at', new Date(Date.now() - 60000).toISOString())
-      .limit(1);
-
-    if (count && count > 10) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limited' }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Log the check
-    await supabaseAdmin.from('security_logs').insert({
-      action: 'check_email_exists',
-      details: { email_hash: email.length.toString() }, // Don't log actual email
-      severity: 'info',
-    });
-
-    // Check if user exists
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
+    // Check if user exists via secure DB function
+    const { data, error } = await supabaseAdmin.rpc('check_user_exists_by_email', {
+      p_email: email.trim().toLowerCase(),
     });
 
     if (error) {
-      console.error('Admin API error:', error);
-      return new Response(
-        JSON.stringify({ exists: true }), // Fail open to not block legitimate resets
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Filter by email manually since listUsers doesn't support email filter directly
-    // Use getUserByEmail instead
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById('placeholder');
-    
-    // Actually, use the correct approach: list and filter, or use RPC
-    // The admin API doesn't have getUserByEmail, so let's query auth.users via SQL
-    const { data: users, error: queryError } = await supabaseAdmin
-      .rpc('check_user_exists_by_email', { p_email: email.trim().toLowerCase() });
-
-    // Fallback: try listing users (limited but works)
-    if (queryError) {
-      // Use admin.listUsers and filter - but this is paginated
-      // Better approach: just query the profiles or use a direct check
-      const { data: profileData } = await supabaseAdmin
-        .from('profiles')
-        .select('user_id')
-        .limit(1);
-      
-      // Can't reliably check without an RPC, so fail open
+      console.error('RPC error:', error);
+      // Fail open so legitimate resets aren't blocked
       return new Response(
         JSON.stringify({ exists: true }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -88,13 +41,13 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ exists: !!users }),
+      JSON.stringify({ exists: !!data }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     console.error('Error:', err);
     return new Response(
-      JSON.stringify({ exists: true }), // Fail open
+      JSON.stringify({ exists: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
