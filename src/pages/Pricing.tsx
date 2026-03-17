@@ -24,46 +24,34 @@ const tierIcons: Record<SubscriptionTier, React.ReactNode> = {
   unlimited: <Star className="w-5 h-5" />,
 };
 
-const tierColors: Record<string, { icon: string; border: string; glow: string; btn: string; check: string }> = {
+const tierColors: Record<string, { icon: string; btn: string; check: string }> = {
   free: {
-    icon: 'text-slate-400',
-    border: 'border-white/[0.06]',
-    glow: '',
-    btn: 'bg-white/10 hover:bg-white/15 text-foreground border border-white/10',
-    check: 'bg-slate-500',
+    icon: 'text-muted-foreground',
+    btn: 'bg-muted hover:bg-muted/80 text-foreground',
+    check: 'bg-muted-foreground',
   },
   starter: {
     icon: 'text-sky-400',
-    border: 'border-sky-500/20',
-    glow: 'hover:border-sky-500/40 hover:shadow-[0_0_40px_-12px_rgba(56,189,248,0.25)]',
     btn: 'bg-sky-500 hover:bg-sky-600 text-white',
     check: 'bg-sky-500',
   },
   pro: {
     icon: 'text-violet-400',
-    border: 'border-violet-500/30',
-    glow: 'shadow-[0_0_60px_-12px_rgba(139,92,246,0.3)] hover:shadow-[0_0_80px_-12px_rgba(139,92,246,0.45)]',
-    btn: 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg shadow-purple-500/20',
+    btn: 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white',
     check: 'bg-violet-500',
   },
   business: {
     icon: 'text-emerald-400',
-    border: 'border-emerald-500/20',
-    glow: 'hover:border-emerald-500/40 hover:shadow-[0_0_40px_-12px_rgba(52,211,153,0.25)]',
     btn: 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white',
     check: 'bg-emerald-500',
   },
   enterprise: {
     icon: 'text-amber-400',
-    border: 'border-amber-500/20',
-    glow: 'hover:border-amber-500/40 hover:shadow-[0_0_40px_-12px_rgba(251,191,36,0.25)]',
     btn: 'bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white',
     check: 'bg-amber-500',
   },
   unlimited: {
     icon: 'text-emerald-400',
-    border: 'border-emerald-500/20',
-    glow: '',
     btn: 'bg-emerald-500 hover:bg-emerald-600 text-white',
     check: 'bg-emerald-500',
   },
