@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-import { validateOrigin, getAllowedOrigin } from '../_shared/originGuard.ts';
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
@@ -9,20 +13,8 @@ const logStep = (step: string, details?: unknown) => {
 };
 
 serve(async (req) => {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": getAllowedOrigin(req),
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
-  }
-
-  if (!validateOrigin(req)) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized origin" }),
-      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
   }
 
   const supabaseClient = createClient(
@@ -74,10 +66,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      // Enable Apple Pay, Google Pay, and card payments automatically
-      payment_method_types: ['card'],
       success_url: `${origin}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/subscription-canceled`,
+      cancel_url: `${origin}/pricing`,
       metadata: {
         user_id: user.id,
       },
