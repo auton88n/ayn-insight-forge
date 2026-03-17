@@ -15,7 +15,7 @@ export const SUBSCRIPTION_TIERS = {
   },
   starter: {
     name: 'Starter',
-    price: 20,
+    price: 9,
     priceId: 'price_1SsEOZDBJlSjDe8ADVHgJugk',
     productId: 'prod_TpuCGCGKRjz1QR',
     limits: { monthlyCredits: 1000, monthlyEngineering: 10 },
@@ -23,7 +23,7 @@ export const SUBSCRIPTION_TIERS = {
   },
   pro: {
     name: 'Pro',
-    price: 49,
+    price: 29,
     priceId: 'price_1SsEP3DBJlSjDe8AednfTBY4',
     productId: 'prod_TpuDZjjDGHOFfO',
     limits: { monthlyCredits: 5000, monthlyEngineering: 50 },
@@ -31,7 +31,7 @@ export const SUBSCRIPTION_TIERS = {
   },
   business: {
     name: 'Business',
-    price: 99,
+    price: 79,
     priceId: 'price_1SsEPKDBJlSjDe8AoLaqnZYP',
     productId: 'prod_TpuDQFgkmlTXAH',
     limits: { monthlyCredits: 15000, monthlyEngineering: 100 },
