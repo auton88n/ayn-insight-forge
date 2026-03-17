@@ -13,6 +13,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const LLM_REQUEST_TIMEOUT_MS = 45000;
+
+function createTimeoutController(timeoutMs: number) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return { controller, timeoutId };
+}
+
 // LLM Provider configs
 interface LLMModel {
   id: string;
