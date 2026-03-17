@@ -327,12 +327,15 @@ export const useMessages = (
 
         const canUse = await rpcResponse.json();
 
+        // Refresh usage UI immediately so credits/limits update in real-time
+        onUsageUpdated?.();
+
         if (!canUse) {
           console.warn('[useMessages] Usage limit reached');
           setIsTyping(false);
           toast({
             title: "Usage Limit Reached",
-            description: "You've reached your monthly message limit. Check Settings for details.",
+            description: "You've reached your message limit. Upgrade for more messages.",
             variant: "destructive"
           });
           return;
