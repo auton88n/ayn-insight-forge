@@ -30,8 +30,10 @@ const ApprovalResult = lazy(() => import("./pages/ApprovalResult"));
 
 const AIEmployee = lazy(() => import("./pages/services/AIEmployee"));
 const AIEmployeeApply = lazy(() => import("./pages/services/AIEmployeeApply"));
-const InfluencerSites = lazy(() => import("./pages/services/InfluencerSites"));
-const InfluencerSitesApply = lazy(() => import("./pages/services/InfluencerSitesApply"));
+// HIDDEN: Content Creator Sites and Engineering tools temporarily disabled
+// const InfluencerSites = lazy(() => import("./pages/services/InfluencerSites"));
+// const InfluencerSitesApply = lazy(() => import("./pages/services/InfluencerSitesApply"));
+const ServicesPage = lazy(() => import("./pages/Services"));
 const AIAgents = lazy(() => import("./pages/services/AIAgents"));
 const AIAgentsApply = lazy(() => import("./pages/services/AIAgentsApply"));
 const Automation = lazy(() => import("./pages/services/Automation"));
@@ -80,10 +82,13 @@ const AnimatedRoutes = () => {
       
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><PageTransition><ResetPassword /></PageTransition></Suspense>} />
       
+      
+      <Route path="/services" element={<Suspense fallback={<PageLoader />}><PageTransition><ServicesPage /></PageTransition></Suspense>} />
       <Route path="/services/ai-employee" element={<Suspense fallback={<PageLoader />}><PageTransition><AIEmployee /></PageTransition></Suspense>} />
       <Route path="/services/ai-employee/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><AIEmployeeApply /></PageTransition></Suspense>} />
-      <Route path="/services/content-creator-sites" element={<Suspense fallback={<PageLoader />}><PageTransition><InfluencerSites /></PageTransition></Suspense>} />
-      <Route path="/services/content-creator-sites/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><InfluencerSitesApply /></PageTransition></Suspense>} />
+      {/* HIDDEN: Content Creator Sites temporarily disabled */}
+      <Route path="/services/content-creator-sites" element={<Navigate to="/services" replace />} />
+      <Route path="/services/content-creator-sites/apply" element={<Navigate to="/services" replace />} />
       <Route path="/services/ai-agents" element={<Suspense fallback={<PageLoader />}><PageTransition><AIAgents /></PageTransition></Suspense>} />
       <Route path="/services/ai-agents/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><AIAgentsApply /></PageTransition></Suspense>} />
       <Route path="/services/automation" element={<Suspense fallback={<PageLoader />}><PageTransition><Automation /></PageTransition></Suspense>} />

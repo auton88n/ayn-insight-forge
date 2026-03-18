@@ -8,11 +8,9 @@ export const ROUTES = {
   SETTINGS: '/settings',
   SUPPORT: '/support',
   PRICING: '/pricing',
-  ENGINEERING: '/engineering',
+  SERVICES: '/services',
   
   CHART_ANALYZER: '/chart-analyzer',
-  COMPLIANCE: '/compliance',
-  ENGINEERING_GRADING: '/engineering/grading',
   ADMIN: '/admin',
   RESET_PASSWORD: '/reset-password',
   APPROVAL_RESULT: '/approval-result',
@@ -20,7 +18,7 @@ export const ROUTES = {
   SUBSCRIPTION_CANCELED: '/subscription-canceled',
   TERMS: '/terms',
   PRIVACY: '/privacy',
-  SERVICES: {
+  SERVICE_PAGES: {
     AI_EMPLOYEE: '/services/ai-employee',
     AI_EMPLOYEE_APPLY: '/services/ai-employee/apply',
     AI_AGENTS: '/services/ai-agents',
@@ -29,11 +27,8 @@ export const ROUTES = {
     AUTOMATION_APPLY: '/services/automation/apply',
     TICKETING: '/services/ticketing',
     TICKETING_APPLY: '/services/ticketing/apply',
-    CIVIL_ENGINEERING: '/services/civil-engineering',
-    CONTENT_CREATOR: '/services/content-creator-sites',
-    CONTENT_CREATOR_APPLY: '/services/content-creator-sites/apply',
   },
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
-export type ServiceRouteKey = keyof typeof ROUTES.SERVICES;
+export type ServiceRouteKey = keyof typeof ROUTES.SERVICE_PAGES;

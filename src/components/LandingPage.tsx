@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Brain, ArrowRight, CheckCircle, Send, Loader2, Sparkles, Globe, Shield, ChevronDown, Calculator, ShieldCheck, Mountain, Ticket, Mail, MapPin, Navigation2 } from 'lucide-react';
+import { Brain, ArrowRight, CheckCircle, Send, Loader2, Sparkles, Globe, Shield, ChevronDown, Mail, Zap, Bot, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -19,11 +19,9 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { LazyLoad } from './ui/lazy-load';
-import MobileMockup from './services/MobileMockup';
 import DeviceMockups from './services/DeviceMockups';
 import AutomationFlowMockup from './services/AutomationFlowMockup';
 import AIEmployeeMockup from './services/AIEmployeeMockup';
-import EngineeringMockup from './services/EngineeringMockup';
 import TicketingMockup from './services/TicketingMockup';
 import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
 import { useDebugStore } from '@/stores/debugStore';
@@ -238,37 +236,24 @@ const LandingPage = memo(() => {
   };
   const services = [{
     number: '01',
-    slug: 'content-creator-sites',
-    title: language === 'ar' ? 'مواقع لصناع المحتوى' : language === 'fr' ? 'Sites Premium pour Créateurs' : 'Premium Content Creator Sites',
-    description: language === 'ar' ? 'موقع احترافي يعكس هويتك ويجذب فرص التعاون.' : language === 'fr' ? 'Sites web de luxe conçus pour mettre en valeur votre marque personnelle.' : 'Luxury websites custom-built to showcase your personal brand.',
-    mockup: <LazyLoad minHeight="320px" debugLabel="MobileMockup"><MobileMockup /></LazyLoad>
-  }, {
-    number: '02',
     slug: 'ai-agents',
     title: language === 'ar' ? 'مساعد ذكي لعملك' : language === 'fr' ? 'Agents IA Personnalisés' : 'Custom AI Agents',
     description: language === 'ar' ? 'مساعد ذكي يعمل ٢٤ ساعة لخدمة عملائك.' : language === 'fr' ? 'Assistants intelligents 24/7 formés sur votre entreprise.' : '24/7 intelligent assistants trained on your business.',
     mockup: <LazyLoad minHeight="280px" debugLabel="DeviceMockups"><DeviceMockups /></LazyLoad>
   }, {
-    number: '03',
+    number: '02',
     slug: 'automation',
     title: language === 'ar' ? 'أتمتة العمليات' : language === 'fr' ? 'Automatisation des Processus' : 'Process Automation',
     description: language === 'ar' ? 'أتمتة المهام المتكررة لتوفير الوقت والجهد.' : language === 'fr' ? 'Automatisez les flux de travail pour gagner du temps.' : 'Automate workflows to save time and reduce errors in any business.',
     mockup: <LazyLoad minHeight="260px" debugLabel="AutomationMockup"><AutomationFlowMockup /></LazyLoad>
   }, {
-    number: '04',
+    number: '03',
     slug: 'ai-employee',
     title: language === 'ar' ? 'موظفين بالذكاء الاصطناعي' : language === 'fr' ? 'Employés IA' : 'AI Employees',
     description: language === 'ar' ? 'موظفين يعملون ٢٤ ساعة بدون إجازات أو تأمين صحي.' : language === 'fr' ? 'Employés qui travaillent 24h/24 sans vacances ni assurance santé.' : 'Employees who work 24/7 with no vacations or healthcare costs.',
     mockup: <LazyLoad minHeight="280px" debugLabel="AIEmployeeMockup"><AIEmployeeMockup /></LazyLoad>
   }, {
-    number: '05',
-    slug: 'engineering',
-    isInternal: true,
-    title: language === 'ar' ? 'حاسبات الهندسة المدنية' : language === 'fr' ? 'Calculateurs de Génie Civil' : 'Civil Engineering Calculators',
-    description: language === 'ar' ? 'تصميم العناصر الإنشائية مع التصور ثلاثي الأبعاد والتحليل بالذكاء الاصطناعي.' : language === 'fr' ? 'Concevez des éléments structurels avec visualisation 3D et analyse IA.' : 'Design structural elements with 3D visualization and AI-powered analysis.',
-    mockup: <LazyLoad minHeight="260px" debugLabel="EngineeringMockup"><EngineeringMockup /></LazyLoad>
-  }, {
-    number: '06',
+    number: '04',
     slug: 'ticketing',
     title: language === 'ar' ? 'نظام التذاكر الذكي' : language === 'fr' ? 'Billetterie Intelligente' : 'Smart Ticketing System',
     description: language === 'ar' ? 'بيع التذاكر أونلاين والتحقق بمسح QR من الجوال.' : language === 'fr' ? 'Vendez des billets en ligne et validez par scan QR.' : 'Sell tickets online and validate with phone QR scanning.',
@@ -311,12 +296,15 @@ const LandingPage = memo(() => {
           {isMenuExpanded && <div className="absolute top-full left-0 mt-2 min-w-[200px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
               {/* Navigation Links */}
               <div className="p-2">
-                <button onClick={() => scrollToSection('about')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
+              <button onClick={() => scrollToSection('about')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
                   {language === 'ar' ? 'عن AYN' : language === 'fr' ? 'À Propos' : 'About'}
                 </button>
-                <button onClick={() => scrollToSection('services')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
-                  {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Services' : 'Services'}
-                </button>
+                <Link to="/services" className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium block">
+                  {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
+                </Link>
+                <Link to="/pricing" className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium block">
+                  {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
+                </Link>
                 <button onClick={() => scrollToSection('contact')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
                   {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
                 </button>
@@ -366,9 +354,12 @@ const LandingPage = memo(() => {
                 <button onClick={() => scrollToSection('about')} className="text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
                   {language === 'ar' ? 'عن AYN' : language === 'fr' ? 'À Propos' : 'About'}
                 </button>
-                <button onClick={() => scrollToSection('services')} className="text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
-                  {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Services' : 'Services'}
-                </button>
+                <Link to="/services" className="block text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
+                  {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
+                </Link>
+                <Link to="/pricing" className="block text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
+                  {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
+                </Link>
                 <button onClick={() => scrollToSection('contact')} className="text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
                   {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
                 </button>
@@ -411,11 +402,11 @@ const LandingPage = memo(() => {
             </span>
 
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
-              {language === 'ar' ? 'ذكاء اصطناعي + أدوات هندسية' : language === 'fr' ? 'IA + Outils d\'Ingénierie' : 'AI Assistant + Engineering Tools'}
+              {language === 'ar' ? 'ذكاء اصطناعي لأعمالك' : language === 'fr' ? 'IA pour Votre Entreprise' : 'AI Solutions for Your Business'}
             </h2>
 
             <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 md:mb-16">
-              {language === 'ar' ? 'AYN يتعرّف عليك ويساعدك في مهامك اليومية، بالإضافة إلى أدوات هندسية احترافية للتصميم الإنشائي.' : language === 'fr' ? 'AYN apprend vos habitudes et vous aide à rester organisé, avec des outils d\'ingénierie professionnels.' : 'AYN learns your habits and helps you stay organized, plus professional engineering tools for structural design.'}
+              {language === 'ar' ? 'AYN يتعرّف عليك ويساعدك في أتمتة أعمالك وتوسيع نطاقها بالذكاء الاصطناعي.' : language === 'fr' ? 'AYN apprend vos habitudes et vous aide à automatiser et développer votre entreprise avec l\'IA.' : 'AYN learns your habits and helps you automate and scale your business with AI.'}
             </p>
           </ScrollReveal>
 
@@ -464,17 +455,17 @@ const LandingPage = memo(() => {
               </div>
             </ScrollReveal>
 
-            {/* Row 2: Engineering Tools */}
+            {/* Row 2: Business Tools */}
             <ScrollReveal delay={0.4}>
               <div className="text-center space-y-3 md:space-y-4">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
-                  <Calculator className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
+                  <Zap className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
-                  {language === 'ar' ? 'حاسبات إنشائية' : language === 'fr' ? 'Calculateurs Structurels' : 'Structural Calculators'}
+                  {language === 'ar' ? 'أتمتة ذكية' : language === 'fr' ? 'Automatisation Intelligente' : 'Smart Automation'}
                 </h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {language === 'ar' ? 'تصميم الكمرات والأعمدة والأساسات مع تصور ثلاثي الأبعاد.' : language === 'fr' ? 'Concevez poutres, colonnes et fondations avec visualisation 3D.' : 'Design beams, columns, slabs and foundations with 3D visualization.'}
+                  {language === 'ar' ? 'أتمتة المهام المتكررة لتوفير الوقت والموارد.' : language === 'fr' ? 'Automatisez les tâches répétitives pour économiser temps et ressources.' : 'Automate repetitive tasks to save time and resources.'}
                 </p>
               </div>
             </ScrollReveal>
@@ -482,13 +473,13 @@ const LandingPage = memo(() => {
             <ScrollReveal delay={0.5}>
               <div className="text-center space-y-3 md:space-y-4">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
-                  <ShieldCheck className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
+                  <Bot className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
-                  {language === 'ar' ? 'فحص الامتثال' : language === 'fr' ? 'Conformité au Code' : 'Code Compliance'}
+                  {language === 'ar' ? 'وكلاء مخصصون' : language === 'fr' ? 'Agents Personnalisés' : 'Custom AI Agents'}
                 </h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {language === 'ar' ? 'تحقق من مطابقة التصميم لكود البناء تلقائيًا.' : language === 'fr' ? 'Vérifiez automatiquement la conformité au code du bâtiment.' : 'Automated building code compliance checks and reports.'}
+                  {language === 'ar' ? 'وكلاء ذكاء اصطناعي مدربون على بيانات شركتك.' : language === 'fr' ? 'Agents IA entraînés sur les données de votre entreprise.' : 'AI agents trained on your company data for 24/7 support.'}
                 </p>
               </div>
             </ScrollReveal>
@@ -496,13 +487,13 @@ const LandingPage = memo(() => {
             <ScrollReveal delay={0.6}>
               <div className="text-center space-y-3 md:space-y-4">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
-                  <Mountain className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
+                  <BarChart3 className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
-                  {language === 'ar' ? 'تصميم التسوية' : language === 'fr' ? 'Conception de Terrassement' : 'Site Grading'}
+                  {language === 'ar' ? 'تحليلات متقدمة' : language === 'fr' ? 'Analyses Avancées' : 'Advanced Analytics'}
                 </h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {language === 'ar' ? 'تحليل التضاريس وتصميم المناسيب بالذكاء الاصطناعي.' : language === 'fr' ? 'Analyse du terrain et conception d\'élévation avec IA.' : 'Terrain analysis and elevation design with AI assistance.'}
+                  {language === 'ar' ? 'رؤى عميقة لاتخاذ قرارات أفضل لأعمالك.' : language === 'fr' ? 'Des insights approfondis pour de meilleures décisions commerciales.' : 'Deep insights to make better business decisions.'}
                 </p>
               </div>
             </ScrollReveal>
@@ -520,7 +511,7 @@ const LandingPage = memo(() => {
                 {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Ce Que Nous Faisons' : 'What We Do'}
               </span>
               <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4 md:mb-6">
-                {language === 'ar' ? <>ست طرق <span className="font-bold">لتبسيط حياتك</span></> : language === 'fr' ? <>Six Façons de <span className="font-bold">Simplifier Votre Vie</span></> : <>Six Ways We Help <span className="font-bold">Simplify Your Life</span></>}
+                {language === 'ar' ? <>أربع طرق <span className="font-bold">لتبسيط حياتك</span></> : language === 'fr' ? <>Quatre Façons de <span className="font-bold">Simplifier Votre Vie</span></> : <>Four Ways We Help <span className="font-bold">Simplify Your Life</span></>}
               </h2>
             </div>
           </ScrollReveal>
@@ -529,27 +520,17 @@ const LandingPage = memo(() => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="flex flex-col gap-6">
-              {/* Top Left - Content Creator Sites */}
+              {/* AI Agents */}
               <ScrollReveal>
                 <Link to={`/services/${services[0].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="mb-4">
-                      
                       <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
                         {services[0].title}
                       </h3>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {services[0].description}
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">{services[0].description}</p>
                     </div>
-                    <div className="flex-1 flex items-center justify-center overflow-hidden">
-                      {services[0].mockup}
-                    </div>
+                    <div className="flex-1 flex items-center justify-center overflow-hidden">{services[0].mockup}</div>
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-4">
                       {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -558,61 +539,20 @@ const LandingPage = memo(() => {
                 </Link>
               </ScrollReveal>
 
-              {/* Bottom Left - Automation */}
+              {/* Process Automation */}
               <ScrollReveal delay={0.2}>
-                <Link to={`/services/${services[2].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                <Link to={`/services/${services[1].slug}`} className="block">
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="flex flex-col gap-4">
                       <div>
-                        
-                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
-                          {services[2].title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {services[2].description}
-                        </p>
+                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">{services[1].title}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">{services[1].description}</p>
                       </div>
-                      <div className="flex-1 flex items-center justify-center h-[120px]">
-                        {services[2].mockup}
-                      </div>
+                      <div className="flex-1 flex items-center justify-center h-[120px]">{services[1].mockup}</div>
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                         {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              </ScrollReveal>
-
-              {/* Ticketing System - Featured Card */}
-              <ScrollReveal delay={0.3}>
-                <Link to="/services/ticketing" className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[500px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
-                    <div className="mb-4">
-                      <span className="text-xs font-mono text-purple-500 tracking-wider">NEW</span>
-                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-purple-500 transition-colors">
-                        {services[5].title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {services[5].description}
-                      </p>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center overflow-visible">
-                      {services[5].mockup}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-4">
-                      {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </motion.div>
                 </Link>
@@ -621,28 +561,16 @@ const LandingPage = memo(() => {
 
             {/* Right Column */}
             <div className="flex flex-col gap-6">
-              {/* Top Right - AI Agents */}
+              {/* AI Employees */}
               <ScrollReveal delay={0.1}>
-                <Link to={`/services/${services[1].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                <Link to={`/services/${services[2].slug}`} className="block">
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="flex flex-col gap-4">
                       <div>
-                        
-                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
-                          {services[1].title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {services[1].description}
-                        </p>
+                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">{services[2].title}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">{services[2].description}</p>
                       </div>
-                      <div className="flex-1 flex items-center justify-center h-[120px]">
-                        {services[1].mockup}
-                      </div>
+                      <div className="flex-1 flex items-center justify-center min-h-[280px]">{services[2].mockup}</div>
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                         {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -652,59 +580,18 @@ const LandingPage = memo(() => {
                 </Link>
               </ScrollReveal>
 
-              {/* Bottom Right - AI Employees */}
+              {/* Ticketing System */}
               <ScrollReveal delay={0.3}>
-                <Link to={`/services/${services[3].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
-                          {services[3].title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {services[3].description}
-                        </p>
-                      </div>
-                      <div className="flex-1 flex items-center justify-center min-h-[280px]">
-                        {services[3].mockup}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                        {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              </ScrollReveal>
-              
-              {/* Engineering Tools - Featured Card */}
-              <ScrollReveal delay={0.4}>
-                <Link to="/engineering" className="block">
-                  <motion.div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                <Link to="/services/ticketing" className="block">
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="mb-4">
-                      <span className="text-xs font-mono text-cyan-500 tracking-wider">NEW</span>
-                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-cyan-500 transition-colors">
-                        {services[4].title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {services[4].description}
-                      </p>
+                      <span className="text-xs font-mono text-purple-500 tracking-wider">NEW</span>
+                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-purple-500 transition-colors">{services[3].title}</h3>
+                      <p className="text-sm text-muted-foreground mt-2">{services[3].description}</p>
                     </div>
-                    <div className="flex-1 flex items-center justify-center overflow-visible">
-                      {services[4].mockup}
-                    </div>
+                    <div className="flex-1 flex items-center justify-center overflow-visible">{services[3].mockup}</div>
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-4">
-                      {language === 'ar' ? 'ابدأ التصميم' : language === 'fr' ? 'Commencer la Conception' : 'Start Designing'}
+                      {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </motion.div>
@@ -712,6 +599,16 @@ const LandingPage = memo(() => {
               </ScrollReveal>
             </div>
           </div>
+
+          {/* View All Services CTA */}
+          <ScrollReveal delay={0.4}>
+            <div className="text-center mt-12">
+              <Link to="/services" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                {language === 'ar' ? 'عرض جميع الخدمات' : language === 'fr' ? 'Voir Tous les Services' : 'View All Services'}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -802,7 +699,7 @@ const LandingPage = memo(() => {
       {/* Professional Footer */}
       <footer className="pt-8 pb-4">
         <div className="container max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 mb-6">
             {/* Column 1: Brand */}
             <div className="space-y-3 col-span-2 sm:col-span-1">
               <div className="flex items-center gap-3">
@@ -812,27 +709,31 @@ const LandingPage = memo(() => {
                 <span className="text-2xl font-bold">AYN</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                {language === 'ar' ? 'هندسة مدعومة بالذكاء الاصطناعي' : language === 'fr' ? 'Ingénierie propulsée par l\'IA' : 'AI-Powered Engineering'}
+                {language === 'ar' ? 'حلول ذكاء اصطناعي متقدمة' : language === 'fr' ? 'Solutions IA avancées' : 'Advanced AI Solutions'}
               </p>
             </div>
 
-            {/* Column 2: Explore */}
+            {/* Column 2: Navigate */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
-                {language === 'ar' ? 'استكشف' : language === 'fr' ? 'Explorer' : 'Explore'}
+                {language === 'ar' ? 'التنقل' : language === 'fr' ? 'Navigation' : 'Navigate'}
               </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                {[
-                  { label: language === 'ar' ? 'حول' : language === 'fr' ? 'À propos' : 'About', id: 'about' },
-                  { label: language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services', id: 'services' },
-                  { label: language === 'ar' ? 'تواصل' : language === 'fr' ? 'Contact' : 'Contact', id: 'contact' },
-                ].map(link => (
-                  <li key={link.id}>
-                    <button onClick={() => document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-foreground transition-colors">
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
+                <li>
+                  <Link to="/services" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/pricing" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/support" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'الدعم' : language === 'fr' ? 'Support' : 'Support'}
+                  </Link>
+                </li>
                 <li>
                   <Link to="/privacy" className="hover:text-foreground transition-colors">
                     {language === 'ar' ? 'سياسة الخصوصية' : language === 'fr' ? 'Confidentialité' : 'Privacy Policy'}
@@ -846,33 +747,16 @@ const LandingPage = memo(() => {
               </ul>
             </div>
 
-            {/* Column 3: Services (first half) */}
+            {/* Column 3: Services */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
                 {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
               </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {[
-                  { label: language === 'ar' ? 'مواقع صناع المحتوى' : language === 'fr' ? 'Sites Créateurs' : 'Content Creator Sites', route: '/services/content-creator-sites' },
                   { label: language === 'ar' ? 'وكلاء ذكاء اصطناعي' : language === 'fr' ? 'Agents IA' : 'Custom AI Agents', route: '/services/ai-agents' },
                   { label: language === 'ar' ? 'أتمتة العمليات' : language === 'fr' ? 'Automatisation' : 'Process Automation', route: '/services/automation' },
-                ].map(service => (
-                  <li key={service.route}>
-                    <Link to={service.route} className="hover:text-foreground transition-colors">
-                      {service.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Column 4: Services (second half) */}
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground opacity-0 pointer-events-none hidden lg:block">.</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {[
                   { label: language === 'ar' ? 'موظفون بالذكاء الاصطناعي' : language === 'fr' ? 'Employés IA' : 'AI Employees', route: '/services/ai-employee' },
-                  { label: language === 'ar' ? 'الهندسة المدنية' : language === 'fr' ? 'Génie Civil' : 'Civil Engineering', route: '/services/civil-engineering' },
                   { label: language === 'ar' ? 'نظام التذاكر الذكي' : language === 'fr' ? 'Billetterie' : 'Smart Ticketing', route: '/services/ticketing' },
                 ].map(service => (
                   <li key={service.route}>
@@ -884,7 +768,7 @@ const LandingPage = memo(() => {
               </ul>
             </div>
 
-            {/* Column 5: Contact & Social */}
+            {/* Column 4: Contact & Social */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
                 {language === 'ar' ? 'تواصل' : language === 'fr' ? 'Contact' : 'Contact'}
