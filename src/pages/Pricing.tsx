@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { Check, Crown, Zap, Building2, Sparkles, Loader2, Shield, CreditCard, ChevronDown, Brain, Star } from 'lucide-react';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
@@ -76,10 +77,11 @@ const Pricing = () => {
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
   const [enterpriseForm, setEnterpriseForm] = useState({ companyName: '', email: '', requirements: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleAction = (tier: SubscriptionTier) => {
     if (tier === 'enterprise') { setShowEnterpriseModal(true); return; }
-    navigate('/contact');
+    setShowAuthModal(true);
   };
 
   const handleEnterpriseSubmit = async () => {
@@ -330,6 +332,7 @@ const Pricing = () => {
             </div>
           </DialogContent>
         </Dialog>
+        <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
         <Footer />
       </div>
     </>
