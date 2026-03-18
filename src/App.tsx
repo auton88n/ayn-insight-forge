@@ -52,6 +52,7 @@ const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
 const SubscriptionCanceled = lazy(() => import("./pages/SubscriptionCanceled"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const WorldIntelligence = lazy(() => import("./pages/WorldIntelligence"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,6 +110,7 @@ const AnimatedRoutes = () => {
       <Route path="/subscription-canceled" element={<PageTransition><SubscriptionCanceled /></PageTransition>} />
       <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
       <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+      <Route path="/world-intelligence" element={<Suspense fallback={<PageLoader />}><WorldIntelligence /></Suspense>} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
     </Routes>
