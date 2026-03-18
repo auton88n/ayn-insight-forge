@@ -2,7 +2,7 @@ import { memo } from 'react';
 
 const DeviceMockups = memo(() => {
   return (
-    <div className="relative h-[200px] flex items-center justify-center">
+    <div className="relative h-[160px] sm:h-[180px] md:h-[200px] flex items-center justify-center scale-[0.8] sm:scale-90 md:scale-100 origin-center">
       {/* Laptop */}
       <div className="relative">
         {/* Screen */}

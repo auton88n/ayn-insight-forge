@@ -13,9 +13,9 @@ const stats = [{
 }];
 const navDots = [0, 1, 2, 3, 4];
 const MobileMockup = memo(() => {
-  return <div className="relative flex justify-center items-center py-4 px-4 md:px-8 lg:px-16" dir="ltr">
+  return <div className="relative flex justify-center items-center py-4 px-2 sm:px-4 md:px-8 lg:px-16 overflow-hidden" dir="ltr">
       {/* Phone-Centric Layout Container - Always LTR to prevent card position changes */}
-      <div className="relative mx-auto overflow-visible">
+      <div className="relative mx-auto scale-[0.75] sm:scale-[0.85] md:scale-100 origin-center">
         {/* iPhone Frame - Center (Smaller) */}
         <div className="relative w-[200px] h-[400px] md:w-[220px] md:h-[440px] bg-neutral-900 rounded-[40px] md:rounded-[45px] p-2 md:p-2.5 shadow-2xl z-10">
           {/* Screen */}
