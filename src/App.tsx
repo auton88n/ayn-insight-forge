@@ -52,6 +52,7 @@ const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
 const SubscriptionCanceled = lazy(() => import("./pages/SubscriptionCanceled"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const WorldIntelligence = lazy(() => import("./pages/WorldIntelligence"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
