@@ -213,19 +213,10 @@ const Pricing = () => {
                           onClick={() => handleAction(tier)}
                           className={cn(
                             'w-full h-11 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md',
-                            isCurrentPlan && !isSubscribed
-                              ? 'bg-muted text-muted-foreground cursor-default hover:bg-muted'
-                              : isCurrentPlan && isSubscribed
-                                ? 'bg-card border border-border hover:bg-muted text-foreground'
-                                : colors.btn
+                            colors.btn
                           )}
                         >
-                          {isCurrentPlan && !isSubscribed ? (
-                            <span className="flex items-center gap-1.5">
-                              <Check className="w-3.5 h-3.5" />
-                              Current Plan
-                            </span>
-                          ) : getButtonText(tier)}
+                          {getButtonText(tier)}
                         </Button>
                       </div>
                     </div>
