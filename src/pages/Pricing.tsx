@@ -77,10 +77,11 @@ const Pricing = () => {
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
   const [enterpriseForm, setEnterpriseForm] = useState({ companyName: '', email: '', requirements: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleAction = (tier: SubscriptionTier) => {
     if (tier === 'enterprise') { setShowEnterpriseModal(true); return; }
-    navigate('/contact');
+    setShowAuthModal(true);
   };
 
   const handleEnterpriseSubmit = async () => {
