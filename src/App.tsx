@@ -82,10 +82,13 @@ const AnimatedRoutes = () => {
       
       <Route path="/reset-password" element={<Suspense fallback={<PageLoader />}><PageTransition><ResetPassword /></PageTransition></Suspense>} />
       
+      
+      <Route path="/services" element={<Suspense fallback={<PageLoader />}><PageTransition><ServicesPage /></PageTransition></Suspense>} />
       <Route path="/services/ai-employee" element={<Suspense fallback={<PageLoader />}><PageTransition><AIEmployee /></PageTransition></Suspense>} />
       <Route path="/services/ai-employee/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><AIEmployeeApply /></PageTransition></Suspense>} />
-      <Route path="/services/content-creator-sites" element={<Suspense fallback={<PageLoader />}><PageTransition><InfluencerSites /></PageTransition></Suspense>} />
-      <Route path="/services/content-creator-sites/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><InfluencerSitesApply /></PageTransition></Suspense>} />
+      {/* HIDDEN: Content Creator Sites temporarily disabled */}
+      <Route path="/services/content-creator-sites" element={<Navigate to="/services" replace />} />
+      <Route path="/services/content-creator-sites/apply" element={<Navigate to="/services" replace />} />
       <Route path="/services/ai-agents" element={<Suspense fallback={<PageLoader />}><PageTransition><AIAgents /></PageTransition></Suspense>} />
       <Route path="/services/ai-agents/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><AIAgentsApply /></PageTransition></Suspense>} />
       <Route path="/services/automation" element={<Suspense fallback={<PageLoader />}><PageTransition><Automation /></PageTransition></Suspense>} />
