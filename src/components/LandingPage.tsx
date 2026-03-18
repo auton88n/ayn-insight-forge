@@ -13,9 +13,7 @@ import { Hero } from '@/components/landing/Hero';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import AutomationFlowMockup from './services/AutomationFlowMockup';
-import AIEmployeeMockup from './services/AIEmployeeMockup';
-import TicketingMockup from './services/TicketingMockup';
+import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
 import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
 import { useDebugStore } from '@/stores/debugStore';
 
