@@ -356,9 +356,12 @@ const LandingPage = memo(() => {
                 <button onClick={() => scrollToSection('about')} className="text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
                   {language === 'ar' ? 'عن AYN' : language === 'fr' ? 'À Propos' : 'About'}
                 </button>
-                <button onClick={() => scrollToSection('services')} className="text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
-                  {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Services' : 'Services'}
-                </button>
+                <Link to="/services" className="block text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
+                  {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
+                </Link>
+                <Link to="/pricing" className="block text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
+                  {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
+                </Link>
                 <button onClick={() => scrollToSection('contact')} className="text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
                   {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
                 </button>
