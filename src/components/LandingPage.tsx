@@ -122,31 +122,8 @@ const LandingPage = memo(() => {
 
 
 
-  const services = [{
-    number: '01',
-    slug: 'ai-agents',
-    title: language === 'ar' ? 'مساعد ذكي لعملك' : language === 'fr' ? 'Agents IA Personnalisés' : 'Custom AI Agents',
-    description: language === 'ar' ? 'مساعد ذكي يعمل ٢٤ ساعة لخدمة عملائك.' : language === 'fr' ? 'Assistants intelligents 24/7 formés sur votre entreprise.' : '24/7 intelligent assistants trained on your business.',
-    mockup: <LazyLoad minHeight="280px" debugLabel="DeviceMockups"><DeviceMockups /></LazyLoad>
-  }, {
-    number: '02',
-    slug: 'automation',
-    title: language === 'ar' ? 'أتمتة العمليات' : language === 'fr' ? 'Automatisation des Processus' : 'Process Automation',
-    description: language === 'ar' ? 'أتمتة المهام المتكررة لتوفير الوقت والجهد.' : language === 'fr' ? 'Automatisez les flux de travail pour gagner du temps.' : 'Automate workflows to save time and reduce errors in any business.',
-    mockup: <LazyLoad minHeight="260px" debugLabel="AutomationMockup"><AutomationFlowMockup /></LazyLoad>
-  }, {
-    number: '03',
-    slug: 'ai-employee',
-    title: language === 'ar' ? 'موظفين بالذكاء الاصطناعي' : language === 'fr' ? 'Employés IA' : 'AI Employees',
-    description: language === 'ar' ? 'موظفين يعملون ٢٤ ساعة بدون إجازات أو تأمين صحي.' : language === 'fr' ? 'Employés qui travaillent 24h/24 sans vacances ni assurance santé.' : 'Employees who work 24/7 with no vacations or healthcare costs.',
-    mockup: <LazyLoad minHeight="280px" debugLabel="AIEmployeeMockup"><AIEmployeeMockup /></LazyLoad>
-  }, {
-    number: '04',
-    slug: 'ticketing',
-    title: language === 'ar' ? 'نظام التذاكر الذكي' : language === 'fr' ? 'Billetterie Intelligente' : 'Smart Ticketing System',
-    description: language === 'ar' ? 'بيع التذاكر أونلاين والتحقق بمسح QR من الجوال.' : language === 'fr' ? 'Vendez des billets en ligne et validez par scan QR.' : 'Sell tickets online and validate with phone QR scanning.',
-    mockup: <LazyLoad minHeight="300px" debugLabel="TicketingMockup"><TicketingMockup /></LazyLoad>
-  }];
+
+
   // FAQ Schema for rich snippets
   const faqSchema = createFAQSchema([{
     question: "What is AYN AI?",
