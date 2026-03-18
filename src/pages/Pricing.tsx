@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { Check, Crown, Zap, Building2, Sparkles, Loader2, Shield, CreditCard, ChevronDown, Brain, Star } from 'lucide-react';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
