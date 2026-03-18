@@ -40,78 +40,11 @@ const LandingPage = memo(() => {
   const debugRef = useRef(useDebugStore.getState());
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string>('');
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const {
     t,
     language,
     direction
   } = useLanguage();
-
-
-
-  // Debug render logging - use ref to avoid dependency on context
-  if (debugRef.current?.isDebugMode) {
-    debugRef.current.incrementRenderCount('LandingPage');
-  }
-
-  // Hover handlers with collapse delay
-  const handleMouseEnter = () => {
-    if (collapseTimeoutRef.current) {
-      clearTimeout(collapseTimeoutRef.current);
-      collapseTimeoutRef.current = null;
-    }
-    setIsMenuExpanded(true);
-  };
-  const handleMouseLeave = () => {
-    // Don't collapse if a dropdown is open
-    if (isDropdownOpen) return;
-    collapseTimeoutRef.current = setTimeout(() => {
-      setIsMenuExpanded(false);
-    }, 300);
-  };
-
-  // Handle dropdown open state to prevent menu collapse
-  const handleDropdownOpenChange = (open: boolean) => {
-    setIsDropdownOpen(open);
-    if (open && collapseTimeoutRef.current) {
-      clearTimeout(collapseTimeoutRef.current);
-      collapseTimeoutRef.current = null;
-    }
-  };
-
-  // Smooth scroll to section
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth'
-      });
-      setIsMenuExpanded(false);
-    }
-  };
-
-  // Auto-collapse on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 100 && isMenuExpanded) {
-        setIsMenuExpanded(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isMenuExpanded]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (collapseTimeoutRef.current) {
-        clearTimeout(collapseTimeoutRef.current);
-      }
-    };
-  }, []);
 
 
 
