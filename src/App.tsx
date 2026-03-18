@@ -30,8 +30,10 @@ const ApprovalResult = lazy(() => import("./pages/ApprovalResult"));
 
 const AIEmployee = lazy(() => import("./pages/services/AIEmployee"));
 const AIEmployeeApply = lazy(() => import("./pages/services/AIEmployeeApply"));
-const InfluencerSites = lazy(() => import("./pages/services/InfluencerSites"));
-const InfluencerSitesApply = lazy(() => import("./pages/services/InfluencerSitesApply"));
+// HIDDEN: Content Creator Sites and Engineering tools temporarily disabled
+// const InfluencerSites = lazy(() => import("./pages/services/InfluencerSites"));
+// const InfluencerSitesApply = lazy(() => import("./pages/services/InfluencerSitesApply"));
+const ServicesPage = lazy(() => import("./pages/Services"));
 const AIAgents = lazy(() => import("./pages/services/AIAgents"));
 const AIAgentsApply = lazy(() => import("./pages/services/AIAgentsApply"));
 const Automation = lazy(() => import("./pages/services/Automation"));
