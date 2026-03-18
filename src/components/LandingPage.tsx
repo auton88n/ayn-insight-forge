@@ -185,11 +185,7 @@ const LandingPage = memo(() => {
 
 
 
-      {/* Shared Footer */}
       <Footer />
-
-      {/* Auth Modal */}
-      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
     </div>
   </>;
 });
