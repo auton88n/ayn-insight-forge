@@ -397,6 +397,11 @@ const LandingPage = memo(() => {
                   </Link>
                 </li>
                 <li>
+                  <Link to="/contact" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
+                  </Link>
+                </li>
+                <li>
                   <Link to="/support" className="hover:text-foreground transition-colors">
                     {language === 'ar' ? 'الدعم' : language === 'fr' ? 'Support' : 'Support'}
                   </Link>
