@@ -2,7 +2,6 @@ import { useState, memo } from 'react';
 
 import { Brain, Sparkles, Globe, Shield, Zap, Bot, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AuthModal } from './auth/AuthModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { cn } from '@/lib/utils';
