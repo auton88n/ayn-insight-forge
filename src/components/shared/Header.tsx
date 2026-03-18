@@ -1,11 +1,15 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Brain, Menu } from 'lucide-react';
+import { Brain, Menu, LogIn, LogOut, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const navLinks = [
   { path: '/', en: 'Home', fr: 'Accueil', ar: 'الرئيسية' },
@@ -17,82 +21,150 @@ const navLinks = [
 export const Header = () => {
   const { language } = useLanguage();
   const location = useLocation();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   const getLabel = (link: typeof navLinks[0]) =>
     language === 'ar' ? link.ar : language === 'fr' ? link.fr : link.en;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-      <div className="container max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
-            <Brain className="w-5 h-5 text-background" />
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
+        <div className="container max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
+              <Brain className="w-5 h-5 text-background" />
+            </div>
+            <span className="text-xl font-bold">AYN</span>
+          </Link>
+
+          {/* Desktop nav */}
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={cn(
+                  'transition-colors',
+                  location.pathname === link.path
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {getLabel(link)}
+              </Link>
+            ))}
           </div>
-          <span className="text-xl font-bold">AYN</span>
-        </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                'transition-colors',
-                location.pathname === link.path
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {getLabel(link)}
-            </Link>
-          ))}
-        </div>
+          {/* Right side */}
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <ThemeToggle />
 
-        {/* Right side */}
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher />
-          <ThemeToggle />
-
-          {/* Mobile menu */}
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[280px]">
-                <div className="flex flex-col gap-6 pt-8">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center">
-                      <Brain className="w-6 h-6 text-background" />
-                    </div>
-                    <span className="text-2xl font-bold">AYN</span>
+            {/* Auth button - desktop */}
+            <div className="hidden md:block">
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted text-sm">
+                    <User className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-muted-foreground max-w-[120px] truncate">
+                      {user.email?.split('@')[0]}
+                    </span>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.path}
-                        to={link.path}
-                        className={cn(
-                          'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
-                          location.pathname === link.path
-                            ? 'bg-muted text-foreground'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                        )}
-                      >
-                        {getLabel(link)}
-                      </Link>
-                    ))}
-                  </div>
+                  <Button variant="ghost" size="icon" onClick={handleSignOut} title={language === 'ar' ? 'تسجيل خروج' : language === 'fr' ? 'Déconnexion' : 'Sign out'}>
+                    <LogOut className="h-4 w-4" />
+                  </Button>
                 </div>
-              </SheetContent>
-            </Sheet>
+              ) : (
+                <Button variant="default" size="sm" onClick={() => setShowAuthModal(true)} className="gap-1.5">
+                  <LogIn className="h-4 w-4" />
+                  {language === 'ar' ? 'دخول' : language === 'fr' ? 'Connexion' : 'Sign In'}
+                </Button>
+              )}
+            </div>
+
+            {/* Mobile menu */}
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[280px]">
+                  <div className="flex flex-col gap-6 pt-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-foreground flex items-center justify-center">
+                        <Brain className="w-6 h-6 text-background" />
+                      </div>
+                      <span className="text-2xl font-bold">AYN</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      {navLinks.map((link) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          className={cn(
+                            'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
+                            location.pathname === link.path
+                              ? 'bg-muted text-foreground'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                          )}
+                        >
+                          {getLabel(link)}
+                        </Link>
+                      ))}
+                    </div>
+
+                    <div className="h-px bg-border" />
+
+                    {/* Auth - mobile */}
+                    {user ? (
+                      <div className="space-y-2 px-3">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <User className="w-4 h-4" />
+                          <span className="truncate">{user.email}</span>
+                        </div>
+                        <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                          <LogOut className="h-4 w-4 mr-2" />
+                          {language === 'ar' ? 'تسجيل خروج' : language === 'fr' ? 'Déconnexion' : 'Sign Out'}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="px-3">
+                        <Button className="w-full" onClick={() => setShowAuthModal(true)}>
+                          <LogIn className="h-4 w-4 mr-2" />
+                          {language === 'ar' ? 'دخول' : language === 'fr' ? 'Connexion' : 'Sign In'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
+    </>
   );
 };
