@@ -79,41 +79,12 @@ const Pricing = () => {
 
   const handleAction = (tier: SubscriptionTier) => {
     if (tier === 'enterprise') { setShowEnterpriseModal(true); return; }
-    if (tier === currentTier) { if (isSubscribed) openCustomerPortal(); return; }
-    if (tier === 'free') { if (isSubscribed) openCustomerPortal(); return; }
-    startCheckout(tier);
-  };
-
-  const handleEnterpriseSubmit = async () => {
-    if (!enterpriseForm.companyName || !enterpriseForm.email) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      const { error } = await supabase.from('contact_messages').insert({
-        name: enterpriseForm.companyName,
-        email: enterpriseForm.email,
-        message: `[ENTERPRISE INQUIRY]\n\n${enterpriseForm.requirements || 'User requested Enterprise pricing information'}`
-      });
-      if (error) throw error;
-      toast.success('Thank you! Our team will contact you within 24 hours.');
-      setShowEnterpriseModal(false);
-      setEnterpriseForm({ companyName: '', email: '', requirements: '' });
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Enterprise inquiry error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    navigate('/contact');
   };
 
   const getButtonText = (tier: SubscriptionTier) => {
     if (tier === 'enterprise') return 'Contact Sales';
-    if (tier === currentTier) return isSubscribed ? 'Manage Plan' : 'Current Plan';
-    if (tier === 'free') return isSubscribed ? 'Downgrade' : 'Get Started';
-    const tierOrder: SubscriptionTier[] = ['free', 'starter', 'pro', 'business', 'enterprise'];
-    return tierOrder.indexOf(tier) > tierOrder.indexOf(currentTier) ? 'Upgrade' : 'Switch Plan';
+    return 'Get Started';
   };
 
   const displayTiers: SubscriptionTier[] = ['free', 'starter', 'pro', 'business', 'enterprise'];
