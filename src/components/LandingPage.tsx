@@ -14,7 +14,6 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
-import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
 import { useDebugStore } from '@/stores/debugStore';
 
 // ScrollReveal component - defined outside to prevent recreation on re-renders
