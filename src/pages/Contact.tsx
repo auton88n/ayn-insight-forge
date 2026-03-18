@@ -116,35 +116,7 @@ const Contact = () => {
         canonical="/contact"
       />
       <div dir={direction} className="min-h-screen bg-background">
-        {/* Navigation */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
-          <div className="container max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
-                <Brain className="w-5 h-5 text-background" />
-              </div>
-              <span className="text-xl font-bold">AYN</span>
-            </Link>
-            <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-              <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
-                {language === 'ar' ? 'الرئيسية' : language === 'fr' ? 'Accueil' : 'Home'}
-              </Link>
-              <Link to="/services" className="text-muted-foreground hover:text-foreground transition-colors">
-                {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
-              </Link>
-              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
-              </Link>
-              <Link to="/contact" className="text-foreground">
-                {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
-              </Link>
-            </div>
-            <div className="flex items-center gap-2">
-              <LanguageSwitcher />
-              <ThemeToggle />
-            </div>
-          </div>
-        </nav>
+        <Header />
 
         {/* Hero + Form */}
         <section className="pt-32 pb-16 px-6">
