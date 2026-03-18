@@ -298,12 +298,15 @@ const LandingPage = memo(() => {
           {isMenuExpanded && <div className="absolute top-full left-0 mt-2 min-w-[200px] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-fade-in" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
               {/* Navigation Links */}
               <div className="p-2">
-                <button onClick={() => scrollToSection('about')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
+              <button onClick={() => scrollToSection('about')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
                   {language === 'ar' ? 'عن AYN' : language === 'fr' ? 'À Propos' : 'About'}
                 </button>
-                <button onClick={() => scrollToSection('services')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
-                  {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Services' : 'Services'}
-                </button>
+                <Link to="/services" className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium block">
+                  {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
+                </Link>
+                <Link to="/pricing" className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium block">
+                  {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
+                </Link>
                 <button onClick={() => scrollToSection('contact')} className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-muted transition-colors text-sm font-medium">
                   {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
                 </button>
