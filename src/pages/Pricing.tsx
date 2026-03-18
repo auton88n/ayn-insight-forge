@@ -71,7 +71,7 @@ const faqItems = [
 
 const Pricing = () => {
   const navigate = useNavigate();
-  const { tier: currentTier, isLoading, isSubscribed, startCheckout, openCustomerPortal } = useSubscription();
+  const { isLoading } = useSubscription();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
   const [enterpriseForm, setEnterpriseForm] = useState({ companyName: '', email: '', requirements: '' });
