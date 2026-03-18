@@ -354,6 +354,7 @@ const Pricing = () => {
             </div>
           </DialogContent>
         </Dialog>
+        <Footer />
       </div>
     </>
   );
