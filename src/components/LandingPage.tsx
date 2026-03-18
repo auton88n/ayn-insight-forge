@@ -56,9 +56,8 @@ const LandingPage = memo(() => {
     language,
     direction
   } = useLanguage();
-  const {
-    toast
-  } = useToast();
+
+
 
   // Debug render logging - use ref to avoid dependency on context
   if (debugRef.current?.isDebugMode) {
