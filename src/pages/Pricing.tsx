@@ -332,6 +332,7 @@ const Pricing = () => {
             </div>
           </DialogContent>
         </Dialog>
+        <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
         <Footer />
       </div>
     </>
