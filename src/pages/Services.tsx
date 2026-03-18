@@ -87,7 +87,7 @@ const Services = () => {
                   transition={{ delay: i * 0.1, duration: 0.5 }}
                 >
                   <Link to={`/services/${service.slug}`} className="block group">
-                    <div className="bg-card border border-border/50 rounded-3xl p-8 min-h-[400px] flex flex-col hover:border-border hover:shadow-xl transition-all duration-300">
+                    <div className="bg-card border border-border/50 rounded-3xl p-6 sm:p-8 min-h-[350px] sm:min-h-[400px] flex flex-col hover:border-border hover:shadow-xl transition-all duration-300 overflow-hidden">
                       <div className="mb-6">
                         <service.icon className={cn("w-8 h-8 mb-4", service.color)} />
                         <h2 className="text-2xl font-bold group-hover:text-primary transition-colors">
