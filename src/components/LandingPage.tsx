@@ -513,7 +513,7 @@ const LandingPage = memo(() => {
                 {language === 'ar' ? 'خدماتنا' : language === 'fr' ? 'Ce Que Nous Faisons' : 'What We Do'}
               </span>
               <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif mb-4 md:mb-6">
-                {language === 'ar' ? <>ست طرق <span className="font-bold">لتبسيط حياتك</span></> : language === 'fr' ? <>Six Façons de <span className="font-bold">Simplifier Votre Vie</span></> : <>Six Ways We Help <span className="font-bold">Simplify Your Life</span></>}
+                {language === 'ar' ? <>أربع طرق <span className="font-bold">لتبسيط حياتك</span></> : language === 'fr' ? <>Quatre Façons de <span className="font-bold">Simplifier Votre Vie</span></> : <>Four Ways We Help <span className="font-bold">Simplify Your Life</span></>}
               </h2>
             </div>
           </ScrollReveal>
@@ -522,27 +522,17 @@ const LandingPage = memo(() => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left Column */}
             <div className="flex flex-col gap-6">
-              {/* Top Left - Content Creator Sites */}
+              {/* AI Agents */}
               <ScrollReveal>
                 <Link to={`/services/${services[0].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="mb-4">
-                      
                       <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
                         {services[0].title}
                       </h3>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {services[0].description}
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">{services[0].description}</p>
                     </div>
-                    <div className="flex-1 flex items-center justify-center overflow-hidden">
-                      {services[0].mockup}
-                    </div>
+                    <div className="flex-1 flex items-center justify-center overflow-hidden">{services[0].mockup}</div>
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-4">
                       {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -551,61 +541,20 @@ const LandingPage = memo(() => {
                 </Link>
               </ScrollReveal>
 
-              {/* Bottom Left - Automation */}
+              {/* Process Automation */}
               <ScrollReveal delay={0.2}>
-                <Link to={`/services/${services[2].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                <Link to={`/services/${services[1].slug}`} className="block">
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="flex flex-col gap-4">
                       <div>
-                        
-                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
-                          {services[2].title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {services[2].description}
-                        </p>
+                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">{services[1].title}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">{services[1].description}</p>
                       </div>
-                      <div className="flex-1 flex items-center justify-center h-[120px]">
-                        {services[2].mockup}
-                      </div>
+                      <div className="flex-1 flex items-center justify-center h-[120px]">{services[1].mockup}</div>
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                         {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                       </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              </ScrollReveal>
-
-              {/* Ticketing System - Featured Card */}
-              <ScrollReveal delay={0.3}>
-                <Link to="/services/ticketing" className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[500px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
-                    <div className="mb-4">
-                      <span className="text-xs font-mono text-purple-500 tracking-wider">NEW</span>
-                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-purple-500 transition-colors">
-                        {services[5].title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {services[5].description}
-                      </p>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center overflow-visible">
-                      {services[5].mockup}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-4">
-                      {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </motion.div>
                 </Link>
@@ -614,28 +563,16 @@ const LandingPage = memo(() => {
 
             {/* Right Column */}
             <div className="flex flex-col gap-6">
-              {/* Top Right - AI Agents */}
+              {/* AI Employees */}
               <ScrollReveal delay={0.1}>
-                <Link to={`/services/${services[1].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[280px] group cursor-pointer contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                <Link to={`/services/${services[2].slug}`} className="block">
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="flex flex-col gap-4">
                       <div>
-                        
-                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
-                          {services[1].title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {services[1].description}
-                        </p>
+                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">{services[2].title}</h3>
+                        <p className="text-sm text-muted-foreground mt-2">{services[2].description}</p>
                       </div>
-                      <div className="flex-1 flex items-center justify-center h-[120px]">
-                        {services[1].mockup}
-                      </div>
+                      <div className="flex-1 flex items-center justify-center min-h-[280px]">{services[2].mockup}</div>
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
                         {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -645,59 +582,18 @@ const LandingPage = memo(() => {
                 </Link>
               </ScrollReveal>
 
-              {/* Bottom Right - AI Employees */}
+              {/* Ticketing System */}
               <ScrollReveal delay={0.3}>
-                <Link to={`/services/${services[3].slug}`} className="block">
-                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[480px] group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-primary transition-colors">
-                          {services[3].title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {services[3].description}
-                        </p>
-                      </div>
-                      <div className="flex-1 flex items-center justify-center min-h-[280px]">
-                        {services[3].mockup}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                        {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
-              </ScrollReveal>
-              
-              {/* Engineering Tools - Featured Card */}
-              <ScrollReveal delay={0.4}>
-                <Link to="/engineering" className="block">
-                  <motion.div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{
-                    y: -4
-                  }} transition={{
-                    duration: 0.3,
-                    ease: [0.32, 0.72, 0, 1]
-                  }}>
+                <Link to="/services/ticketing" className="block">
+                  <motion.div className="bg-neutral-50 dark:bg-card rounded-3xl p-6 md:p-8 min-h-[320px] lg:min-h-[380px] flex flex-col group cursor-pointer overflow-hidden contain-layout" whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}>
                     <div className="mb-4">
-                      <span className="text-xs font-mono text-cyan-500 tracking-wider">NEW</span>
-                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-cyan-500 transition-colors">
-                        {services[4].title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {services[4].description}
-                      </p>
+                      <span className="text-xs font-mono text-purple-500 tracking-wider">NEW</span>
+                      <h3 className="text-xl md:text-2xl font-bold mt-2 group-hover:text-purple-500 transition-colors">{services[3].title}</h3>
+                      <p className="text-sm text-muted-foreground mt-2">{services[3].description}</p>
                     </div>
-                    <div className="flex-1 flex items-center justify-center overflow-visible">
-                      {services[4].mockup}
-                    </div>
+                    <div className="flex-1 flex items-center justify-center overflow-visible">{services[3].mockup}</div>
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors mt-4">
-                      {language === 'ar' ? 'ابدأ التصميم' : language === 'fr' ? 'Commencer la Conception' : 'Start Designing'}
+                      {language === 'ar' ? 'اكتشف المزيد' : language === 'fr' ? 'En Savoir Plus' : 'Learn More'}
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </motion.div>
@@ -705,6 +601,16 @@ const LandingPage = memo(() => {
               </ScrollReveal>
             </div>
           </div>
+
+          {/* View All Services CTA */}
+          <ScrollReveal delay={0.4}>
+            <div className="text-center mt-12">
+              <Link to="/services" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                {language === 'ar' ? 'عرض جميع الخدمات' : language === 'fr' ? 'Voir Tous les Services' : 'View All Services'}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
