@@ -701,7 +701,7 @@ const LandingPage = memo(() => {
       {/* Professional Footer */}
       <footer className="pt-8 pb-4">
         <div className="container max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 mb-6">
             {/* Column 1: Brand */}
             <div className="space-y-3 col-span-2 sm:col-span-1">
               <div className="flex items-center gap-3">
@@ -711,27 +711,31 @@ const LandingPage = memo(() => {
                 <span className="text-2xl font-bold">AYN</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                {language === 'ar' ? 'هندسة مدعومة بالذكاء الاصطناعي' : language === 'fr' ? 'Ingénierie propulsée par l\'IA' : 'AI-Powered Engineering'}
+                {language === 'ar' ? 'حلول ذكاء اصطناعي متقدمة' : language === 'fr' ? 'Solutions IA avancées' : 'Advanced AI Solutions'}
               </p>
             </div>
 
-            {/* Column 2: Explore */}
+            {/* Column 2: Navigate */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
-                {language === 'ar' ? 'استكشف' : language === 'fr' ? 'Explorer' : 'Explore'}
+                {language === 'ar' ? 'التنقل' : language === 'fr' ? 'Navigation' : 'Navigate'}
               </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                {[
-                  { label: language === 'ar' ? 'حول' : language === 'fr' ? 'À propos' : 'About', id: 'about' },
-                  { label: language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services', id: 'services' },
-                  { label: language === 'ar' ? 'تواصل' : language === 'fr' ? 'Contact' : 'Contact', id: 'contact' },
-                ].map(link => (
-                  <li key={link.id}>
-                    <button onClick={() => document.getElementById(link.id)?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-foreground transition-colors">
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
+                <li>
+                  <Link to="/services" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/pricing" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/support" className="hover:text-foreground transition-colors">
+                    {language === 'ar' ? 'الدعم' : language === 'fr' ? 'Support' : 'Support'}
+                  </Link>
+                </li>
                 <li>
                   <Link to="/privacy" className="hover:text-foreground transition-colors">
                     {language === 'ar' ? 'سياسة الخصوصية' : language === 'fr' ? 'Confidentialité' : 'Privacy Policy'}
@@ -745,33 +749,16 @@ const LandingPage = memo(() => {
               </ul>
             </div>
 
-            {/* Column 3: Services (first half) */}
+            {/* Column 3: Services */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
                 {language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}
               </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {[
-                  { label: language === 'ar' ? 'مواقع صناع المحتوى' : language === 'fr' ? 'Sites Créateurs' : 'Content Creator Sites', route: '/services/content-creator-sites' },
                   { label: language === 'ar' ? 'وكلاء ذكاء اصطناعي' : language === 'fr' ? 'Agents IA' : 'Custom AI Agents', route: '/services/ai-agents' },
                   { label: language === 'ar' ? 'أتمتة العمليات' : language === 'fr' ? 'Automatisation' : 'Process Automation', route: '/services/automation' },
-                ].map(service => (
-                  <li key={service.route}>
-                    <Link to={service.route} className="hover:text-foreground transition-colors">
-                      {service.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Column 4: Services (second half) */}
-            <div className="space-y-3">
-              <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground opacity-0 pointer-events-none hidden lg:block">.</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {[
                   { label: language === 'ar' ? 'موظفون بالذكاء الاصطناعي' : language === 'fr' ? 'Employés IA' : 'AI Employees', route: '/services/ai-employee' },
-                  { label: language === 'ar' ? 'الهندسة المدنية' : language === 'fr' ? 'Génie Civil' : 'Civil Engineering', route: '/services/civil-engineering' },
                   { label: language === 'ar' ? 'نظام التذاكر الذكي' : language === 'fr' ? 'Billetterie' : 'Smart Ticketing', route: '/services/ticketing' },
                 ].map(service => (
                   <li key={service.route}>
@@ -783,7 +770,7 @@ const LandingPage = memo(() => {
               </ul>
             </div>
 
-            {/* Column 5: Contact & Social */}
+            {/* Column 4: Contact & Social */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm uppercase tracking-wider text-foreground">
                 {language === 'ar' ? 'تواصل' : language === 'fr' ? 'Contact' : 'Contact'}
