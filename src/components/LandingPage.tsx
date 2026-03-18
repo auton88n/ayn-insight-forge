@@ -35,6 +35,7 @@ const ScrollReveal = ({
     </div>;
 };
 const LandingPage = memo(() => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const {
     t,
