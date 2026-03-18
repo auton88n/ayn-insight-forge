@@ -36,8 +36,6 @@ const ScrollReveal = ({
     </div>;
 };
 const LandingPage = memo(() => {
-  // Use ref to avoid re-renders from debug context updates
-  const debugRef = useRef(useDebugStore.getState());
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string>('');
   const {
