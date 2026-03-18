@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Crown, Zap, Building2, Sparkles, ArrowLeft, Loader2, Shield, CreditCard, ChevronDown, Brain, Star } from 'lucide-react';
+import { Check, Crown, Zap, Building2, Sparkles, Loader2, Shield, CreditCard, ChevronDown, Brain, Star } from 'lucide-react';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -127,18 +129,14 @@ const Pricing = () => {
       />
 
       <div className="min-h-screen bg-background relative overflow-hidden">
+        <Header />
         {/* Subtle background */}
         <div className="fixed inset-0 -z-10">
           <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-purple-500/8 rounded-full blur-[120px]" />
           <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-blue-500/8 rounded-full blur-[120px]" />
         </div>
 
-        <div className="container max-w-7xl mx-auto px-4 py-12 relative z-10">
-          {/* Back */}
-          <Button variant="ghost" onClick={() => navigate('/')} className="mb-8 hover:bg-card/50">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+        <div className="container max-w-7xl mx-auto px-4 pt-24 pb-12 relative z-10">
 
           {/* Header */}
           <div className="text-center mb-16">
@@ -356,6 +354,7 @@ const Pricing = () => {
             </div>
           </DialogContent>
         </Dialog>
+        <Footer />
       </div>
     </>
   );
