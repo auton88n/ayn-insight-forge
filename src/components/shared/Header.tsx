@@ -23,6 +23,7 @@ const navLinks = [
 export const Header = () => {
   const { language } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
 
@@ -41,6 +42,26 @@ export const Header = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+  };
+
+  const handleNavClick = useCallback((e: React.MouseEvent, path: string) => {
+    if (path.includes('#')) {
+      e.preventDefault();
+      const hash = path.split('#')[1];
+      if (location.pathname !== '/') {
+        navigate('/');
+        setTimeout(() => {
+          document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location.pathname, navigate]);
+
+  const isActive = (path: string) => {
+    if (path.includes('#')) return false;
+    return location.pathname === path;
   };
 
   const getLabel = (link: typeof navLinks[0]) =>
