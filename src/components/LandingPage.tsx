@@ -1,6 +1,6 @@
 import { useState, memo } from 'react';
 
-import { Brain, Sparkles, Globe, Shield, Zap, Bot, BarChart3 } from 'lucide-react';
+import { Brain, Sparkles, Globe, Shield, Zap, Bot, BarChart3, TrendingUp, Eye, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthModal } from './auth/AuthModal';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -9,6 +9,9 @@ import { cn } from '@/lib/utils';
 import { Hero } from '@/components/landing/Hero';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import featureBusinessImg from '@/assets/feature-business.jpg';
+import featureMarketImg from '@/assets/feature-market.jpg';
+import featurePredictImg from '@/assets/feature-predict.jpg';
 import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
