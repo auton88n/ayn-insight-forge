@@ -385,15 +385,30 @@ export const Sidebar = ({
         )}
 
         
-        {/* Tool Buttons - Card Grid — HIDDEN FOR NOW
+        {/* World Intelligence Button */}
         <SidebarGroup className="flex-shrink-0 px-4 pb-3">
           <SidebarGroupContent>
-            <div className="grid grid-cols-2 gap-2">
-              Engineering Card + Compliance Card
-            </div>
+            <button
+              onClick={() => navigate('/world-intelligence')}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl",
+                "bg-gradient-to-r from-amber-500/10 to-red-500/10",
+                "border border-amber-500/20 hover:border-amber-500/40",
+                "hover:from-amber-500/15 hover:to-red-500/15",
+                "transition-all duration-300 group"
+              )}
+            >
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center shadow-md shadow-amber-500/20">
+                <Activity className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <p className="text-xs font-semibold text-foreground">World Intelligence</p>
+                <p className="text-[10px] text-muted-foreground">Live global insights</p>
+              </div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
           </SidebarGroupContent>
         </SidebarGroup>
-        */}
 
         {/* Search Input */}
         <div className="px-4 pb-3 flex-shrink-0">
