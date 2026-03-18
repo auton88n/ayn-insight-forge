@@ -146,6 +146,7 @@ export const Header = () => {
                       <Link
                         key={link.path}
                         to={link.path}
+                        onClick={(e) => handleNavClick(e, link.path)}
                         className={cn(
                           'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
                           location.pathname === link.path ?
