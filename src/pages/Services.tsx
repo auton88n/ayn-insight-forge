@@ -78,8 +78,8 @@ const Services = () => {
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
               </Link>
-              <Link to="/support" className="text-muted-foreground hover:text-foreground transition-colors">
-                {language === 'ar' ? 'الدعم' : language === 'fr' ? 'Support' : 'Support'}
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
               </Link>
             </div>
             <div className="flex items-center gap-2">
