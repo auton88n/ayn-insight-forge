@@ -31,4 +31,4 @@ export const ROUTES = {
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
-export type ServiceRouteKey = keyof typeof ROUTES.SERVICES;
+export type ServiceRouteKey = keyof typeof ROUTES.SERVICE_PAGES;
