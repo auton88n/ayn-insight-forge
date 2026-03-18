@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, memo } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+
 import { Brain, Sparkles, Globe, Shield, ChevronDown, Mail, Zap, Bot, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
