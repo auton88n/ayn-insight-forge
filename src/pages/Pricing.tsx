@@ -159,14 +159,6 @@ const Pricing = () => {
                         </div>
                       )}
 
-                      {/* Current plan badge */}
-                      {isCurrentPlan && (
-                        <div className="absolute -top-3 right-4 z-10">
-                          <Badge className="bg-foreground text-background text-[10px] px-2.5 py-0.5 border-0 shadow-lg">
-                            Your Plan
-                          </Badge>
-                        </div>
-                      )}
 
                       <div className="p-6 flex flex-col h-full">
                         {/* Tier name + icon */}
