@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo } from 'react';
+import { useState, memo } from 'react';
 
 import { Brain, Sparkles, Globe, Shield, Zap, Bot, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
