@@ -1,18 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Brain, CheckCircle, Send, Loader2, Mail } from 'lucide-react';
+import { CheckCircle, Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { SEO } from '@/components/shared/SEO';
-import { ThemeToggle } from '@/components/shared/theme-toggle';
-import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 
 const Contact = () => {
   const { language, direction } = useLanguage();

@@ -1,20 +1,18 @@
 import { useState, useRef, useEffect, memo } from 'react';
 
-import { Brain, Sparkles, Globe, Shield, ChevronDown, Mail, Zap, Bot, BarChart3 } from 'lucide-react';
+import { Sparkles, Globe, Shield, Zap, Bot, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { AuthModal } from './auth/AuthModal';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
-import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { cn } from '@/lib/utils';
 import { Hero } from '@/components/landing/Hero';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
 import { useDebugStore } from '@/stores/debugStore';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 
 // ScrollReveal component - defined outside to prevent recreation on re-renders
 const ScrollReveal = ({

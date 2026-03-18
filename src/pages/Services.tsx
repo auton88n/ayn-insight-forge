@@ -1,17 +1,16 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bot, Cpu, Users, Ticket, Brain } from 'lucide-react';
+import { ArrowRight, Bot, Cpu, Users, Ticket } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SEO } from '@/components/shared/SEO';
-import { ThemeToggle } from '@/components/shared/theme-toggle';
-import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { LazyLoad } from '@/components/ui/lazy-load';
 import DeviceMockups from '@/components/services/DeviceMockups';
 import AutomationFlowMockup from '@/components/services/AutomationFlowMockup';
 import AIEmployeeMockup from '@/components/services/AIEmployeeMockup';
 import TicketingMockup from '@/components/services/TicketingMockup';
-import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Header } from '@/components/shared/Header';
+import { Footer } from '@/components/shared/Footer';
 
 const Services = () => {
   const { language, direction } = useLanguage();
