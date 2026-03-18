@@ -455,17 +455,17 @@ const LandingPage = memo(() => {
               </div>
             </ScrollReveal>
 
-            {/* Row 2: Engineering Tools */}
+            {/* Row 2: Business Tools */}
             <ScrollReveal delay={0.4}>
               <div className="text-center space-y-3 md:space-y-4">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
-                  <Calculator className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
+                  <Zap className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
-                  {language === 'ar' ? 'حاسبات إنشائية' : language === 'fr' ? 'Calculateurs Structurels' : 'Structural Calculators'}
+                  {language === 'ar' ? 'أتمتة ذكية' : language === 'fr' ? 'Automatisation Intelligente' : 'Smart Automation'}
                 </h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {language === 'ar' ? 'تصميم الكمرات والأعمدة والأساسات مع تصور ثلاثي الأبعاد.' : language === 'fr' ? 'Concevez poutres, colonnes et fondations avec visualisation 3D.' : 'Design beams, columns, slabs and foundations with 3D visualization.'}
+                  {language === 'ar' ? 'أتمتة المهام المتكررة لتوفير الوقت والموارد.' : language === 'fr' ? 'Automatisez les tâches répétitives pour économiser temps et ressources.' : 'Automate repetitive tasks to save time and resources.'}
                 </p>
               </div>
             </ScrollReveal>
@@ -473,13 +473,13 @@ const LandingPage = memo(() => {
             <ScrollReveal delay={0.5}>
               <div className="text-center space-y-3 md:space-y-4">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
-                  <ShieldCheck className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
+                  <Bot className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
-                  {language === 'ar' ? 'فحص الامتثال' : language === 'fr' ? 'Conformité au Code' : 'Code Compliance'}
+                  {language === 'ar' ? 'وكلاء مخصصون' : language === 'fr' ? 'Agents Personnalisés' : 'Custom AI Agents'}
                 </h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {language === 'ar' ? 'تحقق من مطابقة التصميم لكود البناء تلقائيًا.' : language === 'fr' ? 'Vérifiez automatiquement la conformité au code du bâtiment.' : 'Automated building code compliance checks and reports.'}
+                  {language === 'ar' ? 'وكلاء ذكاء اصطناعي مدربون على بيانات شركتك.' : language === 'fr' ? 'Agents IA entraînés sur les données de votre entreprise.' : 'AI agents trained on your company data for 24/7 support.'}
                 </p>
               </div>
             </ScrollReveal>
@@ -487,13 +487,13 @@ const LandingPage = memo(() => {
             <ScrollReveal delay={0.6}>
               <div className="text-center space-y-3 md:space-y-4">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 mx-auto flex items-center justify-center">
-                  <Mountain className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
+                  <BarChart3 className="w-7 h-7 md:w-8 md:h-8 text-foreground" />
                 </div>
                 <h3 className="text-lg md:text-xl font-bold">
-                  {language === 'ar' ? 'تصميم التسوية' : language === 'fr' ? 'Conception de Terrassement' : 'Site Grading'}
+                  {language === 'ar' ? 'تحليلات متقدمة' : language === 'fr' ? 'Analyses Avancées' : 'Advanced Analytics'}
                 </h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {language === 'ar' ? 'تحليل التضاريس وتصميم المناسيب بالذكاء الاصطناعي.' : language === 'fr' ? 'Analyse du terrain et conception d\'élévation avec IA.' : 'Terrain analysis and elevation design with AI assistance.'}
+                  {language === 'ar' ? 'رؤى عميقة لاتخاذ قرارات أفضل لأعمالك.' : language === 'fr' ? 'Des insights approfondis pour de meilleures décisions commerciales.' : 'Deep insights to make better business decisions.'}
                 </p>
               </div>
             </ScrollReveal>
