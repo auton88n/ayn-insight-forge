@@ -32,9 +32,9 @@ const AIEmployeeMockup = memo(() => {
   const isMobile = useIsMobile();
   const orbitRadius = isMobile ? 80 : 160;
   
-  return <div className="relative w-full h-full min-h-[280px] sm:min-h-[350px] md:min-h-[450px] flex items-center justify-center overflow-hidden" dir="ltr">
+  return <div className="relative w-full h-full min-h-[250px] sm:min-h-[300px] md:min-h-[350px] flex items-center justify-center overflow-hidden" dir="ltr">
     {/* Responsive scaling wrapper to prevent overflow */}
-    <div className="relative scale-[0.6] sm:scale-[0.7] md:scale-[0.85] lg:scale-100 origin-center">
+    <div className="relative w-[380px] h-[380px] scale-[0.55] sm:scale-[0.65] md:scale-[0.75] lg:scale-[0.85] origin-center flex items-center justify-center">
       {/* Background ambient glow - simplified */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
         <div className="w-64 h-64 bg-cyan-500/20 rounded-full blur-2xl" />
