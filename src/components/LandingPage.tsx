@@ -220,9 +220,9 @@ const LandingPage = memo(() => {
                 <Link to="/pricing" className="block text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
                   {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
                 </Link>
-                <button onClick={() => scrollToSection('contact')} className="text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
+                <Link to="/contact" className="block text-left py-2 text-sm font-medium hover:text-foreground/80 transition-colors">
                   {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
-                </button>
+                </Link>
                 
                 <div className="h-px bg-border my-2" />
                 
