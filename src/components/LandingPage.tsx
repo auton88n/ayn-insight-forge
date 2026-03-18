@@ -238,37 +238,24 @@ const LandingPage = memo(() => {
   };
   const services = [{
     number: '01',
-    slug: 'content-creator-sites',
-    title: language === 'ar' ? 'مواقع لصناع المحتوى' : language === 'fr' ? 'Sites Premium pour Créateurs' : 'Premium Content Creator Sites',
-    description: language === 'ar' ? 'موقع احترافي يعكس هويتك ويجذب فرص التعاون.' : language === 'fr' ? 'Sites web de luxe conçus pour mettre en valeur votre marque personnelle.' : 'Luxury websites custom-built to showcase your personal brand.',
-    mockup: <LazyLoad minHeight="320px" debugLabel="MobileMockup"><MobileMockup /></LazyLoad>
-  }, {
-    number: '02',
     slug: 'ai-agents',
     title: language === 'ar' ? 'مساعد ذكي لعملك' : language === 'fr' ? 'Agents IA Personnalisés' : 'Custom AI Agents',
     description: language === 'ar' ? 'مساعد ذكي يعمل ٢٤ ساعة لخدمة عملائك.' : language === 'fr' ? 'Assistants intelligents 24/7 formés sur votre entreprise.' : '24/7 intelligent assistants trained on your business.',
     mockup: <LazyLoad minHeight="280px" debugLabel="DeviceMockups"><DeviceMockups /></LazyLoad>
   }, {
-    number: '03',
+    number: '02',
     slug: 'automation',
     title: language === 'ar' ? 'أتمتة العمليات' : language === 'fr' ? 'Automatisation des Processus' : 'Process Automation',
     description: language === 'ar' ? 'أتمتة المهام المتكررة لتوفير الوقت والجهد.' : language === 'fr' ? 'Automatisez les flux de travail pour gagner du temps.' : 'Automate workflows to save time and reduce errors in any business.',
     mockup: <LazyLoad minHeight="260px" debugLabel="AutomationMockup"><AutomationFlowMockup /></LazyLoad>
   }, {
-    number: '04',
+    number: '03',
     slug: 'ai-employee',
     title: language === 'ar' ? 'موظفين بالذكاء الاصطناعي' : language === 'fr' ? 'Employés IA' : 'AI Employees',
     description: language === 'ar' ? 'موظفين يعملون ٢٤ ساعة بدون إجازات أو تأمين صحي.' : language === 'fr' ? 'Employés qui travaillent 24h/24 sans vacances ni assurance santé.' : 'Employees who work 24/7 with no vacations or healthcare costs.',
     mockup: <LazyLoad minHeight="280px" debugLabel="AIEmployeeMockup"><AIEmployeeMockup /></LazyLoad>
   }, {
-    number: '05',
-    slug: 'engineering',
-    isInternal: true,
-    title: language === 'ar' ? 'حاسبات الهندسة المدنية' : language === 'fr' ? 'Calculateurs de Génie Civil' : 'Civil Engineering Calculators',
-    description: language === 'ar' ? 'تصميم العناصر الإنشائية مع التصور ثلاثي الأبعاد والتحليل بالذكاء الاصطناعي.' : language === 'fr' ? 'Concevez des éléments structurels avec visualisation 3D et analyse IA.' : 'Design structural elements with 3D visualization and AI-powered analysis.',
-    mockup: <LazyLoad minHeight="260px" debugLabel="EngineeringMockup"><EngineeringMockup /></LazyLoad>
-  }, {
-    number: '06',
+    number: '04',
     slug: 'ticketing',
     title: language === 'ar' ? 'نظام التذاكر الذكي' : language === 'fr' ? 'Billetterie Intelligente' : 'Smart Ticketing System',
     description: language === 'ar' ? 'بيع التذاكر أونلاين والتحقق بمسح QR من الجوال.' : language === 'fr' ? 'Vendez des billets en ligne et validez par scan QR.' : 'Sell tickets online and validate with phone QR scanning.',
