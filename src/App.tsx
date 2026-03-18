@@ -34,6 +34,7 @@ const AIEmployeeApply = lazy(() => import("./pages/services/AIEmployeeApply"));
 // const InfluencerSites = lazy(() => import("./pages/services/InfluencerSites"));
 // const InfluencerSitesApply = lazy(() => import("./pages/services/InfluencerSitesApply"));
 const ServicesPage = lazy(() => import("./pages/Services"));
+const ContactPage = lazy(() => import("./pages/Contact"));
 const AIAgents = lazy(() => import("./pages/services/AIAgents"));
 const AIAgentsApply = lazy(() => import("./pages/services/AIAgentsApply"));
 const Automation = lazy(() => import("./pages/services/Automation"));
@@ -95,6 +96,7 @@ const AnimatedRoutes = () => {
       <Route path="/services/automation/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><AutomationApply /></PageTransition></Suspense>} />
       <Route path="/services/ticketing" element={<Suspense fallback={<PageLoader />}><PageTransition><Ticketing /></PageTransition></Suspense>} />
       <Route path="/services/ticketing/apply" element={<Suspense fallback={<PageLoader />}><PageTransition><TicketingApply /></PageTransition></Suspense>} />
+      <Route path="/contact" element={<Suspense fallback={<PageLoader />}><PageTransition><ContactPage /></PageTransition></Suspense>} />
       <Route path="/support" element={<PageTransition><Support /></PageTransition>} />
       {/* HIDDEN: Engineering & Compliance routes temporarily disabled
       <Route path="/engineering" element={<Suspense fallback={<PageLoader />}><PageTransition><Engineering /></PageTransition></Suspense>} />

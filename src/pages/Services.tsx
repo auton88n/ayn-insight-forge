@@ -78,8 +78,8 @@ const Services = () => {
               <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 {language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}
               </Link>
-              <Link to="/support" className="text-muted-foreground hover:text-foreground transition-colors">
-                {language === 'ar' ? 'الدعم' : language === 'fr' ? 'Support' : 'Support'}
+              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                {language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}
               </Link>
             </div>
             <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ const Services = () => {
                   <li><Link to="/" className="hover:text-foreground transition-colors">{language === 'ar' ? 'الرئيسية' : language === 'fr' ? 'Accueil' : 'Home'}</Link></li>
                   <li><Link to="/services" className="hover:text-foreground transition-colors">{language === 'ar' ? 'الخدمات' : language === 'fr' ? 'Services' : 'Services'}</Link></li>
                   <li><Link to="/pricing" className="hover:text-foreground transition-colors">{language === 'ar' ? 'الأسعار' : language === 'fr' ? 'Tarifs' : 'Pricing'}</Link></li>
-                  <li><Link to="/support" className="hover:text-foreground transition-colors">{language === 'ar' ? 'الدعم' : language === 'fr' ? 'Support' : 'Support'}</Link></li>
+                  <li><Link to="/contact" className="hover:text-foreground transition-colors">{language === 'ar' ? 'تواصل معنا' : language === 'fr' ? 'Contact' : 'Contact'}</Link></li>
                 </ul>
               </div>
               <div>
