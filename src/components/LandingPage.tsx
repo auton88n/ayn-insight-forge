@@ -188,6 +188,7 @@ const LandingPage = memo(() => {
 
 
       <Footer />
+      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
     </div>
   </>;
 });
