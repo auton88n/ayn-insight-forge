@@ -71,7 +71,7 @@ const faqItems = [
 
 const Pricing = () => {
   const navigate = useNavigate();
-  const { tier: currentTier, isLoading, isSubscribed, startCheckout, openCustomerPortal } = useSubscription();
+  const { isLoading } = useSubscription();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
   const [enterpriseForm, setEnterpriseForm] = useState({ companyName: '', email: '', requirements: '' });
@@ -79,9 +79,7 @@ const Pricing = () => {
 
   const handleAction = (tier: SubscriptionTier) => {
     if (tier === 'enterprise') { setShowEnterpriseModal(true); return; }
-    if (tier === currentTier) { if (isSubscribed) openCustomerPortal(); return; }
-    if (tier === 'free') { if (isSubscribed) openCustomerPortal(); return; }
-    startCheckout(tier);
+    navigate('/contact');
   };
 
   const handleEnterpriseSubmit = async () => {
@@ -100,8 +98,7 @@ const Pricing = () => {
       toast.success('Thank you! Our team will contact you within 24 hours.');
       setShowEnterpriseModal(false);
       setEnterpriseForm({ companyName: '', email: '', requirements: '' });
-    } catch (error) {
-      if (import.meta.env.DEV) console.error('Enterprise inquiry error:', error);
+    } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -110,10 +107,7 @@ const Pricing = () => {
 
   const getButtonText = (tier: SubscriptionTier) => {
     if (tier === 'enterprise') return 'Contact Sales';
-    if (tier === currentTier) return isSubscribed ? 'Manage Plan' : 'Current Plan';
-    if (tier === 'free') return isSubscribed ? 'Downgrade' : 'Get Started';
-    const tierOrder: SubscriptionTier[] = ['free', 'starter', 'pro', 'business', 'enterprise'];
-    return tierOrder.indexOf(tier) > tierOrder.indexOf(currentTier) ? 'Upgrade' : 'Switch Plan';
+    return 'Get Started';
   };
 
   const displayTiers: SubscriptionTier[] = ['free', 'starter', 'pro', 'business', 'enterprise'];
@@ -164,7 +158,6 @@ const Pricing = () => {
                 {displayTiers.map((tier) => {
                   const config = SUBSCRIPTION_TIERS[tier];
                   const colors = tierColors[tier];
-                  const isCurrentPlan = tier === currentTier;
                   const isPopular = tier === 'pro';
                   const isEnterprise = tier === 'enterprise';
 
@@ -189,14 +182,6 @@ const Pricing = () => {
                         </div>
                       )}
 
-                      {/* Current plan badge */}
-                      {isCurrentPlan && (
-                        <div className="absolute -top-3 right-4 z-10">
-                          <Badge className="bg-foreground text-background text-[10px] px-2.5 py-0.5 border-0 shadow-lg">
-                            Your Plan
-                          </Badge>
-                        </div>
-                      )}
 
                       <div className="p-6 flex flex-col h-full">
                         {/* Tier name + icon */}
@@ -251,19 +236,10 @@ const Pricing = () => {
                           onClick={() => handleAction(tier)}
                           className={cn(
                             'w-full h-11 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md',
-                            isCurrentPlan && !isSubscribed
-                              ? 'bg-muted text-muted-foreground cursor-default hover:bg-muted'
-                              : isCurrentPlan && isSubscribed
-                                ? 'bg-card border border-border hover:bg-muted text-foreground'
-                                : colors.btn
+                            colors.btn
                           )}
                         >
-                          {isCurrentPlan && !isSubscribed ? (
-                            <span className="flex items-center gap-1.5">
-                              <Check className="w-3.5 h-3.5" />
-                              Current Plan
-                            </span>
-                          ) : getButtonText(tier)}
+                          {getButtonText(tier)}
                         </Button>
                       </div>
                     </div>
