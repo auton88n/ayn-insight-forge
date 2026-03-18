@@ -402,11 +402,11 @@ const LandingPage = memo(() => {
             </span>
 
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
-              {language === 'ar' ? 'ذكاء اصطناعي + أدوات هندسية' : language === 'fr' ? 'IA + Outils d\'Ingénierie' : 'AI Assistant + Engineering Tools'}
+              {language === 'ar' ? 'ذكاء اصطناعي لأعمالك' : language === 'fr' ? 'IA pour Votre Entreprise' : 'AI Solutions for Your Business'}
             </h2>
 
             <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 md:mb-16">
-              {language === 'ar' ? 'AYN يتعرّف عليك ويساعدك في مهامك اليومية، بالإضافة إلى أدوات هندسية احترافية للتصميم الإنشائي.' : language === 'fr' ? 'AYN apprend vos habitudes et vous aide à rester organisé, avec des outils d\'ingénierie professionnels.' : 'AYN learns your habits and helps you stay organized, plus professional engineering tools for structural design.'}
+              {language === 'ar' ? 'AYN يتعرّف عليك ويساعدك في أتمتة أعمالك وتوسيع نطاقها بالذكاء الاصطناعي.' : language === 'fr' ? 'AYN apprend vos habitudes et vous aide à automatiser et développer votre entreprise avec l\'IA.' : 'AYN learns your habits and helps you automate and scale your business with AI.'}
             </p>
           </ScrollReveal>
 
