@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Brain, Menu, LogIn, LogOut, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
@@ -13,6 +13,8 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const navLinks = [
 { path: '/', en: 'Home', fr: 'Accueil', ar: 'الرئيسية' },
+{ path: '/#about', en: 'About', fr: 'À Propos', ar: 'من نحن' },
+{ path: '/#features', en: 'Features', fr: 'Fonctionnalités', ar: 'المميزات' },
 { path: '/services', en: 'Services', fr: 'Services', ar: 'الخدمات' },
 { path: '/pricing', en: 'Pricing', fr: 'Tarifs', ar: 'الأسعار' },
 { path: '/contact', en: 'Contact', fr: 'Contact', ar: 'تواصل معنا' }];
@@ -21,6 +23,7 @@ const navLinks = [
 export const Header = () => {
   const { language } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
 
@@ -39,6 +42,26 @@ export const Header = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+  };
+
+  const handleNavClick = useCallback((e: React.MouseEvent, path: string) => {
+    if (path.includes('#')) {
+      e.preventDefault();
+      const hash = path.split('#')[1];
+      if (location.pathname !== '/') {
+        navigate('/');
+        setTimeout(() => {
+          document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [location.pathname, navigate]);
+
+  const isActive = (path: string) => {
+    if (path.includes('#')) return false;
+    return location.pathname === path;
   };
 
   const getLabel = (link: typeof navLinks[0]) =>
@@ -62,9 +85,10 @@ export const Header = () => {
             <Link
               key={link.path}
               to={link.path}
+              onClick={(e) => handleNavClick(e, link.path)}
               className={cn(
                 'transition-colors',
-                location.pathname === link.path ?
+                isActive(link.path) ?
                 'text-foreground' :
                 'text-muted-foreground hover:text-foreground'
               )}>
@@ -122,9 +146,10 @@ export const Header = () => {
                       <Link
                         key={link.path}
                         to={link.path}
+                        onClick={(e) => handleNavClick(e, link.path)}
                         className={cn(
                           'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
-                          location.pathname === link.path ?
+                          isActive(link.path) ?
                           'bg-muted text-foreground' :
                           'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                         )}>

@@ -1,6 +1,6 @@
 import { useState, memo } from 'react';
 
-import { Brain, Sparkles, Globe, Shield, Zap, Bot, BarChart3 } from 'lucide-react';
+import { Brain, Sparkles, Globe, Shield, Zap, Bot, BarChart3, TrendingUp, Eye, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AuthModal } from './auth/AuthModal';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -9,6 +9,9 @@ import { cn } from '@/lib/utils';
 import { Hero } from '@/components/landing/Hero';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import featureBusinessImg from '@/assets/feature-business.jpg';
+import featureMarketImg from '@/assets/feature-market.jpg';
+import featurePredictImg from '@/assets/feature-predict.jpg';
 import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
@@ -186,6 +189,115 @@ const LandingPage = memo(() => {
       </section>
 
 
+
+      {/* Features Section */}
+      <section id="features" className="py-20 md:py-32 px-4 md:px-6 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <ScrollReveal>
+            <div className="text-center mb-16 md:mb-24">
+              <span className="text-sm font-mono text-muted-foreground tracking-wider uppercase mb-4 block">
+                {language === 'ar' ? 'قدرات عين' : language === 'fr' ? 'Capacités d\'AYN' : 'AYN Capabilities'}
+              </span>
+              <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
+                {language === 'ar' ? 'ثلاث قوى في منصة واحدة' : language === 'fr' ? 'Trois Forces en Une Plateforme' : 'Three Powers, One Platform'}
+              </h2>
+              <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto">
+                {language === 'ar' ? 'عين يجمع بين التحليل العميق والرؤية الاستباقية لحماية أعمالك وتنميتها.' : language === 'fr' ? 'AYN combine analyse profonde et vision proactive pour protéger et développer votre entreprise.' : 'AYN combines deep analysis and proactive vision to protect and grow your business.'}
+              </p>
+            </div>
+          </ScrollReveal>
+
+          {/* Feature 1: Business Intelligence */}
+          <ScrollReveal>
+            <motion.div 
+              className="grid md:grid-cols-2 gap-0 mb-16 md:mb-24 rounded-3xl overflow-hidden bg-card shadow-[0_4px_40px_-12px_hsl(var(--foreground)/0.1)] border border-border/30"
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="relative overflow-hidden aspect-[16/10] md:aspect-auto">
+                <img src={featureBusinessImg} alt="AI Business Intelligence Dashboard" className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card/20" />
+              </div>
+              <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-bold mb-4">
+                  {language === 'ar' ? 'بناء ودراسة الأعمال' : language === 'fr' ? 'Construire & Étudier les Affaires' : 'Build & Study Business'}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  {language === 'ar' ? 'عين يحلل بيانات شركتك ويساعدك في اتخاذ القرارات الاستراتيجية. من دراسة المنافسين إلى تحليل السوق المستهدف، يوفر لك رؤى عميقة تبني عليها نمو أعمالك.' : language === 'fr' ? 'AYN analyse les données de votre entreprise et vous aide à prendre des décisions stratégiques. De l\'étude des concurrents à l\'analyse du marché cible, il fournit des insights profonds.' : 'AYN analyzes your company data and helps you make strategic decisions. From competitor analysis to target market research, it provides deep insights to fuel your business growth.'}
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'تحليل المنافسين والسوق' : language === 'fr' ? 'Analyse des concurrents et du marché' : 'Competitor & market analysis'}</li>
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'استراتيجيات النمو المدعومة بالبيانات' : language === 'fr' ? 'Stratégies de croissance basées sur les données' : 'Data-driven growth strategies'}</li>
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'تقارير أداء ذكية' : language === 'fr' ? 'Rapports de performance intelligents' : 'Intelligent performance reports'}</li>
+                </ul>
+              </div>
+            </motion.div>
+          </ScrollReveal>
+
+          {/* Feature 2: Market Intelligence */}
+          <ScrollReveal>
+            <motion.div 
+              className="grid md:grid-cols-2 gap-0 mb-16 md:mb-24 rounded-3xl overflow-hidden bg-card shadow-[0_4px_40px_-12px_hsl(var(--foreground)/0.1)] border border-border/30"
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center order-2 md:order-1">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                  <Eye className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-bold mb-4">
+                  {language === 'ar' ? 'رصد الأسواق والتحولات' : language === 'fr' ? 'Surveillance des Marchés & Tendances' : 'Market Shifts & Intelligence'}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  {language === 'ar' ? 'عين يراقب الأسواق العالمية في الوقت الفعلي ويكشف التحولات قبل أن تصبح واضحة. من أسعار النفط إلى العملات الرقمية، لا يفوتك أي تغيير.' : language === 'fr' ? 'AYN surveille les marchés mondiaux en temps réel et détecte les changements avant qu\'ils ne deviennent évidents. Du pétrole aux cryptomonnaies, rien ne vous échappe.' : 'AYN monitors global markets in real-time and detects shifts before they become obvious. From oil prices to crypto, no change goes unnoticed.'}
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'تتبع الأسواق في الوقت الفعلي' : language === 'fr' ? 'Suivi des marchés en temps réel' : 'Real-time market tracking'}</li>
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'تحليل القطاعات والاتجاهات' : language === 'fr' ? 'Analyse sectorielle et tendances' : 'Sector analysis & trend detection'}</li>
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'تنبيهات الفرص الاستثمارية' : language === 'fr' ? 'Alertes d\'opportunités d\'investissement' : 'Investment opportunity alerts'}</li>
+                </ul>
+              </div>
+              <div className="relative overflow-hidden aspect-[16/10] md:aspect-auto order-1 md:order-2">
+                <img src={featureMarketImg} alt="Global Market Intelligence Dashboard" className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent to-card/20" />
+              </div>
+            </motion.div>
+          </ScrollReveal>
+
+          {/* Feature 3: Predictive Intelligence */}
+          <ScrollReveal>
+            <motion.div 
+              className="grid md:grid-cols-2 gap-0 rounded-3xl overflow-hidden bg-card shadow-[0_4px_40px_-12px_hsl(var(--foreground)/0.1)] border border-border/30"
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="relative overflow-hidden aspect-[16/10] md:aspect-auto">
+                <img src={featurePredictImg} alt="Predictive AI World Events Analysis" className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card/20" />
+              </div>
+              <div className="p-8 md:p-12 lg:p-16 flex flex-col justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                  <AlertTriangle className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-bold mb-4">
+                  {language === 'ar' ? 'التنبؤ بالأحداث العالمية' : language === 'fr' ? 'Prédiction des Événements Mondiaux' : 'World Event Predictions'}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  {language === 'ar' ? 'عين يحلل الأحداث الجيوسياسية وسلاسل الإمداد والصراعات العالمية ليتنبأ بتأثيرها على أعمالك. استعد للمستقبل قبل أن يصل.' : language === 'fr' ? 'AYN analyse les événements géopolitiques, les chaînes d\'approvisionnement et les conflits mondiaux pour prédire leur impact sur votre entreprise.' : 'AYN analyzes geopolitical events, supply chains, and global conflicts to predict their impact on your business. Prepare for the future before it arrives.'}
+                </p>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'تحليل المخاطر الجيوسياسية' : language === 'fr' ? 'Analyse des risques géopolitiques' : 'Geopolitical risk analysis'}</li>
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'تنبيهات اضطراب سلاسل الإمداد' : language === 'fr' ? 'Alertes de perturbation de la chaîne d\'approvisionnement' : 'Supply chain disruption alerts'}</li>
+                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary" /> {language === 'ar' ? 'سيناريوهات التأثير على الأعمال' : language === 'fr' ? 'Scénarios d\'impact commercial' : 'Business impact scenarios'}</li>
+                </ul>
+              </div>
+            </motion.div>
+          </ScrollReveal>
+        </div>
+      </section>
 
       <Footer />
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
