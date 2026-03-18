@@ -14,6 +14,7 @@ export const ROUTES = {
   CHART_ANALYZER: '/chart-analyzer',
   ADMIN: '/admin',
   RESET_PASSWORD: '/reset-password',
+  WORLD_INTELLIGENCE: '/world-intelligence',
   APPROVAL_RESULT: '/approval-result',
   SUBSCRIPTION_SUCCESS: '/subscription-success',
   SUBSCRIPTION_CANCELED: '/subscription-canceled',
