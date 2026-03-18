@@ -1,10 +1,8 @@
-import { useState, useRef, useEffect, useMemo, memo } from 'react';
+import { useState, useRef, useEffect, memo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Brain, ArrowRight, CheckCircle, Send, Loader2, Sparkles, Globe, Shield, ChevronDown, Mail, Zap, Bot, BarChart3 } from 'lucide-react';
+import { Brain, ArrowRight, Sparkles, Globe, Shield, ChevronDown, Mail, Zap, Bot, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import { AuthModal } from './auth/AuthModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
