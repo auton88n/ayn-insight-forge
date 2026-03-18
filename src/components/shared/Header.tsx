@@ -149,7 +149,7 @@ export const Header = () => {
                         onClick={(e) => handleNavClick(e, link.path)}
                         className={cn(
                           'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
-                          location.pathname === link.path ?
+                          isActive(link.path) ?
                           'bg-muted text-foreground' :
                           'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                         )}>
