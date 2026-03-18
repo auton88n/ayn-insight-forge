@@ -12,11 +12,11 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 const navLinks = [
-  { path: '/', en: 'Home', fr: 'Accueil', ar: 'الرئيسية' },
-  { path: '/services', en: 'Services', fr: 'Services', ar: 'الخدمات' },
-  { path: '/pricing', en: 'Pricing', fr: 'Tarifs', ar: 'الأسعار' },
-  { path: '/contact', en: 'Contact', fr: 'Contact', ar: 'تواصل معنا' },
-];
+{ path: '/', en: 'Home', fr: 'Accueil', ar: 'الرئيسية' },
+{ path: '/services', en: 'Services', fr: 'Services', ar: 'الخدمات' },
+{ path: '/pricing', en: 'Pricing', fr: 'Tarifs', ar: 'الأسعار' },
+{ path: '/contact', en: 'Contact', fr: 'Contact', ar: 'تواصل معنا' }];
+
 
 export const Header = () => {
   const { language } = useLanguage();
@@ -42,7 +42,7 @@ export const Header = () => {
   };
 
   const getLabel = (link: typeof navLinks[0]) =>
-    language === 'ar' ? link.ar : language === 'fr' ? link.fr : link.en;
+  language === 'ar' ? link.ar : language === 'fr' ? link.fr : link.en;
 
   return (
     <>
@@ -58,20 +58,20 @@ export const Header = () => {
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  'transition-colors',
-                  location.pathname === link.path
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
+            {navLinks.map((link) =>
+            <Link
+              key={link.path}
+              to={link.path}
+              className={cn(
+                'transition-colors',
+                location.pathname === link.path ?
+                'text-foreground' :
+                'text-muted-foreground hover:text-foreground'
+              )}>
+              
                 {getLabel(link)}
               </Link>
-            ))}
+            )}
           </div>
 
           {/* Right side */}
@@ -81,8 +81,8 @@ export const Header = () => {
 
             {/* Auth button - desktop */}
             <div className="hidden md:block">
-              {user ? (
-                <div className="flex items-center gap-2">
+              {user ?
+              <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-muted text-sm">
                     <User className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-muted-foreground max-w-[120px] truncate">
@@ -92,13 +92,13 @@ export const Header = () => {
                   <Button variant="ghost" size="icon" onClick={handleSignOut} title={language === 'ar' ? 'تسجيل خروج' : language === 'fr' ? 'Déconnexion' : 'Sign out'}>
                     <LogOut className="h-4 w-4" />
                   </Button>
-                </div>
-              ) : (
-                <Button variant="default" size="sm" onClick={() => setShowAuthModal(true)} className="gap-1.5">
-                  <LogIn className="h-4 w-4" />
+                </div> :
+
+              <Button variant="default" size="sm" onClick={() => setShowAuthModal(true)} className="gap-1.5">
+                  
                   {language === 'ar' ? 'دخول' : language === 'fr' ? 'Connexion' : 'Sign In'}
                 </Button>
-              )}
+              }
             </div>
 
             {/* Mobile menu */}
@@ -118,27 +118,27 @@ export const Header = () => {
                       <span className="text-2xl font-bold">AYN</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      {navLinks.map((link) => (
-                        <Link
-                          key={link.path}
-                          to={link.path}
-                          className={cn(
-                            'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
-                            location.pathname === link.path
-                              ? 'bg-muted text-foreground'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                          )}
-                        >
+                      {navLinks.map((link) =>
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        className={cn(
+                          'py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
+                          location.pathname === link.path ?
+                          'bg-muted text-foreground' :
+                          'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                        )}>
+                        
                           {getLabel(link)}
                         </Link>
-                      ))}
+                      )}
                     </div>
 
                     <div className="h-px bg-border" />
 
                     {/* Auth - mobile */}
-                    {user ? (
-                      <div className="space-y-2 px-3">
+                    {user ?
+                    <div className="space-y-2 px-3">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <User className="w-4 h-4" />
                           <span className="truncate">{user.email}</span>
@@ -147,15 +147,15 @@ export const Header = () => {
                           <LogOut className="h-4 w-4 mr-2" />
                           {language === 'ar' ? 'تسجيل خروج' : language === 'fr' ? 'Déconnexion' : 'Sign Out'}
                         </Button>
-                      </div>
-                    ) : (
-                      <div className="px-3">
+                      </div> :
+
+                    <div className="px-3">
                         <Button className="w-full" onClick={() => setShowAuthModal(true)}>
                           <LogIn className="h-4 w-4 mr-2" />
                           {language === 'ar' ? 'دخول' : language === 'fr' ? 'Connexion' : 'Sign In'}
                         </Button>
                       </div>
-                    )}
+                    }
                   </div>
                 </SheetContent>
               </Sheet>
@@ -165,6 +165,6 @@ export const Header = () => {
       </nav>
 
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
-    </>
-  );
+    </>);
+
 };
