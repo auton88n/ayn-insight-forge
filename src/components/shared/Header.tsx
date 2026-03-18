@@ -85,9 +85,10 @@ export const Header = () => {
             <Link
               key={link.path}
               to={link.path}
+              onClick={(e) => handleNavClick(e, link.path)}
               className={cn(
                 'transition-colors',
-                location.pathname === link.path ?
+                isActive(link.path) ?
                 'text-foreground' :
                 'text-muted-foreground hover:text-foreground'
               )}>
