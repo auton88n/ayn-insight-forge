@@ -34,6 +34,7 @@ const AIEmployeeApply = lazy(() => import("./pages/services/AIEmployeeApply"));
 // const InfluencerSites = lazy(() => import("./pages/services/InfluencerSites"));
 // const InfluencerSitesApply = lazy(() => import("./pages/services/InfluencerSitesApply"));
 const ServicesPage = lazy(() => import("./pages/Services"));
+const ContactPage = lazy(() => import("./pages/Contact"));
 const AIAgents = lazy(() => import("./pages/services/AIAgents"));
 const AIAgentsApply = lazy(() => import("./pages/services/AIAgentsApply"));
 const Automation = lazy(() => import("./pages/services/Automation"));
