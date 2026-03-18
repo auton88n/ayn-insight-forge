@@ -10,7 +10,7 @@ import { Hero } from '@/components/landing/Hero';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { SEO, organizationSchema, websiteSchema, softwareApplicationSchema, createFAQSchema } from '@/components/shared/SEO';
-import { useDebugStore } from '@/stores/debugStore';
+import { Header } from '@/components/shared/Header';
 import { Header } from '@/components/shared/Header';
 import { Footer } from '@/components/shared/Footer';
 
