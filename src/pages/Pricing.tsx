@@ -135,7 +135,6 @@ const Pricing = () => {
                 {displayTiers.map((tier) => {
                   const config = SUBSCRIPTION_TIERS[tier];
                   const colors = tierColors[tier];
-                  const isCurrentPlan = tier === currentTier;
                   const isPopular = tier === 'pro';
                   const isEnterprise = tier === 'enterprise';
 
