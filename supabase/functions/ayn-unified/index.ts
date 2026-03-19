@@ -908,7 +908,8 @@ async function scanMarketOpportunities(): Promise<{ opportunities: any[]; scanne
     const getKlineTime = (k: any) => (k && typeof k === 'object' && 'time' in k ? k.time : k?.[0]);
 
     for (const candidate of phase1Candidates) {
-      const klines = await fetchKlines(candidate.symbol, '60M', 100, apiKey, apiSecret);
+      // Use 15M (not 60M) so last candle is at most ~15 min old; 60M = up to 1h stale
+      const klines = await fetchKlines(candidate.symbol, '15M', 100, apiKey, apiSecret);
 
       let score: number;
       let signals: string[];

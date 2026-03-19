@@ -307,6 +307,7 @@ export function calculateEnhancedScore(
 // Funding rates: Pionex REST API does not expose a public funding-rate endpoint
 // (perpetual/public/fundingRate returns 404). Removed to avoid 404 on every scan.
 
+// Pionex klines interval format: 1M, 5M, 15M, 30M, 60M (minutes), 4H, 8H, 12H, 1D. Scanner uses 15M for fresher data.
 export async function fetchKlines(
   symbol: string,
   interval: string,
@@ -379,8 +380,12 @@ export async function fetchKlines(
   if (typeof lastTimeMs === 'number') {
     const nowMs = Date.now();
     const ageSec = (nowMs - lastTimeMs) / 1000;
+    const within15Min = ageSec < 900;
     console.log(
       `[SCANNER] Last kline timestamp: ${lastTimeMs} ms (${new Date(lastTimeMs).toISOString()}), now: ${nowMs} ms, age: ${ageSec.toFixed(0)}s, symbol: ${symbol}`
+    );
+    console.log(
+      `[SCANNER] Last candle age check: ${ageSec.toFixed(0)}s ${within15Min ? '(OK: under 15 min)' : '(WARN: over 15 min)'}`
     );
   } else {
     console.log(`[SCANNER] Last kline has no time field: symbol=${symbol} sample=${JSON.stringify(last).slice(0, 120)}`);
