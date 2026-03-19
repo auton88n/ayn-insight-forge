@@ -24,11 +24,11 @@ Deno.serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { priceId } = await req.json();
+    const { priceId, mode = 'subscription', credits } = await req.json();
     if (!priceId) {
       throw new Error("priceId is required");
     }
-    logStep("Price ID received", { priceId });
+    logStep("Parameters received", { priceId, mode, credits });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -56,10 +56,17 @@ Deno.serve(async (req) => {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
-      mode: "subscription",
+      mode: mode as Stripe.Checkout.SessionCreateParams.Mode,
       success_url: `${origin}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/pricing`,
-      metadata: { user_id: user.id },
+      cancel_url: `${origin}/dashboard/pricing`,
+      metadata: mode === 'payment' ? { 
+        user_id: user.id,
+        type: 'topup',
+        credits: credits ? credits.toString() : '500'
+      } : { 
+        user_id: user.id 
+      },
+      invoice_creation: mode === 'payment' ? { enabled: true } : undefined,
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });

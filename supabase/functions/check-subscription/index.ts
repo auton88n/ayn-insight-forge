@@ -78,16 +78,40 @@ Deno.serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    // Try to get cached customer ID to avoid unnecessary Stripe API calls
+    let customerId = existingSub?.stripe_customer_id;
+    let customersData = [];
 
-    if (customers.data.length === 0) {
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    
+    if (!customerId) {
+        logStep("No cached Stripe customer ID, calling Stripe API");
+        const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+        customersData = customers.data;
+        if (customersData.length > 0) {
+            customerId = customersData[0].id;
+        }
+    } else {
+        logStep("Found cached Stripe customer ID", { customerId });
+    }
+
+    // Fetch existing limits to preserve bonus_credits
+    const { data: existingLimits } = await supabaseClient
+      .from('user_ai_limits')
+      .select('bonus_credits')
+      .eq('user_id', user.id)
+      .single();
+    
+    const existingBonusCredits = existingLimits?.bonus_credits || 0;
+
+    if (!customerId && customersData.length === 0) {
       logStep("No Stripe customer found, setting free tier");
 
       await supabaseClient.from('user_ai_limits').upsert({
         user_id: user.id,
         daily_messages: 5, daily_engineering: 1,
         monthly_messages: 5, monthly_engineering: 1,
+        bonus_credits: existingBonusCredits
       }, { onConflict: 'user_id' });
 
       await supabaseClient.from('access_grants').upsert({
@@ -105,9 +129,6 @@ Deno.serve(async (req) => {
         status: 200,
       });
     }
-
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
 
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId, status: "active", limit: 1,
@@ -148,6 +169,7 @@ Deno.serve(async (req) => {
         daily_engineering: limits.dailyEngineering as number,
         monthly_messages: limits.dailyCredits as number,
         monthly_engineering: limits.dailyEngineering as number,
+        bonus_credits: existingBonusCredits,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
     } else {
@@ -157,6 +179,7 @@ Deno.serve(async (req) => {
         monthly_engineering: limits.monthlyEngineering as number,
         daily_messages: limits.monthlyCredits as number,
         daily_engineering: limits.monthlyEngineering as number,
+        bonus_credits: existingBonusCredits,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
     }

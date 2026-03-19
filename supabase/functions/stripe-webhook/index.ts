@@ -71,6 +71,13 @@ async function updateUserSubscription(
     logStep('Failed to update user_subscriptions', { userId, error: subError.message });
   }
 
+  // Fetch true limit state to preserve bonus credits and current usage
+  const { data: existingLimits } = await supabase
+    .from('user_ai_limits')
+    .select('bonus_credits, current_daily_messages, current_monthly_messages, current_daily_engineering, current_monthly_engineering')
+    .eq('user_id', userId)
+    .single();
+
   const { error: limitsError } = await supabase
     .from('user_ai_limits')
     .upsert({
@@ -79,6 +86,11 @@ async function updateUserSubscription(
       monthly_engineering: limits.monthlyEngineering,
       daily_messages: limits.monthlyCredits,
       daily_engineering: limits.monthlyEngineering,
+      bonus_credits: existingLimits?.bonus_credits ?? 0,
+      current_daily_messages: existingLimits?.current_daily_messages ?? 0,
+      current_monthly_messages: existingLimits?.current_monthly_messages ?? 0,
+      current_daily_engineering: existingLimits?.current_daily_engineering ?? 0,
+      current_monthly_engineering: existingLimits?.current_monthly_engineering ?? 0,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
@@ -246,7 +258,7 @@ Deno.serve(async (req) => {
         const tier = PRODUCT_TO_TIER[productId] || 'free';
         const limits = TIER_LIMITS[tier];
 
-        // Reset usage on renewal
+        // Reset usage on renewal, but preserve bonus credits!
         await supabase.from('user_ai_limits').update({
           current_monthly_messages: 0,
           current_monthly_engineering: 0,
@@ -280,6 +292,39 @@ Deno.serve(async (req) => {
         }).eq('user_id', user.id);
 
         logStep("Payment failed processed", { userId: user.id });
+        break;
+      }
+
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode !== 'payment') break; // We only care about one-time payments here
+
+        const userId = session.metadata?.user_id;
+        if (!userId) {
+          logStep("Checkout completed but no user_id in metadata");
+          break;
+        }
+
+        const type = session.metadata?.type;
+        if (type === 'topup') {
+          const creditsToAdd = parseInt(session.metadata?.credits || '0', 10);
+          if (creditsToAdd > 0) {
+            logStep(`Adding ${creditsToAdd} top-up credits to user`, { userId });
+            
+            const { error: topupError } = await supabase.rpc('add_bonus_credits', {
+              p_user_id: userId,
+              p_amount: creditsToAdd,
+              p_reason: 'Stripe one-time top-up purchase',
+              p_gift_type: 'top_up_purchase'
+            });
+
+            if (topupError) {
+              logStep("Error adding top-up credits", { userId, error: topupError.message });
+            } else {
+              logStep("Top-up credits added successfully", { userId });
+            }
+          }
+        }
         break;
       }
 

@@ -65,7 +65,7 @@ export const UpgradeBanner = ({ currentTier = 'free', className }: UpgradeBanner
         {/* CTA Button */}
         <Button
           size="sm"
-          onClick={() => navigate('/pricing')}
+          onClick={() => navigate('/dashboard/pricing')}
           className={cn(
             "h-7 text-xs w-full mt-1",
             "bg-primary hover:bg-primary/90",

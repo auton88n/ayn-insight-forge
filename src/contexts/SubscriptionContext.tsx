@@ -4,6 +4,10 @@ import { toast } from 'sonner';
 import { getErrorMessage, ErrorCodes } from '@/lib/errorMessages';
 
 // Tier configuration — aligned with Stripe products and backend
+export const TOPUP_PRICE_ID = 'price_placeholder_topup_10usd_500msg';
+export const TOPUP_CREDITS = 500;
+export const TOPUP_PRICE = 10;
+
 export const SUBSCRIPTION_TIERS = {
   free: {
     name: 'Free',
@@ -74,6 +78,7 @@ interface SubscriptionState {
 interface SubscriptionContextType extends SubscriptionState {
   checkSubscription: () => Promise<void>;
   startCheckout: (tier: SubscriptionTier) => Promise<void>;
+  startTopUp: () => Promise<void>;
   openCustomerPortal: () => Promise<void>;
 }
 
@@ -101,26 +106,34 @@ export const SubscriptionProvider = ({ children }: SubscriptionProviderProps) =>
     limits: SUBSCRIPTION_TIERS.free.limits,
   });
 
-  const checkSubscription = useCallback(async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          isSubscribed: false,
-          tier: 'free',
-          limits: SUBSCRIPTION_TIERS.free.limits,
-        }));
-        return;
-      }
+  const checkSubscriptionPromise = React.useRef<Promise<void> | null>(null);
 
-      // Check sessionStorage cache (5 min TTL)
-      const cached = sessionStorage.getItem('subscription_cache');
-      if (cached) {
-        try {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < 5 * 60 * 1000) {
+  const checkSubscription = useCallback(async () => {
+    // Deduplicate concurrent calls
+    if (checkSubscriptionPromise.current) {
+      return checkSubscriptionPromise.current;
+    }
+
+    const verifySubscription = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            isSubscribed: false,
+            tier: 'free',
+            limits: SUBSCRIPTION_TIERS.free.limits,
+          }));
+          return;
+        }
+
+        // Check sessionStorage cache (10 min TTL)
+        const cached = sessionStorage.getItem('subscription_cache');
+        if (cached) {
+          try {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 10 * 60 * 1000) {
             const tier = (data?.tier || 'free') as SubscriptionTier;
             setState({
               isLoading: false,
@@ -148,25 +161,33 @@ export const SubscriptionProvider = ({ children }: SubscriptionProviderProps) =>
       }
 
       // Cache the response
-      sessionStorage.setItem('subscription_cache', JSON.stringify({
-        data,
-        timestamp: Date.now(),
-      }));
+        sessionStorage.setItem('subscription_cache', JSON.stringify({
+          data,
+          timestamp: Date.now(),
+        }));
 
-      const tier = (data?.tier || 'free') as SubscriptionTier;
-      setState({
-        isLoading: false,
-        isSubscribed: data?.subscribed || false,
-        tier,
-        productId: data?.product_id || null,
-        subscriptionEnd: data?.subscription_end || null,
-        limits: SUBSCRIPTION_TIERS[tier]?.limits || SUBSCRIPTION_TIERS.free.limits,
-      });
-    } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error('[SubscriptionContext] Error:', err);
+        const tier = (data?.tier || 'free') as SubscriptionTier;
+        setState({
+          isLoading: false,
+          isSubscribed: data?.subscribed || false,
+          tier,
+          productId: data?.product_id || null,
+          subscriptionEnd: data?.subscription_end || null,
+          limits: SUBSCRIPTION_TIERS[tier]?.limits || SUBSCRIPTION_TIERS.free.limits,
+        });
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.error('[SubscriptionContext] Error:', err);
+        }
+        setState(prev => ({ ...prev, isLoading: false }));
       }
-      setState(prev => ({ ...prev, isLoading: false }));
+    };
+
+    checkSubscriptionPromise.current = verifySubscription();
+    try {
+      await checkSubscriptionPromise.current;
+    } finally {
+      checkSubscriptionPromise.current = null;
     }
   }, []);
 
@@ -195,6 +216,29 @@ export const SubscriptionProvider = ({ children }: SubscriptionProviderProps) =>
     } catch (err) {
       if (import.meta.env.DEV) {
         console.error('[SubscriptionContext] Checkout error:', err);
+      }
+      toast.error(getErrorMessage(ErrorCodes.CHECKOUT_FAILED).description);
+    }
+  }, []);
+
+  const startTopUp = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          priceId: TOPUP_PRICE_ID,
+          mode: 'payment',
+          credits: TOPUP_CREDITS
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('[SubscriptionContext] Top-up error:', err);
       }
       toast.error(getErrorMessage(ErrorCodes.CHECKOUT_FAILED).description);
     }
@@ -269,6 +313,7 @@ export const SubscriptionProvider = ({ children }: SubscriptionProviderProps) =>
         ...state,
         checkSubscription,
         startCheckout,
+        startTopUp,
         openCustomerPortal,
       }}
     >

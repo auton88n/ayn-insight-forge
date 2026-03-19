@@ -566,7 +566,7 @@ export const AYN_TOOLS = [
     type: "function",
     function: {
       name: "search_web",
-      description: "Search the live internet for recent events or things you don't know.",
+      description: "Search the live internet for ANY information you don't have — recent events, company details, people, regulations, technologies, market data. ALWAYS search when you're not 100% certain of current facts. The user expects up-to-date insight.",
       parameters: { 
         type: "object", 
         properties: { query: { type: "string" } },
@@ -578,11 +578,35 @@ export const AYN_TOOLS = [
     type: "function",
     function: {
       name: "get_sector_intelligence",
-      description: "Gets specific intelligence reports for various sectors: startups, jobs, supply_chain, real_estate, consumer, health, tech.",
+      description: "Gets specific intelligence reports for various sectors: startups, jobs, supply_chain, real_estate, consumer, health, tech, energy, gov_policy, education. Use this when analyzing industry trends.",
       parameters: { 
         type: "object", 
-        properties: { sector: { type: "string", enum: ["startups", "jobs", "supply_chain", "real_estate", "consumer", "health", "tech"] } },
+        properties: { sector: { type: "string", enum: ["startups", "jobs", "supply_chain", "real_estate", "consumer", "health", "tech", "energy", "gov_policy", "education"] } },
         required: ["sector"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_country_profile",
+      description: "Gets deep intelligence on a specific country: economy, hot sectors, government reforms, regional dynamics. Use when the user asks about doing business or investing in a specific country.",
+      parameters: {
+        type: "object",
+        properties: { country_codes: { type: "array", items: { type: "string" }, description: "e.g. ['SA', 'US', 'AE']" } },
+        required: ["country_codes"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_trade_flows",
+      description: "Gets data on imports, exports, and trade dependencies for specific countries.",
+      parameters: {
+        type: "object",
+        properties: { country_codes: { type: "array", items: { type: "string" }, description: "e.g. ['CN', 'SA']" } },
+        required: ["country_codes"]
       }
     }
   }
@@ -623,7 +647,23 @@ export async function executeTool(toolCall: any, supabase: any): Promise<any> {
       if (sec === 'real_estate') return (await supabase.from('ayn_real_estate').select('*').in('country_code', ['SA', 'US']).limit(2)).data;
       if (sec === 'consumer') return (await supabase.from('ayn_consumer_sentiment').select('*').in('country_code', ['SA', 'US']).limit(2)).data;
       if (sec === 'health') return (await supabase.from('ayn_health_intel').select('*').in('country_code', ['SA', 'US']).limit(2)).data;
+      // Map new sectors to generic news/intel if specific prep-table doesn't exist yet, or to existing tables if they do
+      if (sec === 'energy') return (await supabase.from('ayn_business_news').select('*').ilike('category', '%energy%').limit(2)).data || { status: 'No specific energy intel found' };
+      if (sec === 'gov_policy') return (await supabase.from('ayn_geopolitical').select('*').eq('singleton_key', 1).maybeSingle()).data;
+      if (sec === 'education') return { status: 'Education sector focus is emerging, check cross-sector tech/startup data.' };
       return { status: 'Sector not found' };
+    }
+    if (name === 'get_country_profile') {
+      const codes = args.country_codes || [];
+      if (codes.length === 0) return { status: 'No country codes provided' };
+      const { data } = await supabase.from('ayn_country_intelligence').select('country_code, country_name, region, economy, government, hot_sectors, opportunities, intelligence_brief').in('country_code', codes);
+      return data || { status: 'No profiles found' };
+    }
+    if (name === 'get_trade_flows') {
+      const codes = args.country_codes || [];
+      if (codes.length === 0) return { status: 'No country codes provided' };
+      const { data } = await supabase.from('ayn_trade_flows').select('country_code, country_name, top_exports, top_imports, opportunities, dependencies, intelligence_brief').in('country_code', codes);
+      return data || { status: 'No trade data found' };
     }
   } catch (err) {
     return { error: String(err) };
@@ -1017,7 +1057,7 @@ serve(async (req) => {
     const lastMessage = messages[messages.length - 1]?.content || '';
     const fileContext = context?.fileContext;
     const hasImageFile = !!(fileContext && fileContext.type && fileContext.type.startsWith('image/'));
-    const intent = (forcedIntent && forcedIntent !== 'chat') ? forcedIntent : detectIntent(lastMessage, hasImageFile);
+    let intent = (forcedIntent && forcedIntent !== 'chat') ? forcedIntent : detectIntent(lastMessage, hasImageFile);
     console.log(`Detected intent: ${intent}`);
 
     // === PROMPT INJECTION DEFENSE ===
@@ -1180,7 +1220,7 @@ Closed Trades: NONE
 STATUS: Account launched. Zero trades executed.
 
 MANDATORY RESPONSE FOR THIS STATE:
-Your answer MUST say: "My paper trading account is live with $10,000. No trades yet — I'm being selective and waiting for a 65%+ confidence setup."
+Your answer MUST say: "My paper trading account is live with $10,000. No trades yet — I'm being selective and waiting for an 80%+ confidence setup."
 DO NOT DEVIATE. DO NOT ADD FICTIONAL TRADES. DO NOT ADD FICTIONAL PRICES. DO NOT INVENT BALANCES OTHER THAN $10,000.`;
       
       console.log('[ayn-unified] No account data found, injected default state');
@@ -1929,7 +1969,7 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
     if (intent === 'floor_plan') {
       // Temporarily disabled - treat as regular chat
       intent = 'chat';
-      systemPrompt = buildSystemPrompt('chat', language, context, userMessage, userContext);
+      systemPrompt = buildSystemPrompt('chat', language, context, lastMessage, userContext);
     }
 
 
@@ -1990,10 +2030,14 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
         /\b(ceo|president|prime minister|founder|owner|chairman)\b/i,
         /\b(what happened|what is happening|when did|when is|where is|how much is|how many)\b/i,
         /\b(score|result|winner|champion|standings|match|game)\b/i,
-        /\b(سعر|اخبار|اليوم|الان|حاليا|من هو|ما هو|كم|نتيجة)\b/i,
+        // Business & Strategy specific
+        /\b(competitors|competition|startup|company|fundraising|investors|venture capital|series a|seed round)\b/i,
+        /\b(regulation|law|legal|compliance|taxes|policies|zatca|misa|pif)\b/i,
+        /\b(vision 2030|giga project|neom|qiddiya|red sea project|saudization)\b/i,
+        /\b(سعر|اخبار|اليوم|الان|حاليا|من هو|ما هو|كم|نتيجة|شركة|منافسين|استثمار|رؤية 2030|نظام|قانون)\b/i,
       ];
       if (search.some(r => r.test(l))) return true;
-      // Long questions ending with ? about the world
+      // Long questions ending with ? about the world or business
       if (msg.trim().endsWith('?') && msg.split(' ').length > 5) return true;
       return false;
     };
