@@ -1113,7 +1113,7 @@ async function gatherSystemContext(supabase: any) {
 
   // Match recent messages to user names
   const userIds = [...new Set(recentMessages?.map((m: any) => m.user_id).filter(Boolean) || [])];
-  let userNameMap: Record<string, string> = {};
+  const userNameMap: Record<string, string> = {};
   if (userIds.length > 0) {
     const { data: profiles } = await supabase
       .from('profiles')

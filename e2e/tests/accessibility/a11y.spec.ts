@@ -253,7 +253,7 @@ test.describe('Accessibility', () => {
           return (lighter + 0.05) / (darker + 0.05);
         };
 
-        let lowContrast = 0;
+        const lowContrast = 0;
         document.querySelectorAll('p, span, h1, h2, h3, h4, h5, h6, a, button').forEach(el => {
           const styles = window.getComputedStyle(el);
           // This is a simplified check - real contrast testing needs more sophistication

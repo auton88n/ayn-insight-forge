@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -90,7 +90,7 @@ export const AYNActivityLog = () => {
   const [isLive, setIsLive] = useState(false);
   const liveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setLoading(true);
     let query = supabase
       .from('ayn_activity_log')
@@ -110,7 +110,7 @@ export const AYNActivityLog = () => {
       setLogs(data as ActivityLog[]);
     }
     setLoading(false);
-  };
+  }, [filter, employeeFilter]);
 
   useEffect(() => {
     fetchLogs();
@@ -134,7 +134,7 @@ export const AYNActivityLog = () => {
       supabase.removeChannel(channel);
       if (liveTimeout.current) clearTimeout(liveTimeout.current);
     };
-  }, [filter, employeeFilter]);
+  }, [fetchLogs, filter]);
 
   const getConfig = (type: string) => ACTION_CONFIG[type] || ACTION_CONFIG.command;
 

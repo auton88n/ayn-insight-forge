@@ -138,22 +138,9 @@ export const AICalculatorAssistant: React.FC<AICalculatorAssistantProps> = ({
     }
   }, [chatInput]);
 
-  // Analyze inputs when they change (debounced)
-  useEffect(() => {
-    const inputsString = JSON.stringify(inputs);
-    if (inputsString === lastAnalyzedInputs.current) return;
-    
-    setAnalysisStatus('analyzing');
-    const timer = setTimeout(() => {
-      analyzeInputs();
-      lastAnalyzedInputs.current = inputsString;
-      setAnalysisStatus('ready');
-    }, 1000);
 
-    return () => clearTimeout(timer);
-  }, [inputs]);
 
-  const analyzeInputs = async () => {
+  const analyzeInputs = useCallback(async () => {
     const newWarnings: Warning[] = [];
     const newSuggestions: Suggestion[] = [];
     const newInsights: AnalysisInsight[] = [];
@@ -243,7 +230,22 @@ export const AICalculatorAssistant: React.FC<AICalculatorAssistantProps> = ({
     setSuggestions(newSuggestions);
     setWarnings(newWarnings);
     setInsights(newInsights);
-  };
+  }, [calculatorType, inputs]);
+
+  // Analyze inputs when they change (debounced)
+  useEffect(() => {
+    const inputsString = JSON.stringify(inputs);
+    if (inputsString === lastAnalyzedInputs.current) return;
+    
+    setAnalysisStatus('analyzing');
+    const timer = setTimeout(() => {
+      analyzeInputs();
+      lastAnalyzedInputs.current = inputsString;
+      setAnalysisStatus('ready');
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [inputs, analyzeInputs]);
 
   const requestAIOptimization = async () => {
     setIsAnalyzing(true);

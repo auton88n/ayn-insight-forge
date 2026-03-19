@@ -113,10 +113,11 @@ export const EngineeringWorkspace: React.FC<EngineeringWorkspaceProps> = ({ user
 
   // Save session summary to user memory on unmount (for AYN context)
   useEffect(() => {
+    const startRef = sessionStartRef.current;
     return () => {
       if (userId && !hasSavedSessionRef.current && session) {
         const context = session.getAIContext();
-        const sessionDuration = Math.round((Date.now() - sessionStartRef.current) / 1000);
+        const sessionDuration = Math.round((Date.now() - startRef) / 1000);
         
         // Only save if user actually used calculators and session was meaningful
         const calcUsed = (context as any).calculatorsUsed;

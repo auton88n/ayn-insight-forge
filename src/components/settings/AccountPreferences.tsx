@@ -40,6 +40,8 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
   });
   const [originalProfile, setOriginalProfile] = useState(profile);
   const usage = useUsageTracking(userId);
+  const { tier: subscriptionTier } = useSubscription();
+  const isPaidUser = subscriptionTier !== 'free';
 
   useEffect(() => {
     if (!userId) {
@@ -157,9 +159,6 @@ export const AccountPreferences = ({ userId, userEmail, accessToken }: AccountPr
   const showUsage = matchesSearch('Usage') || matchesSearch('Limit') || matchesSearch('Messages');
 
   const hasVisibleFields = showContactPerson || showCompanyName || showEmail || showBusinessType || showBusinessContext || showAvatar || showUsage;
-
-    const { tier: subscriptionTier } = useSubscription();
-    const isPaidUser = subscriptionTier !== 'free';
 
     return (
     <div className="space-y-6">

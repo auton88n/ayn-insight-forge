@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Session } from '@supabase/supabase-js';
 import { supabaseApi } from '@/lib/supabaseApi';
@@ -87,7 +87,7 @@ export const UserManagement = ({ session, allUsers, onRefresh }: UserManagementP
   const [changingRole, setChangingRole] = useState<string | null>(null);
 
   // Fetch user roles on mount
-  const fetchUserRoles = async () => {
+  const fetchUserRoles = useCallback(async () => {
     try {
       const rolesData = await supabaseApi.get('user_roles?select=user_id,role', session.access_token) as { user_id: string; role: string }[];
       const rolesMap = new Map<string, string>();
@@ -100,12 +100,12 @@ export const UserManagement = ({ session, allUsers, onRefresh }: UserManagementP
     } catch (error) {
       console.error('Error fetching roles:', error);
     }
-  };
+  }, [session.access_token]);
 
   // Load roles when component mounts or users change
   useEffect(() => {
     fetchUserRoles();
-  }, [allUsers.length]);
+  }, [allUsers.length, fetchUserRoles]);
 
   const filteredUsers = useMemo(() => {
     return allUsers.filter(user => {

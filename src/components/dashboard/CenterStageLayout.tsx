@@ -458,10 +458,14 @@ export const CenterStageLayout = ({
       triggerAbsorption,
       playSound,
       orchestrateEmotionChange,
-      setIsResponding,
-      completeAbsorption,
       onSendMessage,
       onRemoveFile,
+      isMobile,
+      onTranscriptToggle,
+      transcriptOpen,
+      completeAbsorption,
+      setIsResponding,
+      startMessageAnimation,
     ],
   );
 
@@ -504,6 +508,7 @@ export const CenterStageLayout = ({
       setIsResponding,
       onSendMessage,
       playSound,
+      setLastUserMessage,
     ],
   );
 
@@ -604,6 +609,9 @@ export const CenterStageLayout = ({
     lastUserMessage,
     selectedMode,
     transcriptOpen,
+    bumpActivity,
+    orchestrateEmotionChange,
+    playSound,
   ]);
 
   // Update emotion when typing

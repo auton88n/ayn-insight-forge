@@ -296,7 +296,7 @@ export const Sidebar = ({
     } else if (profilePopoverOpen) {
       setProfilePopoverOpen(false);
     }
-  }, [isTutorialProfileStep]);
+  }, [isTutorialProfileStep, profilePopoverOpen]);
   const formatCompactTime = (date: Date): string => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();

@@ -286,7 +286,7 @@ export const useChatSession = (userId: string, session: Session | null): UseChat
     initializeSession();
     
     return () => controller.abort();
-  }, [userId, session]);
+  }, [userId, session, currentSessionId]);
 
   return {
     currentSessionId,

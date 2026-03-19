@@ -156,7 +156,7 @@ export const CreditUpgradeCard = ({
           .eq('user_id', userId)
           .limit(1);
         setHasSubmittedFeedback(data ? data.length > 0 : false);
-      } catch {}
+      } catch (error) { console.error("Error checking beta feedback:", error); }
     };
     check();
   }, [userId]);
@@ -176,7 +176,7 @@ export const CreditUpgradeCard = ({
       if (progress < 1) requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
-  }, [credits.remaining]);
+  }, [credits.remaining, displayCount]);
 
   // Format reset time
   const formattedResetTime = useMemo(() => {

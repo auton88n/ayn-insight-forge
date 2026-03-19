@@ -87,7 +87,7 @@ export const CreativeEditor = ({
       }]);
       setCurrentImageUrl(initialImageUrl);
     }
-  }, [open]);
+  }, [open, messages.length, tweetText, initialImageUrl]);
 
   useEffect(() => {
     if (!open) {

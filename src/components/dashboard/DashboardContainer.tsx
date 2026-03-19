@@ -89,7 +89,7 @@ export const DashboardContainer = ({ user, session, auth, isAdmin, hasDutyAccess
     if (chatSession.currentSessionId) {
       messagesHook.loadMessages();
     }
-  }, [chatSession.currentSessionId, messagesHook.loadMessages]);
+  }, [chatSession.currentSessionId, messagesHook]);
 
 
   // Handle send message with pre-uploaded file attachment
@@ -186,7 +186,7 @@ export const DashboardContainer = ({ user, session, auth, isAdmin, hasDutyAccess
       messagesHook.setMessagesFromHistory(loadedMessages);
       setIsTransitioningToChat(false);
     }, 280);
-  }, [chatSession, messagesHook, messagesHook.isTyping]);
+  }, [chatSession, messagesHook]);
 
   // Handle new chat
   const handleNewChat = useCallback(() => {

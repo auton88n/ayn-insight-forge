@@ -55,6 +55,30 @@ export const useEngineeringHistory = (userId: string | undefined) => {
     }
   }, [userId]);
 
+  // Log engineering activity (for AYN context)
+  const logActivity = useCallback(async (
+    activityType: string,
+    summary: string,
+    details: Record<string, any>
+  ) => {
+    if (!userId) return;
+
+    try {
+      await supabase
+        .from('engineering_activity')
+        .insert({
+          user_id: userId,
+          activity_type: activityType,
+          summary,
+          details: details as Json,
+        });
+    } catch (err) {
+      if (import.meta.env.DEV) {
+        console.error('Error logging engineering activity:', err);
+      }
+    }
+  }, [userId]);
+
   // Save a calculation to history
   const saveCalculation = useCallback(async (
     calculationType: string,
@@ -99,31 +123,7 @@ export const useEngineeringHistory = (userId: string | undefined) => {
       }
       return null;
     }
-  }, [userId]);
-
-  // Log engineering activity (for AYN context)
-  const logActivity = useCallback(async (
-    activityType: string,
-    summary: string,
-    details: Record<string, any>
-  ) => {
-    if (!userId) return;
-
-    try {
-      await supabase
-        .from('engineering_activity')
-        .insert({
-          user_id: userId,
-          activity_type: activityType,
-          summary,
-          details: details as Json,
-        });
-    } catch (err) {
-      if (import.meta.env.DEV) {
-        console.error('Error logging engineering activity:', err);
-      }
-    }
-  }, [userId]);
+  }, [userId, logActivity]);
 
   // Delete a calculation from history
   const deleteCalculation = useCallback(async (calculationId: string) => {

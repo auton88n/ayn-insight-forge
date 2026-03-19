@@ -88,7 +88,7 @@ async function loadPipelineLeads(supabase: any, filters?: { industry?: string; s
 
 // ─── Load investigator dossiers from employee_tasks ───
 async function loadDossiers(supabase: any, companyNames?: string[]) {
-  let query = supabase.from('employee_tasks')
+  const query = supabase.from('employee_tasks')
     .select('*')
     .eq('to_employee', 'investigator')
     .eq('status', 'completed')

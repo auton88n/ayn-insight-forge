@@ -5,6 +5,32 @@ import imageCompression from 'browser-image-compression';
 import { validateFile as validateFileSecurity } from '@/lib/fileValidation';
 import type { FileAttachment, UseFileUploadReturn } from '@/types/dashboard.types';
 
+// Allowed file types - exactly 16 extensions across 9 categories
+const ALLOWED_TYPES = [
+  // Documents
+  'application/pdf',
+  // Spreadsheets
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
+  'text/csv',
+  // Text Files
+  'text/plain',
+  // Structured Data
+  'application/json',
+  'application/xml',
+  'text/xml',
+  'text/html',
+  // Images (with AI vision analysis)
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/bmp',
+  'image/svg+xml',
+];
+
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
 export const useFileUpload = (userId: string): UseFileUploadReturn => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -16,32 +42,6 @@ export const useFileUpload = (userId: string): UseFileUploadReturn => {
   const [uploadFailed, setUploadFailed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-
-  // Allowed file types - exactly 16 extensions across 9 categories
-  const ALLOWED_TYPES = [
-    // Documents
-    'application/pdf',
-    // Spreadsheets
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-    'application/vnd.ms-excel', // .xls
-    'text/csv',
-    // Text Files
-    'text/plain',
-    // Structured Data
-    'application/json',
-    'application/xml',
-    'text/xml',
-    'text/html',
-    // Images (with AI vision analysis)
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/bmp',
-    'image/svg+xml',
-  ];
-
-  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
   // Validate file type and size
   const validateBasicFile = useCallback((file: File): boolean => {
@@ -84,8 +84,8 @@ export const useFileUpload = (userId: string): UseFileUploadReturn => {
     }
   }, []);
 
-  // Upload file to Supabase Storage via edge function
   const uploadFile = useCallback(async (file: File): Promise<FileAttachment | null> => {
+    let isFailed = false;
     try {
       setIsUploading(true);
       setUploadFailed(false);
@@ -156,12 +156,13 @@ export const useFileUpload = (userId: string): UseFileUploadReturn => {
       });
       setUploadProgress(0);
       setUploadFailed(true);
+      isFailed = true;
       return null;
     } finally {
       setIsUploading(false);
       // Reset progress after a brief delay to show completion (only if successful)
       setTimeout(() => {
-        if (!uploadFailed) {
+        if (!isFailed) {
           setUploadProgress(0);
         }
       }, 500);

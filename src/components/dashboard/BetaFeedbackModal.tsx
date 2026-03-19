@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -105,7 +105,7 @@ export const BetaFeedbackModal = ({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (step === 'success') {
       // Reset form
       setStep('form');
@@ -116,7 +116,7 @@ export const BetaFeedbackModal = ({
       setWouldRecommend(null);
     }
     onClose();
-  };
+  }, [step, onClose]);
 
   // Auto-close modal 3 seconds after success
   useEffect(() => {
@@ -126,7 +126,7 @@ export const BetaFeedbackModal = ({
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [step]);
+  }, [step, handleClose]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

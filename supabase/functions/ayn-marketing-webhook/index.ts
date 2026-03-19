@@ -303,7 +303,7 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    let reply = aiData.choices?.[0]?.message?.content || "drawing a blank. try again?";
+    const reply = aiData.choices?.[0]?.message?.content || "drawing a blank. try again?";
 
     // Parse and execute actions
     const actionRegex = /\[ACTION:([^:\]]+)(?::([^\]]*))?\]/g;
@@ -573,7 +573,7 @@ async function handleCreatorVoice(
     }
 
     const aiData = await aiRes.json();
-    let reply = aiData.choices?.[0]?.message?.content?.trim() || "couldn't understand that. try again?";
+    const reply = aiData.choices?.[0]?.message?.content?.trim() || "couldn't understand that. try again?";
 
     // Check for image generation trigger anywhere in reply
     if (reply.includes('[GENERATE_IMAGE]')) {

@@ -215,7 +215,7 @@ export const EngineeringBottomChat: React.FC<EngineeringBottomChatProps> = ({
     if (messages.length > 0 && !isExpanded) {
       setIsExpanded(true);
     }
-  }, [messages.length]);
+  }, [messages.length, isExpanded]);
 
   // Close actions menu when clicking outside
   useEffect(() => {

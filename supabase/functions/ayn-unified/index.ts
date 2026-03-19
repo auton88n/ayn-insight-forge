@@ -203,8 +203,9 @@ async function extractAndSaveMemories(
 async function callLLM(
   model: LLMModel,
   messages: Array<{ role: string; content: any }>,
-  stream: boolean = false
-): Promise<Response | { content: string; wasIncomplete?: boolean; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }> {
+  stream: boolean = false,
+  tools?: any[]
+): Promise<Response | { content: string; tool_calls?: any[]; wasIncomplete?: boolean; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }> {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY');
 
@@ -230,6 +231,7 @@ async function callLLM(
           model: model.model_id,
           messages,
           stream,
+          ...(tools && tools.length > 0 ? { tools, tool_choice: "auto" } : {}),
           ...llmParams,
         }),
         signal: controller.signal,
@@ -247,19 +249,22 @@ async function callLLM(
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
-      const finishReason = data.choices?.[0]?.finish_reason;
+      const choice = data.choices?.[0];
+      const content = choice?.message?.content || '';
+      const tool_calls = choice?.message?.tool_calls;
+      const finishReason = choice?.finish_reason;
       const usage = data.usage || null;
 
       if (finishReason === 'length') {
         return {
           content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
           wasIncomplete: true,
+          tool_calls,
           usage
         };
       }
 
-      return { content, wasIncomplete: false, usage };
+      return { content, tool_calls, wasIncomplete: false, usage };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`Lovable API timeout after ${LLM_REQUEST_TIMEOUT_MS}ms`);
@@ -288,6 +293,7 @@ async function callLLM(
           model: model.model_id,
           messages,
           stream,
+          ...(tools && tools.length > 0 ? { tools, tool_choice: "auto" } : {}),
           ...llmParams,
         }),
         signal: controller.signal,
@@ -305,19 +311,22 @@ async function callLLM(
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
-      const finishReason = data.choices?.[0]?.finish_reason;
+      const choice = data.choices?.[0];
+      const content = choice?.message?.content || '';
+      const tool_calls = choice?.message?.tool_calls;
+      const finishReason = choice?.finish_reason;
       const usage = data.usage || null;
 
       if (finishReason === 'length') {
         return {
           content: content + "\n\n---\n*want me to continue? just say 'continue' or ask a follow-up!*",
           wasIncomplete: true,
+          tool_calls,
           usage
         };
       }
 
-      return { content, wasIncomplete: false, usage };
+      return { content, tool_calls, wasIncomplete: false, usage };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`OpenRouter API timeout after ${LLM_REQUEST_TIMEOUT_MS}ms`);
@@ -337,8 +346,9 @@ async function callWithFallback(
   messages: Array<{ role: string; content: any }>,
   stream: boolean,
   supabase: ReturnType<typeof createClient>,
-  userId: string
-): Promise<{ response: Response | { content: string }; modelUsed: LLMModel; wasFallback: boolean }> {
+  userId: string,
+  tools?: any[]
+): Promise<{ response: Response | { content: string; tool_calls?: any[] }; modelUsed: LLMModel; wasFallback: boolean }> {
   // Route to deep reasoning model (Gemini 3 Pro) for complex analytical questions
   // Extract last user message for complexity detection
   const lastUserMsg = messages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
@@ -353,7 +363,7 @@ async function callWithFallback(
     try {
       console.log(`Trying ${model.display_name} for ${intent}...`);
       const startTime = Date.now();
-      const response = await callLLM(model, messages, stream);
+      const response = await callLLM(model, messages, stream, tools);
       const responseTimeMs = Date.now() - startTime;
       
       // Extract token usage — real for non-streaming, estimated for streaming
@@ -523,158 +533,104 @@ async function getTradeFlows(supabase: ReturnType<typeof createClient>, countryC
   } catch { return []; }
 }
 
-// Fetch super-brain intelligence based on what the message is about
-async function getSuperBrainIntel(
-  supabase: ReturnType<typeof createClient>,
-  message: string,
-  countryCodes: string[]
-): Promise<Record<string, unknown>> {
-  const l = message.toLowerCase();
-  const intel: Record<string, unknown> = {};
 
-  const isAbout = (terms: string[]) => terms.some(t => l.includes(t));
-
-  await Promise.allSettled([
-    // Business news - always relevant
-    (async () => {
-      if (countryCodes.length > 0) {
-        const { data } = await supabase.from('ayn_business_news')
-          .select('country_code, headlines, summary, sentiment')
-          .in('country_code', countryCodes).limit(3);
-        if (data?.length) intel.news = data;
+export const AYN_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_market_prices",
+      description: "Gets the latest live prices for commodities, crypto, and currencies.",
+      parameters: { type: "object", properties: {}, required: [] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_business_news",
+      description: "Gets the latest top business and market news headlines.",
+      parameters: { 
+        type: "object", 
+        properties: { country_codes: { type: "array", items: { type: "string" }, description: "e.g. ['US', 'SA']" } }
       }
-    })(),
-
-    // Gov policies
-    (async () => {
-      if (isAbout(['government', 'policy', 'tax', 'law', 'regulation', 'central bank', 'interest rate', 'fed', 'sanctions', 'politics', 'election', 'سياسة', 'حكومة', 'ضريبة'])) {
-        const { data } = await supabase.from('ayn_gov_policies')
-          .select('country_code, central_bank, tax_policy, intelligence_brief')
-          .in('country_code', countryCodes.length > 0 ? countryCodes : ['US', 'GB', 'SA']).limit(3);
-        if (data?.length) intel.gov = data;
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_geopolitical_risks",
+      description: "Retrieves active conflicts, trade tensions, and sanctions globally.",
+      parameters: { type: "object", properties: {}, required: [] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_web",
+      description: "Search the live internet for recent events or things you don't know.",
+      parameters: { 
+        type: "object", 
+        properties: { query: { type: "string" } },
+        required: ["query"]
       }
-    })(),
-
-    // Sector intel
-    (async () => {
-      const sectorMap: Record<string, string[]> = {
-        'technology': ['tech', 'software', 'ai', 'app', 'startup', 'digital', 'saas'],
-        'healthcare': ['health', 'medical', 'hospital', 'pharma', 'doctor', 'clinic', 'wellness'],
-        'real estate': ['property', 'real estate', 'house', 'apartment', 'rent', 'buy home', 'عقار'],
-        'fintech': ['fintech', 'payment', 'bank', 'finance', 'lending', 'insurance'],
-        'retail': ['retail', 'ecommerce', 'shop', 'store', 'sell', 'consumer brand'],
-        'food and agriculture': ['food', 'restaurant', 'agriculture', 'farm', 'grocery', 'cafe', 'مطعم'],
-        'logistics': ['logistics', 'shipping', 'delivery', 'supply chain', 'warehouse', 'transport'],
-        'energy': ['energy', 'solar', 'oil', 'renewable', 'electricity', 'power'],
-      };
-      const matchedSectors = Object.entries(sectorMap)
-        .filter(([, keywords]) => keywords.some(k => l.includes(k)))
-        .map(([sector]) => sector).slice(0, 2);
-      if (matchedSectors.length > 0) {
-        const { data } = await supabase.from('ayn_sector_intel')
-          .select('sector, hot_markets, opportunities, intelligence_brief')
-          .in('sector', matchedSectors);
-        if (data?.length) intel.sectors = data;
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_sector_intelligence",
+      description: "Gets specific intelligence reports for various sectors: startups, jobs, supply_chain, real_estate, consumer, health, tech.",
+      parameters: { 
+        type: "object", 
+        properties: { sector: { type: "string", enum: ["startups", "jobs", "supply_chain", "real_estate", "consumer", "health", "tech"] } },
+        required: ["sector"]
       }
-    })(),
+    }
+  }
+];
 
-    // Startups/VC
-    (async () => {
-      if (isAbout(['startup', 'venture', 'funding', 'invest', 'vc', 'raise', 'pitch', 'founder', 'شركة ناشئة'])) {
-        const { data } = await supabase.from('ayn_startup_intel')
-          .select('hot_sectors, big_rounds, emerging_themes, intelligence_brief')
-          .eq('singleton_key', 1).maybeSingle();
-        if (data) intel.startups = data;
-      }
-    })(),
-
-    // Jobs
-    (async () => {
-      if (isAbout(['job', 'hire', 'salary', 'career', 'work', 'employ', 'skill', 'resume', 'وظيفة', 'راتب', 'توظيف'])) {
-        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'GB'];
-        const { data } = await supabase.from('ayn_job_market')
-          .select('country_code, top_roles, top_skills, salary_trends, intelligence_brief')
-          .in('country_code', codes).limit(3);
-        if (data?.length) intel.jobs = data;
-      }
-    })(),
-
-    // Supply chain
-    (async () => {
-      if (isAbout(['supply chain', 'shipping', 'logistics', 'shortage', 'bottleneck', 'port', 'freight', 'inventory', 'manufacturing'])) {
-        const { data } = await supabase.from('ayn_supply_chain')
-          .select('bottlenecks, risk_alerts, shipping_rates, intelligence_brief')
-          .eq('singleton_key', 1).maybeSingle();
-        if (data) intel.supply_chain = data;
-      }
-    })(),
-
-    // Real estate
-    (async () => {
-      if (isAbout(['real estate', 'property', 'house', 'apartment', 'rent', 'buy home', 'mortgage', 'housing', 'عقار', 'إيجار'])) {
-        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'GB', 'SA'];
-        const { data } = await supabase.from('ayn_real_estate')
-          .select('country_code, residential, rental_yields, hot_cities, intelligence_brief')
-          .in('country_code', codes).limit(3);
-        if (data?.length) intel.real_estate = data;
-      }
-    })(),
-
-    // Consumer sentiment
-    (async () => {
-      if (isAbout(['consumer', 'spending', 'retail', 'customer', 'buying', 'market demand', 'people want', 'trend'])) {
-        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'SA'];
-        const { data } = await supabase.from('ayn_consumer_sentiment')
-          .select('country_code, confidence_index, spending_trends, top_purchases, cutting_spending, intelligence_brief')
-          .in('country_code', codes).limit(3);
-        if (data?.length) intel.consumer = data;
-      }
-    })(),
-
-    // Geopolitical
-    (async () => {
-      if (isAbout(['war', 'conflict', 'sanction', 'geopolit', 'election', 'tension', 'risk', 'unstable', 'political', 'حرب', 'عقوبات'])) {
-        const { data } = await supabase.from('ayn_geopolitical')
-          .select('active_conflicts, sanctions, trade_tensions, intelligence_brief')
-          .eq('singleton_key', 1).maybeSingle();
-        if (data) intel.geopolitical = data;
-      }
-    })(),
-
-    // Health
-    (async () => {
-      if (isAbout(['health', 'medical', 'hospital', 'pharma', 'wellness', 'mental health', 'healthcare', 'clinic', 'صحة', 'مستشفى'])) {
-        const codes = countryCodes.length > 0 ? countryCodes : ['US', 'SA'];
-        const { data } = await supabase.from('ayn_health_intel')
-          .select('country_code, growth_areas, gaps, digital_health, intelligence_brief')
-          .in('country_code', codes).limit(3);
-        if (data?.length) intel.health = data;
-      }
-    })(),
-
-    // Tech disruption
-    (async () => {
-      if (isAbout(['tech', 'ai', 'technology', 'innovation', 'disrupt', 'future', 'emerging', 'software', 'تقنية', 'ذكاء اصطناعي'])) {
-        const { data } = await supabase.from('ayn_tech_disruption')
-          .select('ai_developments, emerging_tech, disrupted_industries, intelligence_brief')
-          .eq('singleton_key', 1).maybeSingle();
-        if (data) intel.tech = data;
-      }
-    })(),
-
-    // Decision memory
-    (async () => {
-      if (isAbout(['decided', 'my decision', 'remember when', 'last time', 'i chose', 'قررت', 'قراري'])) {
-        const { data } = await supabase.from('ayn_decision_memory')
-          .select('decision, context, outcome, lesson, status, created_at')
-          .eq('user_id', '').order('created_at', { ascending: false }).limit(5);
-        if (data?.length) intel.decisions = data;
-      }
-    })(),
-  ]);
-
-  return intel;
+export async function executeTool(toolCall: any, supabase: any): Promise<any> {
+  const name = toolCall?.function?.name;
+  let args: any = {};
+  if (toolCall?.function?.arguments) {
+    try { args = JSON.parse(toolCall.function.arguments); } catch { /* ignore */ }
+  }
+  
+  try {
+    if (name === 'get_market_prices') {
+      const { data } = await supabase.from('ayn_market_prices').select('*').eq('singleton_key', 1).maybeSingle();
+      return data || { status: 'No data available' };
+    }
+    if (name === 'get_business_news') {
+      const codes = args.country_codes || ['US', 'SA', 'GB'];
+      const { data } = await supabase.from('ayn_business_news').select('*').in('country_code', codes).limit(5);
+      return data || { status: 'No news found' };
+    }
+    if (name === 'get_geopolitical_risks') {
+      const { data } = await supabase.from('ayn_geopolitical').select('*').eq('singleton_key', 1).maybeSingle();
+      return data || { status: 'No data' };
+    }
+    if (name === 'search_web' && args.query) {
+      // Note: relying on performWebSearch from earlier in file
+      const res = await performWebSearch(args.query);
+      return { search_results: res };
+    }
+    if (name === 'get_sector_intelligence') {
+      const sec = args.sector;
+      if (sec === 'startups') return (await supabase.from('ayn_startup_intel').select('*').eq('singleton_key', 1).maybeSingle()).data;
+      if (sec === 'supply_chain') return (await supabase.from('ayn_supply_chain').select('*').eq('singleton_key', 1).maybeSingle()).data;
+      if (sec === 'tech') return (await supabase.from('ayn_tech_disruption').select('*').eq('singleton_key', 1).maybeSingle()).data;
+      if (sec === 'jobs') return (await supabase.from('ayn_job_market').select('*').in('country_code', ['SA', 'US']).limit(2)).data;
+      if (sec === 'real_estate') return (await supabase.from('ayn_real_estate').select('*').in('country_code', ['SA', 'US']).limit(2)).data;
+      if (sec === 'consumer') return (await supabase.from('ayn_consumer_sentiment').select('*').in('country_code', ['SA', 'US']).limit(2)).data;
+      if (sec === 'health') return (await supabase.from('ayn_health_intel').select('*').in('country_code', ['SA', 'US']).limit(2)).data;
+      return { status: 'Sector not found' };
+    }
+  } catch (err) {
+    return { error: String(err) };
+  }
+  return { status: 'Tool not recognized or arguments missing.' };
 }
+
 
 // Detect if message is asking about prices/markets/trade
 function needsMarketData(message: string): boolean {
@@ -1168,7 +1124,7 @@ serve(async (req) => {
       // Trade flows for mentioned countries
       mentionedCountries.length > 0 ? getTradeFlows(supabase, mentionedCountries) : Promise.resolve([]),
       // Super brain: news, gov, sectors, jobs, health, geo, tech, supply chain, real estate
-      getSuperBrainIntel(supabase, lastMessage, mentionedCountries)
+      Promise.resolve({}) /* superbrain replaced by true tools */
     ]);
 
     // Check user limits
@@ -2100,15 +2056,74 @@ HOW TO USE THIS: Only surface data that is directly relevant to the user's quest
       }
     }
 
-    // Call with fallback — force non-streaming for autonomous trading (need to parse EXECUTE_TRADE)
-    const effectiveStream = wantsAutonomousTrading ? false : stream;
-    const { response, modelUsed, wasFallback } = await callWithFallback(
+    // ReACT Tool Execution Loop
+    let effectiveStream = wantsAutonomousTrading ? false : stream;
+    let finalMessages = [...fullMessages];
+
+    const supportsTools = (intent === 'chat' || intent === 'search' || intent === 'deep');
+    let toolsToProvide = supportsTools ? AYN_TOOLS : undefined;
+
+    let { response, modelUsed, wasFallback } = await callWithFallback(
       intent,
-      fullMessages,
-      effectiveStream,
+      finalMessages,
+      supportsTools ? false : effectiveStream, // first hop must be false if using tools to easily parse tool_calls
       supabase,
-      userId
+      userId,
+      toolsToProvide
     );
+
+    let initialRespData = response as { content: string; tool_calls?: any[]; wasIncomplete?: boolean };
+    
+    // Check if the AI decided to call tools
+    if (supportsTools && initialRespData.tool_calls && initialRespData.tool_calls.length > 0) {
+      console.log(`[ayn-unified] AI called ${initialRespData.tool_calls.length} tools`);
+      
+      finalMessages.push({
+        role: 'assistant',
+        content: initialRespData.content || null,
+        tool_calls: initialRespData.tool_calls
+      });
+
+      const toolResults = await Promise.all(
+        initialRespData.tool_calls.map(async (tc: any) => {
+          console.log(`[ayn-unified] Executing tool: ${tc?.function?.name}`);
+          const res = await executeTool(tc, supabase);
+          return {
+            role: 'tool',
+            tool_call_id: tc.id,
+            name: tc.function.name,
+            content: JSON.stringify(res)
+          };
+        })
+      );
+
+      finalMessages.push(...toolResults);
+
+      // Second hop to get final answer
+      const secondHop = await callWithFallback(
+        intent,
+        finalMessages,
+        effectiveStream,
+        supabase,
+        userId
+      );
+      response = secondHop.response;
+    } else if (supportsTools && effectiveStream && !(response instanceof Response)) {
+      // AI didn't call tools, but we forced stream=false. We need to simulate a stream for the frontend.
+      const text = initialRespData.content || '';
+      const encoder = new TextEncoder();
+      const syntheticStream = new ReadableStream({
+        start(controller) {
+          // Send one big chunk representing the text properly escaped
+          const payload = JSON.stringify({ choices: [{ delta: { content: text } }] });
+          controller.enqueue(encoder.encode(`data: ${payload}\n\n`));
+          controller.close();
+        }
+      });
+      response = new Response(syntheticStream, { 
+        headers: { 'Content-Type': 'text/event-stream' } 
+      });
+    }
 
     if (effectiveStream && response instanceof Response) {
       // Return streaming response — intercept to strip MEMORY tags before they reach the user

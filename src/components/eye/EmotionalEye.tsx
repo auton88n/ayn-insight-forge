@@ -164,7 +164,7 @@ const EmotionalEyeComponent = ({
       window.removeEventListener('mouseleave', onLeave);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [gazeX, gazeY, performanceConfig.enableMouseTracking, performanceConfig.mouseTrackingThrottle, performanceConfig.shouldReduceAnimations, isDeepIdle]);
+  }, [gazeX, gazeY, performanceConfig.enableMouseTracking, performanceConfig.mouseTrackingThrottle, performanceConfig.shouldReduceAnimations, isDeepIdle, isMobile]);
 
   // AI gaze towards suggestions or input field
   useEffect(() => {

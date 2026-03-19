@@ -149,9 +149,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
 
     recognitionRef.current = recognition;
 
+    const currentTimeout = restartTimeoutRef.current;
     return () => {
-      if (restartTimeoutRef.current) {
-        clearTimeout(restartTimeoutRef.current);
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
       }
       recognition.abort();
     };

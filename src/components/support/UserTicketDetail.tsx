@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,9 +58,7 @@ export function UserTicketDetail({ ticketId, onBack }: UserTicketDetailProps) {
   const [closing, setClosing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchTicketData();
-  }, [ticketId]);
+
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -68,7 +66,7 @@ export function UserTicketDetail({ ticketId, onBack }: UserTicketDetailProps) {
     }
   }, [messages]);
 
-  const fetchTicketData = async () => {
+  const fetchTicketData = useCallback(async () => {
     try {
       const [ticketRes, messagesRes] = await Promise.all([
         supabase
@@ -106,7 +104,11 @@ export function UserTicketDetail({ ticketId, onBack }: UserTicketDetailProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [ticketId, t]);
+
+  useEffect(() => {
+    fetchTicketData();
+  }, [ticketId, fetchTicketData]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !ticket) return;

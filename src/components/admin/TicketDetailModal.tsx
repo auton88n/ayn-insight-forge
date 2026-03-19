@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   X, 
@@ -68,7 +68,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     if (isOpen) {
       fetchMessages();
     }
-  }, [isOpen, ticket.id]);
+  }, [isOpen, fetchMessages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -76,7 +76,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   }, [messages]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -93,7 +93,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [ticket.id]);
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return;

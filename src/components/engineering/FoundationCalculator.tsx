@@ -1,4 +1,4 @@
-import { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useState, forwardRef, useImperativeHandle, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Info, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -125,12 +125,12 @@ export const FoundationCalculator = forwardRef<FoundationCalculatorRef, Foundati
     }
   }));
 
-  const getBearingCapacity = () => {
+  const getBearingCapacity = useCallback(() => {
     if (formData.soilType === 'custom') {
       return parseFloat(formData.customBearing) || 0;
     }
     return soilTypes.find(s => s.value === formData.soilType)?.bearing || 150;
-  };
+  }, [formData.soilType, formData.customBearing]);
 
   // Sync inputs to parent on mount and when formData changes
   useEffect(() => {
@@ -148,7 +148,7 @@ export const FoundationCalculator = forwardRef<FoundationCalculatorRef, Foundati
       buildingCode,
     };
     onInputChange?.(inputs);
-  }, [formData, buildingCode, onInputChange]);
+  }, [formData, buildingCode, onInputChange, getBearingCapacity]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

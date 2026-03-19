@@ -217,13 +217,17 @@ export const useBubbleAnimation = (): UseBubbleAnimationReturn => {
   }, []);
 
   // Memoize responseBubbles to prevent unnecessary re-renders
+  const responseBubbleDeps = responseBubbles.map(b => `${b.id}-${b.isVisible}`).join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableResponseBubbles = useMemo(() => responseBubbles, [
-    responseBubbles.map(b => `${b.id}-${b.isVisible}`).join(',')
+    responseBubbleDeps
   ]);
 
   // Memoize suggestionBubbles similarly
+  const suggestionBubbleDeps = suggestionBubbles.map(s => `${s.id}-${s.isVisible}`).join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableSuggestionBubbles = useMemo(() => suggestionBubbles, [
-    suggestionBubbles.map(s => `${s.id}-${s.isVisible}`).join(',')
+    suggestionBubbleDeps
   ]);
 
   return {

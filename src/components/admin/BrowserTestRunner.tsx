@@ -51,12 +51,7 @@ const BrowserTestRunnerComponent: React.FC<BrowserTestRunnerProps> = ({ onResult
   const [recentRuns, setRecentRuns] = useState<TestRun[]>([]);
   const [liveLog, setLiveLog] = useState<string[]>([]);
 
-  // Load recent test runs
-  useEffect(() => {
-    loadRecentRuns();
-  }, []);
-
-  const loadRecentRuns = async () => {
+  const loadRecentRuns = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('test_runs')
@@ -71,9 +66,14 @@ const BrowserTestRunnerComponent: React.FC<BrowserTestRunnerProps> = ({ onResult
     } catch (e) {
       console.error('Failed to load recent runs:', e);
     }
-  };
+  }, []);
 
-  const saveResultsToDatabase = async (testResults: BrowserTestResult[]) => {
+  // Load recent test runs
+  useEffect(() => {
+    loadRecentRuns();
+  }, [loadRecentRuns]);
+
+  const saveResultsToDatabase = useCallback(async (testResults: BrowserTestResult[]) => {
     try {
       const { data: runData, error: runError } = await supabase
         .from('test_runs')
@@ -113,7 +113,7 @@ const BrowserTestRunnerComponent: React.FC<BrowserTestRunnerProps> = ({ onResult
       console.error('Failed to save results:', error);
       toast.error('Failed to save results');
     }
-  };
+  }, [onResultsUpdate, loadRecentRuns]);
 
   const handleProgress = useCallback((prog: TestProgress) => {
     setProgress(prog);
@@ -164,7 +164,7 @@ const BrowserTestRunnerComponent: React.FC<BrowserTestRunnerProps> = ({ onResult
       setProgress(null);
       browserTestRunner.setProgressCallback(null);
     }
-  }, [handleProgress, onResultsUpdate]);
+  }, [handleProgress, saveResultsToDatabase]);
 
   const runCategoryTests = useCallback(async (category: string) => {
     setIsRunning(true);
@@ -204,7 +204,7 @@ const BrowserTestRunnerComponent: React.FC<BrowserTestRunnerProps> = ({ onResult
       setProgress(null);
       browserTestRunner.setProgressCallback(null);
     }
-  }, [handleProgress, onResultsUpdate]);
+  }, [handleProgress, saveResultsToDatabase]);
 
   const toggleExpanded = (testName: string) => {
     setExpandedResults(prev => {

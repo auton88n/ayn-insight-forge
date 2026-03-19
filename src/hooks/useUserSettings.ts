@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabaseApi } from '@/lib/supabaseApi';
 import { useToast } from '@/hooks/use-toast';
 import { getErrorMessage, ErrorCodes } from '@/lib/errorMessages';
@@ -34,7 +34,7 @@ export const useUserSettings = (userId: string, accessToken?: string) => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     if (!userId || !accessToken) {
       setLoading(false);
       return;
@@ -116,7 +116,7 @@ export const useUserSettings = (userId: string, accessToken?: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, accessToken, toast]);
 
   const refetchSessions = async () => {
     if (!userId || !accessToken) return;
@@ -236,7 +236,7 @@ export const useUserSettings = (userId: string, accessToken?: string) => {
     if (userId && accessToken) {
       fetchAllData();
     }
-  }, [userId, accessToken]);
+  }, [userId, accessToken, fetchAllData]);
 
   return {
     settings,

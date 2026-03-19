@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Briefcase, Plus, Eye, EyeOff, Trash2, ExternalLink, Loader2, Building2 } from 'lucide-react';
@@ -30,13 +30,7 @@ const EngineeringPortfolio = ({ userId, onAddToPortfolio }: EngineeringPortfolio
   const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (userId) {
-      fetchPortfolio();
-    }
-  }, [userId]);
-
-  const fetchPortfolio = async () => {
+  const fetchPortfolio = useCallback(async () => {
     if (!userId) return;
     
     setIsLoading(true);
@@ -61,7 +55,13 @@ const EngineeringPortfolio = ({ userId, onAddToPortfolio }: EngineeringPortfolio
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchPortfolio();
+    }
+  }, [userId, fetchPortfolio]);
 
   const togglePublic = async (itemId: string, currentState: boolean) => {
     try {

@@ -890,15 +890,15 @@ export const useMessages = (
     }
   }, [
     userId, 
-    userEmail, 
     selectedMode, 
     sessionId, 
     messages, 
     userProfile, 
-    allowPersonalization, 
     toast,
     session,
-    isUnlimited
+    isUnlimited,
+    emotionHistory,
+    onUsageUpdated
   ]);
 
   // Wrapper to set messages from history with proper flag management

@@ -532,7 +532,7 @@ Deno.serve(async (req) => {
     const startTime = Date.now();
 
     let allResults: TestResult[] = [];
-    let plans: AITestPlan[] = [];
+    const plans: AITestPlan[] = [];
     let analysis = '';
     let modelUsed = '';
 

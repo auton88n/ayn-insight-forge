@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,7 +72,7 @@ export const MemoryManagement: React.FC<MemoryManagementProps> = ({ userId }) =>
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [clearingAll, setClearingAll] = useState(false);
 
-  const fetchMemories = async () => {
+  const fetchMemories = useCallback(async () => {
     if (!userId) return;
     
     setLoading(true);
@@ -99,13 +99,13 @@ export const MemoryManagement: React.FC<MemoryManagementProps> = ({ userId }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, toast]);
 
   useEffect(() => {
     if (isViewerOpen) {
       fetchMemories();
     }
-  }, [isViewerOpen, userId]);
+  }, [isViewerOpen, userId, fetchMemories]);
 
   const handleDeleteMemory = async (memoryId: string) => {
     setDeletingId(memoryId);

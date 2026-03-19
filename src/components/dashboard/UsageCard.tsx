@@ -123,6 +123,7 @@ export const UsageCard = ({
   useEffect(() => {
     if (propRemaining !== undefined || !userId) return;
     fetchCredits();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, propRemaining]);
 
   // Realtime subscription for instant updates
@@ -139,6 +140,7 @@ export const UsageCard = ({
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   // Animate counter on change
@@ -169,6 +171,7 @@ export const UsageCard = ({
       setDisplayCount(credits.remaining);
       prevRemainingRef.current = credits.remaining;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [credits.loaded]);
 
   const { remaining, totalLimit, allowed, isFree, isUnlimited, resetsAt } = credits;

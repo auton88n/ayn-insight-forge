@@ -11,7 +11,7 @@ export function useLivePrices(tickers: string[]): {
 } {
   const [prices, setPrices] = useState<Record<string, LivePrice>>({});
   const [connected, setConnected] = useState(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   const tickersKey = JSON.stringify(tickers);
 
   useEffect(() => {

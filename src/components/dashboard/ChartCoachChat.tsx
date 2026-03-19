@@ -155,7 +155,7 @@ export default function ChartCoachChat({ result }: ChartCoachChatProps) {
     if (messages.length > 0 && !isExpanded) {
       setIsExpanded(true);
     }
-  }, [messages.length]);
+  }, [messages.length, isExpanded]);
 
   // Keyboard shortcuts
   useEffect(() => {

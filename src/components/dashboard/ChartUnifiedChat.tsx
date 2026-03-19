@@ -189,7 +189,7 @@ export default function ChartUnifiedChat({
         return [...withoutLoading, { type: 'ayn-loading', step: analyzer.step }];
       });
     }
-  }, [analyzer.step, isAnalyzing]);
+  }, [analyzer.step, isAnalyzing, setMessages]);
 
   // ─── Watch for analysis result ───
   useEffect(() => {
@@ -233,7 +233,7 @@ export default function ChartUnifiedChat({
         }
       }
     }
-  }, [analyzer.result, analyzer.step]);
+  }, [analyzer.result, analyzer.step, setLatestResult, setMessages]);
 
   // ─── Watch for analysis error ───
   useEffect(() => {
@@ -243,7 +243,7 @@ export default function ChartUnifiedChat({
         return [...withoutLoading, { type: 'ayn-error', content: analyzer.error! }];
       });
     }
-  }, [analyzer.error, analyzer.step]);
+  }, [analyzer.error, analyzer.step, setMessages]);
 
   // ─── Sync coach messages ───
   const prevCoachLenRef = useRef(coach.messages.length);
@@ -265,7 +265,7 @@ export default function ChartUnifiedChat({
       }
       prevCoachLenRef.current = coach.messages.length;
     }
-  }, [coach.activeSessionId]);
+  }, [coach.activeSessionId, coach.messages, setMessages]);
 
   useEffect(() => {
     // Only start a new chat session if there are no existing messages (first ever load)
@@ -288,7 +288,7 @@ export default function ChartUnifiedChat({
       }
     }
     prevCoachLenRef.current = coach.messages.length;
-  }, [coach.messages.length]);
+  }, [coach.messages.length, coach.messages, setMessages]);
 
   // ─── File handling ───
   const attachFile = useCallback((file: File) => {
@@ -353,7 +353,7 @@ export default function ChartUnifiedChat({
       coach.sendMessage(text);
       setInput('');
     }
-  }, [input, attachedFile, attachedPreview, isBusy, analyzer, coach, clearAttachment]);
+  }, [input, attachedFile, isBusy, analyzer, coach, clearAttachment, setMessages]);
 
   // ─── Textarea auto-resize ───
   useEffect(() => {
@@ -374,7 +374,7 @@ export default function ChartUnifiedChat({
   const handleChip = useCallback((text: string) => {
     setMessages(prev => [...prev, { type: 'user-text', content: text }]);
     coach.sendMessage(text);
-  }, [coach]);
+  }, [coach, setMessages]);
 
 
   const hasMessages = messages.length > 0;

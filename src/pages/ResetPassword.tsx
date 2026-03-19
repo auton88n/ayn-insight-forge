@@ -133,6 +133,7 @@ const ResetPassword = () => {
       if (navigateTimerRef.current) clearTimeout(navigateTimerRef.current);
       if (linkExpired) localStorage.removeItem('password_recovery_in_progress');
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
