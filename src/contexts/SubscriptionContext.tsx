@@ -14,8 +14,8 @@ export const SUBSCRIPTION_TIERS = {
     price: 0,
     priceId: null,
     productId: null,
-    limits: { monthlyCredits: 5, monthlyEngineering: 1, isDaily: true },
-    features: ['5 messages/day', 'Resets daily', 'Basic support'],
+    limits: { monthlyCredits: 50, monthlyEngineering: 1 },
+    features: ['50 messages/month', 'No credit card required', 'Basic support'],
   },
   starter: {
     name: 'Starter',

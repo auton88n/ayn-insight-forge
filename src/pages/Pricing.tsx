@@ -61,11 +61,11 @@ const tierColors: Record<string, { icon: string; btn: string; check: string }> =
 };
 
 const faqItems = [
-  { question: 'What are messages?', answer: 'Each AI interaction counts as one message. Free users get 5 messages per day (resets daily). Paid users receive their full monthly allowance upfront.' },
+  { question: 'What are messages?', answer: 'Each AI interaction counts as one message. Free users get 50 messages per month — no credit card required. Paid users receive their full monthly allowance upfront.' },
   { question: 'What is PDF & Excel generation?', answer: 'Paid users can ask AYN to generate professional documents like reports, spreadsheets, and presentations.' },
   { question: 'Can I upgrade or downgrade anytime?', answer: 'Yes! You can change your plan at any time. Upgrades take effect immediately, and downgrades take effect at the end of your billing cycle.' },
   { question: 'What happens if I run out of messages?', answer: 'Free users wait until the next day for messages to reset. Paid users can purchase a top-up of 500 extra messages for $10, or upgrade to a higher plan.' },
-  { question: 'Is there a free trial?', answer: 'Our Free tier gives you 5 messages per day to try AYN — no credit card required.' },
+  { question: 'Is there a free trial?', answer: 'Our Free tier gives you 50 messages per month to try AYN — no credit card required.' },
   { question: 'Is there a refund policy?', answer: 'All payments are final and non-refundable. You can cancel anytime and keep access until the end of your billing period.' },
   { question: 'What is included in Enterprise?', answer: 'Enterprise plans include custom message limits, tailored AI solutions, and 24/7 priority support. Contact our sales team to discuss your needs.' },
 ];
@@ -117,8 +117,8 @@ const Pricing = () => {
   return (
     <>
       <SEO
-        title="Pricing - AYN"
-        description="Choose the perfect plan for your needs. From free to enterprise, we have options for everyone."
+        title="Pricing - AYN AI | Start Free, Upgrade Anytime"
+        description="Start free with 50 messages/month — no credit card required. Upgrade to Starter ($20), Pro ($49), or Business ($99) as you grow."
         canonical="/pricing"
         keywords="AYN pricing, AI assistant pricing, business AI plans, subscription plans"
         noIndex={true}
