@@ -309,6 +309,23 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ─── GET: Return the latest snapshot (Bypasses RLS for anon frontend users) ───
+    if (req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('ayn_market_snapshot')
+        .select('*')
+        .eq('singleton_key', 1)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      return new Response(JSON.stringify(data || {}), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // ─── POST: Execute the 4-hour sweep and AI synthesis ───
+
     const FRED_API_KEY = Deno.env.get('FRED_API_KEY');
     const ALPHA_VANTAGE_API_KEY = Deno.env.get('ALPHA_VANTAGE_API_KEY');
     const PIONEX_API_KEY = Deno.env.get('PIONEX_API_KEY');

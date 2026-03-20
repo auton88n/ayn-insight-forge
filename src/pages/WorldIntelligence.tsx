@@ -229,8 +229,15 @@ export default function WorldIntelligence() {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
 
   const fetchData = useCallback(async () => {
-    const { data } = await supabase.from('ayn_market_snapshot').select('*').eq('singleton_key', 1).maybeSingle();
-    if (data) setSnapshot(data as unknown as MarketSnapshot);
+    try {
+      const { data, error } = await supabase.functions.invoke('ayn-pulse-engine', { method: 'GET' });
+      if (error) throw error;
+      if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+        setSnapshot(data as unknown as MarketSnapshot);
+      }
+    } catch (e) {
+      console.error('Failed to fetch snapshot from edge function:', e);
+    }
   }, []);
 
   useEffect(() => {
