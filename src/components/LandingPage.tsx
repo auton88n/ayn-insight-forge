@@ -59,7 +59,7 @@ const LandingPage = memo(() => {
     answer: "AYN AI uses advanced machine learning to analyze your interactions, understand your communication style, and adapt to your workflow patterns over time."
   }, {
     question: "What services does AYN AI offer?",
-    answer: "AYN AI offers AI employees for 24/7 customer support, custom AI agents for business automation, content creator websites, smart ticketing systems, and engineering calculation tools."
+    answer: "AYN AI offers AI employees for 24/7 customer support, custom AI agents for business automation, content creator websites, and smart ticketing systems."
   }, {
     question: "Is AYN AI available in Arabic?",
     answer: "Yes! AYN AI (عين) is fully multilingual with native support for Arabic, English, and French, making it ideal for Middle Eastern and international businesses."

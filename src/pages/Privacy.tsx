@@ -79,7 +79,6 @@ const Privacy = () => {
                     "Email address and account credentials",
                     "Optional profile information (company name, business type, contact person)",
                     "Messages, prompts, and files you submit for AI processing",
-                    "Engineering project data and calculation inputs",
                     "Feedback, ratings, and support requests",
                     "Payment information (processed by third-party providers)"
                   ]} />
@@ -125,8 +124,7 @@ const Privacy = () => {
                   <BulletList items={[
                     "Provide and operate AYN's AI-powered services",
                     "Generate AI responses and maintain conversation context",
-                    "Process payments and manage subscriptions",
-                    "Deliver engineering calculations and document analysis"
+                    "Process payments and manage subscriptions"
                   ]} />
                 </SubSection>
                 <SubSection title="Improvement">

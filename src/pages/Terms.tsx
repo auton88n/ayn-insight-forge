@@ -107,7 +107,7 @@ const Terms = () => {
               <PolicySection number="1" title="DESCRIPTION OF SERVICE">
                 <SubSection title="Platform Overview">
                   <p className="text-white/60">
-                    AYN is an AI-powered platform providing business consulting, engineering tools, 
+                    AYN is an AI-powered platform providing business consulting, 
                     document analysis, and general AI assistance. The platform integrates multiple AI 
                     models to deliver intelligent responses across various domains.
                   </p>
@@ -160,7 +160,6 @@ const Terms = () => {
                 <SubSection title="Permitted Uses">
                   <BulletList items={[
                     "Business consulting and analysis",
-                    "Engineering calculations and reference information",
                     "Document analysis and summarization",
                     "General AI-assisted research and productivity"
                   ]} />
@@ -273,22 +272,13 @@ const Terms = () => {
                 </SubSection>
                 <SubSection title="Not Professional Advice">
                   <BulletList items={[
-                    "AYN does NOT provide professional advice (legal, medical, financial, engineering, etc.)",
+                    "AYN does NOT provide professional advice (legal, medical, financial, etc.)",
                     "Users should NOT rely solely on AYN's outputs for critical or professional decisions",
                     "All AI-generated information must be independently verified by the user",
                     "Always consult qualified professionals for important decisions"
                   ]} />
                 </SubSection>
-                <SubSection title="Engineering-Specific Disclaimers">
-                  <WarningBox>Engineering tools provide reference information only.</WarningBox>
-                  <BulletList items={[
-                    "All structural designs and calculations require review and approval by a licensed Professional Engineer (PE) before use",
-                    "AYN does not provide cost estimates — contact local suppliers for pricing",
-                    "Engineering tools are for reference only — not for construction documents",
-                    "Users must verify local building code adoption with the Authority Having Jurisdiction (AHJ)",
-                    "Users assume all risks from using AI-generated engineering information"
-                  ]} />
-                </SubSection>
+
                 <SubSection title="PDF & Document Analysis">
                   <BulletList items={[
                     "Document analysis results are AI-generated interpretations",

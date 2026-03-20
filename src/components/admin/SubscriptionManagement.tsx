@@ -355,13 +355,18 @@ export const SubscriptionManagement = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
             {Object.entries(tierConfig).map(([tier, config]) => {
               const Icon = config.icon;
-              const count = tier === 'free' ? metrics.freeUsers 
-                : tier === 'starter' ? metrics.starterUsers 
-                : tier === 'pro' ? metrics.proUsers 
-                : metrics.businessUsers;
+              const countMap: Record<string, number> = {
+                free: metrics.freeUsers,
+                starter: metrics.starterUsers,
+                pro: metrics.proUsers,
+                business: metrics.businessUsers,
+                enterprise: metrics.enterpriseUsers,
+                unlimited: metrics.unlimitedUsers,
+              };
+              const count = countMap[tier] ?? 0;
               const total = metrics.totalUsers || 1;
               const percentage = ((count / total) * 100).toFixed(1);
               

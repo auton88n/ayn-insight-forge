@@ -46,7 +46,8 @@ const Support = lazy(() => import("./pages/Support"));
 // const Engineering = lazy(() => import("./pages/EngineeringWorkspacePage"));
 // const Compliance = lazy(() => import("./pages/CompliancePage"));
 // const AIGradingDesigner = lazy(() => import("./pages/AIGradingDesigner"));
-const CivilEngineering = lazy(() => import('./pages/services/CivilEngineering'));
+// HIDDEN: CivilEngineering service page temporarily disabled
+// const CivilEngineering = lazy(() => import('./pages/services/CivilEngineering'));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const DashboardPricing = lazy(() => import("./components/dashboard/DashboardPricing"));
 const SubscriptionSuccess = lazy(() => import("./pages/SubscriptionSuccess"));
@@ -106,7 +107,8 @@ const AnimatedRoutes = () => {
       <Route path="/compliance" element={<Suspense fallback={<PageLoader />}><PageTransition><Compliance /></PageTransition></Suspense>} />
       <Route path="/engineering/grading" element={<Suspense fallback={<PageLoader />}><PageTransition><AIGradingDesigner /></PageTransition></Suspense>} />
       */}
-      <Route path="/services/civil-engineering" element={<Navigate to="/" replace />} />
+      {/* HIDDEN: Civil engineering redirect disabled */}
+      {/* <Route path="/services/civil-engineering" element={<Navigate to="/" replace />} /> */}
       <Route path="/approval-result" element={<PageTransition><ApprovalResult /></PageTransition>} />
       <Route path="/subscription-success" element={<PageTransition><SubscriptionSuccess /></PageTransition>} />
       <Route path="/subscription-canceled" element={<PageTransition><SubscriptionCanceled /></PageTransition>} />
