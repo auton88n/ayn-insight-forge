@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 export interface MapPoint {
+  id?: string;
   coordinates: [number, number]; // [lng, lat]
   label: string;
   detail?: string;
@@ -36,7 +37,7 @@ function MapLegend() {
   );
 }
 
-export function HeatMap2D({ points = [], height = 420 }: { points?: MapPoint[]; height?: number }) {
+export function HeatMap2D({ points = [], height = 420, onPointClick }: { points?: MapPoint[]; height?: number; onPointClick?: (pt: MapPoint) => void }) {
   const [activeTooltip, setActiveTooltip] = useState<MapPoint | null>(null);
 
   return (
@@ -77,8 +78,9 @@ export function HeatMap2D({ points = [], height = 420 }: { points?: MapPoint[]; 
               coordinates={point.coordinates}
               onMouseEnter={() => setActiveTooltip(point)}
               onMouseLeave={() => setActiveTooltip(null)}
+              onClick={() => onPointClick && onPointClick(point)}
             >
-              <g className="cursor-pointer group">
+              <g className={cn("group", onPointClick && "cursor-pointer")}>
                 {/* Outer pulse ring */}
                 <circle r={config.size * 2.5} fill={config.color} className="opacity-10 animate-ping" />
                 {/* Mid glow */}

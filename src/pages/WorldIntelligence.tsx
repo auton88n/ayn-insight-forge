@@ -15,6 +15,13 @@ import { HeatMap2D, MapPoint } from '@/components/dashboard/HeatMap2D';
 /* ─── Types ─── */
 interface MarketSnapshot { snapshot: Json; fetched_at: string; sources_used: string[] | null; fetch_errors: string[] | null; }
 
+const SIC_COORDINATES: Record<string, [number, number]> = {
+  'USA': [-95.7, 37.0], 'CHN': [104.1, 35.8], 'EU': [10.4, 51.1], 'GBR': [-3.4, 55.3],
+  'SAU': [45.0, 23.8], 'ARE': [53.8, 23.4], 'JPN': [138.2, 36.2], 'IND': [78.9, 20.5],
+  'BRA': [-51.9, -14.2], 'RUS': [105.3, 61.5], 'IRQ': [43.6, 33.2], 'KOR': [127.7, 35.9],
+  'ZAF': [22.9, -30.5], 'CAN': [-106.3, 56.1], 'AUS': [133.7, -25.2]
+};
+
 /* ─── Helpers ─── */
 function safeArray(val: any): any[] { if (Array.isArray(val)) return val; return []; }
 function safeObj(val: any): Record<string, any> { if (val && typeof val === 'object' && !Array.isArray(val)) return val; return {}; }
@@ -217,6 +224,7 @@ export default function WorldIntelligence() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeCategory, setActiveCategory] = useState('overview');
+  const [selectedDossier, setSelectedDossier] = useState<{ id: string; name: string; news: any[]; economic_posture: string; trajectory: string } | null>(null);
 
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
 
@@ -277,8 +285,11 @@ export default function WorldIntelligence() {
   // Tourism
   const tourism = useMemo(() => safeObj(snap.tourism_market), [snap]);
 
-  // Regional intel
-  const regionalIntel = useMemo(() => safeObj(snap.regional_intel), [snap]);
+  // Regional intel (S.I.C)
+  const regionalIntel = useMemo(() => safeObj(snap.sic_intel || snap.regional_intel), [snap]);
+
+  // AYN AI Predictions (1W, 1M, 1Y)
+  const aynPredictions = useMemo(() => safeObj(snap.ayn_predictions), [snap]);
 
   // Intelligence brief
   const briefItems = useMemo(() => {
@@ -318,12 +329,41 @@ export default function WorldIntelligence() {
       if (q.includes('eu') || q.includes('europe')) pts.push({ coordinates: [4.35, 50.85], label: "EU", detail: `${p.question} (${p.yes_probability?.toFixed(1)}%)`, risk: "stable", category: "Prediction" });
     });
 
+    // S.I.C Deep Intel Map Points
+    Object.entries(regionalIntel).forEach(([code, data]) => {
+      const coords = SIC_COORDINATES[code];
+      if (coords) {
+        pts.push({
+          id: code,
+          coordinates: coords,
+          label: (data as any).name || code,
+          risk: 'alert',
+          category: 'S.I.C Intel',
+          detail: 'CLICK TO DIVE: View deep AYN intelligence dossier'
+        });
+      }
+    });
+
     // Supply chain choke points
     pts.push({ coordinates: [32.3, 30.0], label: "SUEZ CANAL", risk: "alert", category: "Supply Chain", detail: "Key shipping corridor" });
     pts.push({ coordinates: [101.0, 2.5], label: "MALACCA STRAIT", risk: "alert", category: "Supply Chain", detail: "Critical trade route" });
 
     return pts.filter((value, index, self) => index === self.findIndex((t) => Math.abs(t.coordinates[0] - value.coordinates[0]) < 3 && Math.abs(t.coordinates[1] - value.coordinates[1]) < 3));
-  }, [cryptoPrices, macro, demographics, predictions, fearGreed]);
+  }, [cryptoPrices, macro, demographics, predictions, fearGreed, regionalIntel]);
+
+  /* ─── Handlers ─── */
+  const handleMapClick = (pt: MapPoint) => {
+    if (pt.id && regionalIntel[pt.id]) {
+      const intel = regionalIntel[pt.id] as any;
+      setSelectedDossier({
+        id: pt.id,
+        name: intel.name || pt.label,
+        news: safeArray(intel.news),
+        economic_posture: intel.economic_posture || '',
+        trajectory: intel.trajectory || ''
+      });
+    }
+  };
 
   /* ─── Loading ─── */
   if (loading) {
@@ -405,8 +445,8 @@ export default function WorldIntelligence() {
               <RiskIndexBar fearGreed={fearGreed} macro={macro} cryptoSignal={cryptoSignal} />
 
               <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-5">
-                <HudPanel title="Global Threat Map" icon={Globe2} color="cyan">
-                  <HeatMap2D points={mapPoints} height={480} />
+                <HudPanel title="Global Threat Map (Click S.I.C regions for dossier)" icon={Globe2} color="cyan">
+                  <HeatMap2D points={mapPoints} height={480} onPointClick={handleMapClick} />
                 </HudPanel>
                 <div className="flex flex-col gap-5">
                   <HudPanel title="Intelligence Brief" icon={Activity} color="emerald">
@@ -668,29 +708,7 @@ export default function WorldIntelligence() {
                 )}
               </div>
 
-              {/* Regional Intel */}
-              {Object.keys(regionalIntel).length > 0 && (
-                <HudPanel title="Regional Market Intelligence" icon={Globe2} color="purple" collapsible defaultOpen={false}>
-                  <div className="space-y-3">
-                    {Object.entries(regionalIntel).map(([key, val]) => {
-                      const section = safeObj(val as any);
-                      const results = safeArray(section.results);
-                      if (results.length === 0) return null;
-                      return (
-                        <div key={key}>
-                          <div className="text-[8px] font-mono text-purple-400/60 uppercase tracking-wider mb-1.5">{section.label || key}</div>
-                          {results.map((r: any, i: number) => (
-                            <div key={i} className="py-1.5 pl-3 border-l border-white/5 mb-1">
-                              <div className="text-[10px] font-mono text-white/50">{r.title}</div>
-                              {r.snippet && <p className="text-[8px] text-white/25 mt-0.5">{r.snippet}</p>}
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </HudPanel>
-              )}
+              {/* Legacy Regional Intel mapping (removed in favor of map click-to-dive) */}
             </section>
 
             {/* ═══ PREDICTIONS ═══ */}
@@ -700,6 +718,30 @@ export default function WorldIntelligence() {
                 <span className="text-[11px] font-mono text-purple-400 tracking-[0.15em] font-bold uppercase">Predictive Intelligence</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-purple-500/20 to-transparent" />
               </div>
+
+              {Object.keys(aynPredictions).length > 0 && (
+                <HudPanel title="AYN AI PREDICTIONS (Global Macro Trajectory)" icon={Cpu} color="cyan">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {Object.entries(aynPredictions).map(([timeframe, prediction]) => (
+                      <div key={timeframe} className="bg-cyan-500/5 border border-cyan-500/20 p-5 rounded-lg relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-400 to-blue-500" />
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-8 h-8 rounded bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                            <Clock className="w-4 h-4 text-cyan-400" />
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-cyan-400/60 uppercase tracking-widest">AYN FORECAST</div>
+                            <div className="text-xl font-bold font-mono text-white shadow-black drop-shadow-md">{timeframe}</div>
+                          </div>
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-cyan-100/80 font-mono pr-2">
+                          {prediction as string}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </HudPanel>
+              )}
 
               <HudPanel title="Polymarket Probabilities" icon={Target} color="purple">
                 {predictions.length > 0 ? (
@@ -736,6 +778,82 @@ export default function WorldIntelligence() {
           </div>
         </div>
       </div>
+
+      {/* ═══ DEEP DIVE DOSSIER OVERLAY ═══ */}
+      <AnimatePresence>
+        {selectedDossier && (
+          <motion.div 
+            initial={{ opacity: 0, x: 400 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            exit={{ opacity: 0, x: 400 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-[480px] bg-black/95 backdrop-blur-2xl border-l border-cyan-500/30 z-[100] shadow-[0_0_80px_rgba(0,255,200,0.15)] flex flex-col"
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-white/10 shrink-0 bg-gradient-to-b from-cyan-900/20 to-transparent flex justify-between items-start">
+              <div>
+                <div className="text-[10px] font-mono text-cyan-400/80 uppercase tracking-widest mb-1 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" /> S.I.C. INTELLIGENCE DOSSIER
+                </div>
+                <h2 className="text-3xl font-mono font-bold text-white tracking-tight">{selectedDossier.name}</h2>
+              </div>
+              <button 
+                onClick={() => setSelectedDossier(null)} 
+                className="p-2 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+              >
+                <div className="w-5 h-5 flex items-center justify-center font-mono text-xl leading-none">&times;</div>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth scrollbar-thin">
+              
+              {/* Economic Posture */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-mono font-bold text-emerald-400 tracking-widest uppercase">Economic Posture</h3>
+                </div>
+                <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-lg">
+                  <p className="text-[11px] font-mono leading-relaxed text-emerald-100/80 break-words">{selectedDossier.economic_posture}</p>
+                </div>
+              </div>
+
+              {/* Trajectory */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-4 h-4 text-purple-400" />
+                  <h3 className="text-sm font-mono font-bold text-purple-400 tracking-widest uppercase">Forward Trajectory</h3>
+                </div>
+                <div className="bg-purple-500/5 border border-purple-500/20 p-4 rounded-lg">
+                  <p className="text-[11px] font-mono leading-relaxed text-purple-100/80 break-words">{selectedDossier.trajectory}</p>
+                </div>
+              </div>
+
+              {/* Breaking News */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Newspaper className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-sm font-mono font-bold text-cyan-400 tracking-widest uppercase">Live Intelligence Feed</h3>
+                </div>
+                <div className="space-y-3">
+                  {selectedDossier.news.length > 0 ? selectedDossier.news.map((item, idx) => (
+                    <a key={idx} href={item.url} target="_blank" rel="noopener noreferrer" className="block bg-black/40 border border-white/5 hover:border-cyan-500/30 p-4 rounded-lg group transition-colors">
+                      <h4 className="text-[12px] font-bold text-white/90 group-hover:text-cyan-400 transition-colors leading-snug">{item.title}</h4>
+                      {item.description && (
+                        <p className="text-[10px] text-white/40 mt-2 line-clamp-2 leading-relaxed">{item.description}</p>
+                      )}
+                    </a>
+                  )) : (
+                    <p className="text-[11px] text-white/30 font-mono italic">No recent intel gathered.</p>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
