@@ -9,7 +9,11 @@ interface LandingChatInputProps {
   onPlaceholderChange?: () => void;
 }
 
-const placeholders = ["What's on your mind?", "Ask AYN anything...", "How can I help you today?"];
+const placeholders = [
+  "What's happening with oil prices?",
+  "Analyze this market for me...",
+  "What are the risks for my business?"
+];
 
 export const LandingChatInput: React.FC<LandingChatInputProps> = ({ onSendAttempt, onPlaceholderChange }) => {
   const [inputMessage, setInputMessage] = useState('');

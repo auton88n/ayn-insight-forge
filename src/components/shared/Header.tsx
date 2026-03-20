@@ -119,8 +119,7 @@ export const Header = () => {
                 </div> :
 
               <Button variant="default" size="sm" onClick={() => setShowAuthModal(true)} className="gap-1.5">
-                  
-                  {language === 'ar' ? 'دخول' : language === 'fr' ? 'Connexion' : 'Sign In'}
+                  {language === 'ar' ? 'ابدأ مجاناً' : language === 'fr' ? 'Commencer gratuitement' : 'Get Started Free'}
                 </Button>
               }
             </div>
@@ -177,7 +176,7 @@ export const Header = () => {
                     <div className="px-3">
                         <Button className="w-full" onClick={() => setShowAuthModal(true)}>
                           <LogIn className="h-4 w-4 mr-2" />
-                          {language === 'ar' ? 'دخول' : language === 'fr' ? 'Connexion' : 'Sign In'}
+                          {language === 'ar' ? 'ابدأ مجاناً' : language === 'fr' ? 'Commencer gratuitement' : 'Get Started Free'}
                         </Button>
                       </div>
                     }

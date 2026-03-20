@@ -53,19 +53,19 @@ const LandingPage = memo(() => {
   // FAQ Schema for rich snippets
   const faqSchema = createFAQSchema([{
     question: "What is AYN AI?",
-    answer: "AYN AI is a perceptive artificial intelligence platform that learns your habits, understands your goals, and helps you succeed. It offers AI employees, custom AI agents, and business automation tools."
+    answer: "AYN (عين) is a business intelligence AI that monitors global markets, analyzes geopolitical risks, tracks supply chains, and delivers real-time insights to help you make better decisions."
   }, {
-    question: "How does AYN AI learn my preferences?",
-    answer: "AYN AI uses advanced machine learning to analyze your interactions, understand your communication style, and adapt to your workflow patterns over time."
+    question: "What can I ask AYN?",
+    answer: "You can ask AYN about commodity prices, market trends, country risk profiles, supply chain disruptions, trading signals, geopolitical events, and business strategy — it synthesizes live intelligence and gives you direct answers."
   }, {
-    question: "What services does AYN AI offer?",
-    answer: "AYN AI offers AI employees for 24/7 customer support, custom AI agents for business automation, content creator websites, and smart ticketing systems."
+    question: "Does AYN support Arabic?",
+    answer: "Yes. AYN (عين — Arabic for 'eye') is fully bilingual in Arabic and English, built for the MENA market and beyond."
   }, {
-    question: "Is AYN AI available in Arabic?",
-    answer: "Yes! AYN AI (عين) is fully multilingual with native support for Arabic, English, and French, making it ideal for Middle Eastern and international businesses."
+    question: "Is AYN free to try?",
+    answer: "Yes — AYN has a free tier that lets you start immediately with no credit card required."
   }]);
   return <>
-    <SEO title="AYN AI - Personal AI Assistant That Learns You | Smart AI Platform" description="AYN AI is a perceptive artificial intelligence that learns your habits, understands your goals, and helps you succeed. AI employees, custom AI agents, business automation, and more." canonical="/" keywords="AYN AI, AYN artificial intelligence, personal AI assistant, AI that learns you, perceptive AI, smart AI platform, AI employees, AI agents, business automation, Arabic AI assistant, عين AI, machine learning assistant, AI productivity tools, custom AI bots, virtual employees" jsonLd={{
+    <SEO title="AYN AI — Business Intelligence & Market Analysis | Real-Time AI" description="AYN monitors global markets, analyzes geopolitical risks, and delivers instant business intelligence. AI-powered insights for smarter decisions." canonical="/" keywords="AYN AI, business intelligence AI, market analysis AI, geopolitical risk analysis, AI market monitor, real-time market intelligence, AYN artificial intelligence, عين AI, Arabic AI assistant, supply chain intelligence, trading intelligence AI" jsonLd={{
       '@graph': [organizationSchema, websiteSchema, softwareApplicationSchema, faqSchema]
     }} />
     <div dir={direction} className="min-h-screen bg-background scroll-smooth">
@@ -89,11 +89,11 @@ const LandingPage = memo(() => {
             </span>
 
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 md:mb-6">
-              {language === 'ar' ? 'ذكاء اصطناعي لأعمالك' : language === 'fr' ? 'IA pour Votre Entreprise' : 'AI Solutions for Your Business'}
+              {language === 'ar' ? 'ذكاء أعمال لا يتوقف' : language === 'fr' ? 'Intelligence qui ne s\'arrête jamais' : 'Business Intelligence That Never Sleeps'}
             </h2>
 
             <p className="text-base md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10 md:mb-16">
-              {language === 'ar' ? 'AYN يتعرّف عليك ويساعدك في أتمتة أعمالك وتوسيع نطاقها بالذكاء الاصطناعي.' : language === 'fr' ? 'AYN apprend vos habitudes et vous aide à automatiser et développer votre entreprise avec l\'IA.' : 'AYN learns your habits and helps you automate and scale your business with AI.'}
+              {language === 'ar' ? 'AYN يراقب الأسواق ويحلل المخاطر ويقدم لك الأجوبة التي تحتاجها — على الفور.' : language === 'fr' ? 'AYN surveille les marchés, analyse les risques et vous donne les réponses dont vous avez besoin — immédiatement.' : 'AYN monitors markets, analyzes risks, and gives you the answers you need — instantly.'}
             </p>
           </ScrollReveal>
 
