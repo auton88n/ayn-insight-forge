@@ -56,7 +56,6 @@ export const Hero = memo(({ onGetStarted }: HeroProps) => {
             ? 'Intelligence d\'affaires réelle — marchés, risques et décisions stratégiques.'
             : 'Real business intelligence — markets, risks, and decisions that matter.'}
         </motion.p>
-        </motion.p>
       </div>
 
       {/* Central eye — clean, no floating cards */}
