@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowLeft, RefreshCw, Clock, AlertTriangle, TrendingUp, Shield, Zap, Ship, Cpu,
   Globe2, BarChart3, Flame, Radio, Activity, ChevronDown, ChevronUp, Target,
-  DollarSign, Newspaper, Eye, Crosshair, ChevronRight, Layers
+  DollarSign, Newspaper, Eye, Crosshair, ChevronRight, Layers, Users, Plane
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -12,17 +12,12 @@ import { format } from 'date-fns';
 import type { Json } from '@/integrations/supabase/types';
 import { HeatMap2D, MapPoint } from '@/components/dashboard/HeatMap2D';
 
-/* ─── Interfaces ─── */
+/* ─── Types ─── */
 interface MarketSnapshot { snapshot: Json; fetched_at: string; sources_used: string[] | null; fetch_errors: string[] | null; }
-interface GeopoliticalData { active_conflicts: Json; trade_tensions: Json; risk_by_region: Json; intelligence_brief: Json; }
-interface SupplyChainData { bottlenecks: Json; risk_alerts: Json; intelligence_brief: Json; }
-interface BusinessNews { headlines: Json; sentiment: string | null; summary: string | null; sector: string | null; fetched_at: string | null; }
-interface MarketPrices { indices: Json; energy: Json; metals: Json; crypto: Json; currencies: Json; narrative: Json; }
-interface TechDisruption { ai_developments: Json; emerging_tech: Json; intelligence_brief: Json; }
 
 /* ─── Helpers ─── */
-function safeArray(val: Json | null | undefined): any[] { if (Array.isArray(val)) return val; return []; }
-function safeObj(val: Json | null | undefined): Record<string, any> { if (val && typeof val === 'object' && !Array.isArray(val)) return val as Record<string, any>; return {}; }
+function safeArray(val: any): any[] { if (Array.isArray(val)) return val; return []; }
+function safeObj(val: any): Record<string, any> { if (val && typeof val === 'object' && !Array.isArray(val)) return val; return {}; }
 function timeAgo(dateStr: string | null): string {
   if (!dateStr) return '';
   try {
@@ -41,14 +36,14 @@ function timeAgo(dateStr: string | null): string {
 const categories = [
   { id: 'overview', label: 'Overview', icon: Eye },
   { id: 'markets', label: 'Markets', icon: BarChart3 },
-  { id: 'geopolitics', label: 'Geopolitics', icon: AlertTriangle },
-  { id: 'supply', label: 'Supply Chain', icon: Ship },
-  { id: 'tech', label: 'Tech & AI', icon: Cpu },
-  { id: 'news', label: 'News', icon: Newspaper },
+  { id: 'crypto', label: 'Crypto', icon: Zap },
+  { id: 'macro', label: 'Macro', icon: TrendingUp },
+  { id: 'demographics', label: 'Demographics', icon: Users },
+  { id: 'tourism', label: 'Tourism', icon: Plane },
   { id: 'predictions', label: 'Predictions', icon: Target },
 ] as const;
 
-/* ─── Reusable UI Blocks ─── */
+/* ─── Reusable UI ─── */
 function HudPanel({ title, icon: Icon, children, color = 'cyan', collapsible = false, defaultOpen = true, id }: {
   title: string; icon: any; children: React.ReactNode; color?: 'cyan' | 'red' | 'amber' | 'emerald' | 'purple' | 'blue';
   collapsible?: boolean; defaultOpen?: boolean; id?: string;
@@ -87,37 +82,13 @@ function HudPanel({ title, icon: Icon, children, color = 'cyan', collapsible = f
   );
 }
 
-function MarketTicker({ indices, energy, metals, crypto, currencies }: { indices: any[]; energy: any[]; metals: any[]; crypto: any[]; currencies: any[] }) {
-  const items = [...indices, ...energy, ...metals, ...crypto, ...currencies].slice(0, 20);
-  if (items.length === 0) return null;
-  return (
-    <div className="relative overflow-hidden border-b border-cyan-500/10 bg-black/70 shrink-0">
-      <div className="flex animate-[scroll_80s_linear_infinite] gap-8 py-2 px-4 whitespace-nowrap">
-        {[...items, ...items].map((item: any, i) => {
-          const v = safeObj(item);
-          const change = parseFloat(v.change_pct || v.change || '0') || 0;
-          return (
-            <span key={i} className="inline-flex items-center gap-2 text-[10px] font-mono">
-              <span className="text-white/40">{v.name || v.symbol || v.commodity || v.metal || v.pair}</span>
-              <span className="text-white/80 font-semibold">{v.price || v.value || v.rate || '—'}</span>
-              <span className={cn("font-bold", change > 0 ? "text-emerald-400" : change < 0 ? "text-red-400" : "text-white/20")}>
-                {change > 0 ? '▲' : change < 0 ? '▼' : '–'}{Math.abs(change).toFixed(2)}%
-              </span>
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function DataRow({ label, value, change, prefix = '' }: { label: string; value: string | number; change?: number; prefix?: string; }) {
+function DataRow({ label, value, change, prefix = '', suffix = '' }: { label: string; value: string | number; change?: number; prefix?: string; suffix?: string }) {
   return (
     <div className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0 group hover:bg-white/[0.02] transition-colors px-1 rounded">
       <span className="text-[10px] font-mono text-white/40 group-hover:text-white/60 transition-colors truncate max-w-[60%]">{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-[11px] font-mono text-white/80 font-semibold">{prefix}{value}</span>
-        {change !== undefined && (
+        <span className="text-[11px] font-mono text-white/80 font-semibold">{prefix}{value}{suffix}</span>
+        {change !== undefined && change !== null && !isNaN(change) && (
           <span className={cn("text-[9px] font-mono font-bold px-1 py-0.5 rounded", change > 0 ? "text-emerald-400 bg-emerald-400/10" : change < 0 ? "text-red-400 bg-red-400/10" : "text-white/20")}>
             {change > 0 ? '+' : ''}{change.toFixed(2)}%
           </span>
@@ -127,21 +98,8 @@ function DataRow({ label, value, change, prefix = '' }: { label: string; value: 
   );
 }
 
-function AlertRow({ text, severity = 'medium' }: { text: string; severity?: string }) {
-  const isHigh = severity === 'high' || severity === 'critical';
-  return (
-    <div className={cn("flex items-start gap-2.5 py-2 px-2 border-b border-white/5 last:border-0 rounded transition-colors", isHigh ? "hover:bg-red-500/5" : "hover:bg-amber-500/5")}>
-      <div className="relative mt-1.5 shrink-0">
-        <div className={cn("w-1.5 h-1.5 rounded-full", isHigh ? "bg-red-400 shadow-[0_0_6px_rgba(239,68,68,0.5)]" : "bg-amber-400 shadow-[0_0_4px_rgba(245,158,11,0.4)]")} />
-        {isHigh && <div className="absolute inset-0 w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />}
-      </div>
-      <p className="text-[10px] font-mono text-white/60 leading-relaxed">{text}</p>
-    </div>
-  );
-}
-
 function BriefLine({ text }: { text: string }) {
-  const isAlert = text.includes('⚠') || text.includes('🔴') || text.includes('PREDICTION') || text.includes('ALERT');
+  const isAlert = text.includes('⚠') || text.includes('🔴') || text.includes('PREDICTION') || text.includes('ALERT') || text.includes('FEAR') || text.includes('INVERTED');
   return (
     <div className={cn("text-[10px] font-mono leading-relaxed py-2 px-3 border-l-2 mb-1 rounded-r", isAlert ? "border-l-red-500/60 text-red-300/70 bg-red-500/5" : "border-l-cyan-400/30 text-cyan-100/60 bg-cyan-400/5")}>
       {text}
@@ -149,58 +107,107 @@ function BriefLine({ text }: { text: string }) {
   );
 }
 
-/* ─── Risk Index Bar ─── */
-function RiskIndexBar({ geopolitical, prices, supplyChain, tech, snapshot }: {
-  geopolitical: GeopoliticalData | null; prices: MarketPrices | null;
-  supplyChain: SupplyChainData | null; tech: TechDisruption | null; snapshot: MarketSnapshot | null;
-}) {
-  const calcRisk = (count: number, thresholds: [number, number, number]) => {
-    if (count >= thresholds[2]) return { level: 'CRITICAL', color: 'bg-red-500', text: 'text-red-400', glow: 'shadow-red-500/20' };
-    if (count >= thresholds[1]) return { level: 'HIGH', color: 'bg-orange-500', text: 'text-orange-400', glow: 'shadow-orange-500/20' };
-    if (count >= thresholds[0]) return { level: 'MEDIUM', color: 'bg-amber-500', text: 'text-amber-400', glow: 'shadow-amber-500/20' };
-    return { level: 'LOW', color: 'bg-emerald-500', text: 'text-emerald-400', glow: 'shadow-emerald-500/20' };
-  };
+function MacroIndicator({ name, value, trend, change, signal }: { name: string; value: any; trend?: string; change?: any; signal?: string }) {
+  const trendColor = trend === 'rising' ? 'text-red-400' : trend === 'falling' ? 'text-emerald-400' : 'text-white/30';
+  return (
+    <div className="bg-white/[0.02] border border-white/5 rounded-lg p-3 hover:border-white/10 transition-colors">
+      <div className="text-[8px] font-mono text-white/30 uppercase tracking-wider mb-1">{name}</div>
+      <div className="flex items-baseline gap-2">
+        <span className="text-lg font-mono font-bold text-white/90">{typeof value === 'number' ? value.toFixed(2) : value}</span>
+        {trend && <span className={cn("text-[9px] font-mono font-bold uppercase", trendColor)}>{trend}</span>}
+      </div>
+      {change !== null && change !== undefined && <div className="text-[8px] font-mono text-white/20 mt-0.5">Δ {typeof change === 'number' ? change.toFixed(4) : change}</div>}
+      {signal && <div className="text-[8px] font-mono text-cyan-400/50 mt-1 leading-relaxed">{signal}</div>}
+    </div>
+  );
+}
 
-  const geoRisk = calcRisk(safeArray(geopolitical?.active_conflicts).length + safeArray(geopolitical?.trade_tensions).length, [2, 4, 6]);
-  const scRisk = calcRisk(safeArray(supplyChain?.risk_alerts).length + safeArray(supplyChain?.bottlenecks).length, [2, 4, 6]);
-  const techRisk = calcRisk(safeArray(tech?.ai_developments).length + safeArray(tech?.emerging_tech).length, [3, 5, 8]);
+/* ─── Market Ticker (from snapshot data) ─── */
+function MarketTicker({ cryptoPrices, macro }: { cryptoPrices: Record<string, any>; macro: Record<string, any> }) {
+  const items: { name: string; value: string; change: number }[] = [];
 
-  // Market risk from average absolute change
-  const allPrices = [...safeArray(prices?.indices), ...safeArray(prices?.energy), ...safeArray(prices?.crypto)];
-  const avgChange = allPrices.length > 0 ? allPrices.reduce((sum, p) => sum + Math.abs(parseFloat(safeObj(p).change_pct || '0') || 0), 0) / allPrices.length : 0;
-  const marketRisk = calcRisk(avgChange, [1, 2.5, 5]);
+  // Add crypto
+  Object.entries(cryptoPrices).forEach(([sym, data]) => {
+    const d = safeObj(data);
+    items.push({ name: sym, value: `$${parseFloat(d.price || 0).toLocaleString()}`, change: parseFloat(d.change_24h_pct || 0) });
+  });
+
+  // Add key macro
+  const macroKeys = ['fed_funds_rate', 'inflation_cpi', 'unemployment_rate', 'treasury_10yr', 'treasury_2yr'];
+  macroKeys.forEach(k => {
+    const d = safeObj(macro[k]);
+    if (d.value) items.push({ name: d.name || k, value: `${d.value}`, change: d.change || 0 });
+  });
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="relative overflow-hidden border-b border-cyan-500/10 bg-black/70 shrink-0">
+      <div className="flex animate-[scroll_80s_linear_infinite] gap-8 py-2 px-4 whitespace-nowrap">
+        {[...items, ...items].map((item, i) => (
+          <span key={i} className="inline-flex items-center gap-2 text-[10px] font-mono">
+            <span className="text-white/40">{item.name}</span>
+            <span className="text-white/80 font-semibold">{item.value}</span>
+            <span className={cn("font-bold", item.change > 0 ? "text-emerald-400" : item.change < 0 ? "text-red-400" : "text-white/20")}>
+              {item.change > 0 ? '▲' : item.change < 0 ? '▼' : '–'}{Math.abs(item.change).toFixed(2)}%
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Risk Index from snapshot data ─── */
+function RiskIndexBar({ fearGreed, macro, cryptoSignal }: { fearGreed: Record<string, any>; macro: Record<string, any>; cryptoSignal: string }) {
+  const fgValue = fearGreed.value as number || 50;
+  const yieldCurve = safeObj(macro.yield_curve);
 
   const items = [
-    { label: 'Geopolitical', icon: AlertTriangle, ...geoRisk },
-    { label: 'Market', icon: TrendingUp, ...marketRisk },
-    { label: 'Supply Chain', icon: Ship, ...scRisk },
-    { label: 'Tech Disruption', icon: Cpu, ...techRisk },
+    {
+      label: 'Sentiment',
+      icon: Activity,
+      level: fgValue <= 25 ? 'EXTREME FEAR' : fgValue <= 45 ? 'FEAR' : fgValue <= 55 ? 'NEUTRAL' : fgValue <= 75 ? 'GREED' : 'EXTREME GREED',
+      color: fgValue <= 25 ? 'text-red-400 bg-red-500/10 shadow-red-500/20' : fgValue <= 45 ? 'text-orange-400 bg-orange-500/10 shadow-orange-500/20' : fgValue <= 55 ? 'text-amber-400 bg-amber-500/10 shadow-amber-500/20' : 'text-emerald-400 bg-emerald-500/10 shadow-emerald-500/20',
+      value: `${fgValue}`,
+    },
+    {
+      label: 'Yield Curve',
+      icon: TrendingUp,
+      level: yieldCurve.inverted ? 'INVERTED' : parseFloat(yieldCurve.spread || '1') < 0.5 ? 'FLAT' : 'NORMAL',
+      color: yieldCurve.inverted ? 'text-red-400 bg-red-500/10 shadow-red-500/20' : parseFloat(yieldCurve.spread || '1') < 0.5 ? 'text-amber-400 bg-amber-500/10 shadow-amber-500/20' : 'text-emerald-400 bg-emerald-500/10 shadow-emerald-500/20',
+      value: `${yieldCurve.spread || '—'}`,
+    },
+    {
+      label: 'Crypto',
+      icon: Zap,
+      level: cryptoSignal.includes('HIGH') ? 'RISK-OFF' : cryptoSignal.includes('LOW') ? 'RISK-ON' : 'MODERATE',
+      color: cryptoSignal.includes('HIGH') ? 'text-amber-400 bg-amber-500/10 shadow-amber-500/20' : cryptoSignal.includes('LOW') ? 'text-emerald-400 bg-emerald-500/10 shadow-emerald-500/20' : 'text-blue-400 bg-blue-500/10 shadow-blue-500/20',
+      value: '',
+    },
+    {
+      label: 'Fed Rate',
+      icon: DollarSign,
+      level: `${safeObj(macro.fed_funds_rate).value || '—'}%`,
+      color: 'text-purple-400 bg-purple-500/10 shadow-purple-500/20',
+      value: safeObj(macro.fed_funds_rate).trend || '',
+    },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
       {items.map(item => (
-        <div key={item.label} className={cn("flex items-center gap-3 bg-black/40 border border-white/5 rounded-lg px-3 py-2.5 shadow-lg", item.glow)}>
-          <item.icon className={cn("w-4 h-4 shrink-0", item.text)} />
+        <div key={item.label} className={cn("flex items-center gap-3 bg-black/40 border border-white/5 rounded-lg px-3 py-2.5 shadow-lg")}>
+          <item.icon className={cn("w-4 h-4 shrink-0", item.color.split(' ')[0])} />
           <div className="flex-1 min-w-0">
             <div className="text-[8px] font-mono text-white/30 uppercase tracking-wider mb-0.5">{item.label}</div>
-            <div className={cn("text-[11px] font-mono font-bold tracking-wider", item.text)}>{item.level}</div>
+            <div className={cn("text-[11px] font-mono font-bold tracking-wider", item.color.split(' ')[0])}>{item.level}</div>
+            {item.value && <div className="text-[8px] font-mono text-white/20">{item.value}</div>}
           </div>
-          <div className={cn("w-2 h-2 rounded-full", item.color, "shadow-[0_0_8px_currentColor]")} />
         </div>
       ))}
     </div>
   );
-}
-
-/* ─── Sentiment Badge ─── */
-function SentimentBadge({ sentiment }: { sentiment: string | null }) {
-  if (!sentiment) return null;
-  const s = sentiment.toLowerCase();
-  const config = s.includes('bull') || s.includes('positive') ? { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30', label: 'Bullish' }
-    : s.includes('bear') || s.includes('negative') ? { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/30', label: 'Bearish' }
-    : { bg: 'bg-white/5', text: 'text-white/40', border: 'border-white/10', label: 'Neutral' };
-  return <span className={cn("text-[8px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border", config.bg, config.text, config.border)}>{config.label}</span>;
 }
 
 /* ─── Main Component ─── */
@@ -210,137 +217,113 @@ export default function WorldIntelligence() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeCategory, setActiveCategory] = useState('overview');
-  const contentRef = useRef<HTMLDivElement>(null);
 
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
-  const [geopolitical, setGeopolitical] = useState<GeopoliticalData | null>(null);
-  const [supplyChain, setSupplyChain] = useState<SupplyChainData | null>(null);
-  const [news, setNews] = useState<BusinessNews[]>([]);
-  const [prices, setPrices] = useState<MarketPrices | null>(null);
-  const [tech, setTech] = useState<TechDisruption | null>(null);
 
-  const fetchAllData = useCallback(async () => {
-    const [snapRes, geoRes, scRes, newsRes, pricesRes, techRes] = await Promise.all([
-      supabase.from('ayn_market_snapshot').select('*').eq('singleton_key', 1).maybeSingle(),
-      supabase.from('ayn_geopolitical').select('*').eq('singleton_key', 1).maybeSingle(),
-      supabase.from('ayn_supply_chain').select('*').eq('singleton_key', 1).maybeSingle(),
-      supabase.from('ayn_business_news').select('*').order('fetched_at', { ascending: false }).limit(5),
-      supabase.from('ayn_market_prices').select('*').eq('singleton_key', 1).maybeSingle(),
-      supabase.from('ayn_tech_disruption').select('*').eq('singleton_key', 1).maybeSingle(),
-    ]);
-    if (snapRes.data) setSnapshot(snapRes.data as unknown as MarketSnapshot);
-    if (geoRes.data) setGeopolitical(geoRes.data as unknown as GeopoliticalData);
-    if (scRes.data) setSupplyChain(scRes.data as unknown as SupplyChainData);
-    if (newsRes.data) setNews(newsRes.data as unknown as BusinessNews[]);
-    if (pricesRes.data) setPrices(pricesRes.data as unknown as MarketPrices);
-    if (techRes.data) setTech(techRes.data as unknown as TechDisruption);
+  const fetchData = useCallback(async () => {
+    const { data } = await supabase.from('ayn_market_snapshot').select('*').eq('singleton_key', 1).maybeSingle();
+    if (data) setSnapshot(data as unknown as MarketSnapshot);
   }, []);
 
   useEffect(() => {
-    fetchAllData().finally(() => setLoading(false));
+    fetchData().finally(() => setLoading(false));
     const channel = supabase.channel('world-intel-realtime')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ayn_market_snapshot' }, (payload) => setSnapshot(payload.new as unknown as MarketSnapshot))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ayn_geopolitical' }, (payload) => setGeopolitical(payload.new as unknown as GeopoliticalData))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ayn_market_prices' }, (payload) => setPrices(payload.new as unknown as MarketPrices))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ayn_supply_chain' }, (payload) => setSupplyChain(payload.new as unknown as SupplyChainData))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ayn_tech_disruption' }, (payload) => setTech(payload.new as unknown as TechDisruption))
       .subscribe();
     const clockInterval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => { supabase.removeChannel(channel); clearInterval(clockInterval); };
-  }, [fetchAllData]);
+  }, [fetchData]);
 
-  const handleRefresh = async () => { setRefreshing(true); await fetchAllData(); setRefreshing(false); };
+  const handleRefresh = async () => { setRefreshing(true); await fetchData(); setRefreshing(false); };
+  const scrollTo = (id: string) => { setActiveCategory(id); document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 
-  const scrollTo = (id: string) => {
-    setActiveCategory(id);
-    document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  /* ─── Extract data from snapshot blob ─── */
+  const snap = useMemo(() => safeObj(snapshot?.snapshot), [snapshot]);
 
-  // Data derivations
+  // Macro data (FRED)
+  const macro = useMemo(() => safeObj(snap.macro), [snap]);
+
+  // Market data
+  const stocks = useMemo(() => safeObj(safeObj(snap.markets).stocks), [snap]);
+  const topGainers = useMemo(() => safeArray(stocks.top_gainers), [stocks]);
+  const topLosers = useMemo(() => safeArray(stocks.top_losers), [stocks]);
+  const mostActive = useMemo(() => safeArray(stocks.most_active), [stocks]);
+  const goldData = useMemo(() => safeObj(stocks.gold), [stocks]);
+
+  // Crypto data
+  const cryptoSection = useMemo(() => safeObj(safeObj(snap.markets).crypto), [snap]);
+  const cryptoPrices = useMemo(() => safeObj(cryptoSection.crypto_prices), [cryptoSection]);
+  const btcDominance = useMemo(() => cryptoSection.btc_dominance_proxy || '—', [cryptoSection]);
+  const cryptoSignal = useMemo(() => (cryptoSection.crypto_signal || '') as string, [cryptoSection]);
+  const marketBreadth = useMemo(() => safeObj(cryptoSection.market_breadth), [cryptoSection]);
+
+  // Sentiment
+  const fearGreed = useMemo(() => safeObj(safeObj(snap.markets).sentiment), [snap]);
+
+  // Predictions
+  const predictions = useMemo(() => safeArray(safeObj(snap.prediction_markets).prediction_markets), [snap]);
+
+  // Geopolitical
+  const geopolitical = useMemo(() => safeObj(snap.geopolitical), [snap]);
+
+  // Institutional
+  const institutional = useMemo(() => safeObj(snap.institutional_signals), [snap]);
+  const institutionalNews = useMemo(() => safeArray(institutional.institutional_news), [institutional]);
+
+  // Demographics
+  const demographics = useMemo(() => safeObj(snap.demographics), [snap]);
+  const demoInsights = useMemo(() => safeArray(demographics.insights), [demographics]);
+
+  // Tourism
+  const tourism = useMemo(() => safeObj(snap.tourism_market), [snap]);
+
+  // Regional intel
+  const regionalIntel = useMemo(() => safeObj(snap.regional_intel), [snap]);
+
+  // Intelligence brief
   const briefItems = useMemo(() => {
-    const items: string[] = [];
-    if (snapshot?.snapshot) {
-      const b = safeArray(safeObj(snapshot.snapshot).intelligence_brief);
-      if (b.length) items.push(...b);
-    }
-    if (geopolitical?.intelligence_brief) items.push(...safeArray(geopolitical.intelligence_brief).slice(0, 3));
-    if (supplyChain?.intelligence_brief) items.push(...safeArray(supplyChain.intelligence_brief).slice(0, 2));
-    if (tech?.intelligence_brief) items.push(...safeArray(tech.intelligence_brief).slice(0, 2));
-    return items.length > 0 ? items : ["Intelligence arrays idle. Standing by."];
-  }, [snapshot, geopolitical, supplyChain, tech]);
+    const items = safeArray(snap.intelligence_brief);
+    return items.length > 0 ? items : ["Waiting for intelligence data. Trigger ayn-pulse-engine to populate."];
+  }, [snap]);
 
-  const indices = useMemo(() => safeArray(prices?.indices), [prices]);
-  const energy = useMemo(() => safeArray(prices?.energy), [prices]);
-  const metals = useMemo(() => safeArray(prices?.metals), [prices]);
-  const crypto = useMemo(() => safeArray(prices?.crypto), [prices]);
-  const currencies = useMemo(() => safeArray(prices?.currencies), [prices]);
-  const narrative = useMemo(() => safeObj(prices?.narrative), [prices]);
+  // Sources used
+  const sourcesUsed = useMemo(() => snapshot?.sources_used || [], [snapshot]);
 
-  const conflicts = useMemo(() => safeArray(geopolitical?.active_conflicts), [geopolitical]);
-  const tensions = useMemo(() => safeArray(geopolitical?.trade_tensions), [geopolitical]);
-  const riskByRegion = useMemo(() => safeObj(geopolitical?.risk_by_region), [geopolitical]);
-
-  const scBottlenecks = useMemo(() => safeArray(supplyChain?.bottlenecks), [supplyChain]);
-  const scAlerts = useMemo(() => safeArray(supplyChain?.risk_alerts), [supplyChain]);
-
-  const aiDev = useMemo(() => safeArray(tech?.ai_developments), [tech]);
-  const emergingTech = useMemo(() => safeArray(tech?.emerging_tech), [tech]);
-
-  const predictions = useMemo(() => {
-    if (!snapshot?.snapshot) return [];
-    return safeArray(safeObj(safeObj(snapshot.snapshot).prediction_markets).prediction_markets);
-  }, [snapshot]);
-
-  // Build map points from ALL data sources
+  /* ─── Map Points ─── */
   const mapPoints: MapPoint[] = useMemo(() => {
     const pts: MapPoint[] = [];
 
-    // Conflicts
-    conflicts.forEach(c => {
-      const obj = safeObj(c);
-      const name = (obj.name || obj.title || obj.description || '').toLowerCase();
-      if (name.includes('ukraine') || name.includes('russia')) pts.push({ coordinates: [33.0, 48.0], label: "UKRAINE/RUSSIA", risk: "critical", category: "Conflict", detail: obj.description || name });
-      else if (name.includes('gaza') || name.includes('israel') || name.includes('palestine')) pts.push({ coordinates: [34.5, 31.5], label: "GAZA", risk: "critical", category: "Conflict", detail: obj.description || name });
-      else if (name.includes('yemen') || name.includes('houthi')) pts.push({ coordinates: [44.2, 15.4], label: "YEMEN", risk: "high", category: "Conflict", detail: obj.description || name });
-      else if (name.includes('sudan')) pts.push({ coordinates: [32.5, 15.6], label: "SUDAN", risk: "high", category: "Conflict", detail: obj.description || name });
-      else if (name.includes('taiwan') || name.includes('china')) pts.push({ coordinates: [120.0, 24.0], label: "TAIWAN STRAIT", risk: "alert", category: "Military", detail: obj.description || name });
-      else if (name.includes('syria')) pts.push({ coordinates: [38.0, 35.0], label: "SYRIA", risk: "high", category: "Conflict", detail: obj.description || name });
-    });
+    // Key geopolitical hotspots
+    pts.push({ coordinates: [33.0, 48.0], label: "UKRAINE/RUSSIA", risk: "critical", category: "Conflict", detail: "Active conflict zone" });
+    pts.push({ coordinates: [34.5, 31.5], label: "GAZA/ISRAEL", risk: "critical", category: "Conflict", detail: "Active conflict zone" });
+    pts.push({ coordinates: [44.2, 15.4], label: "YEMEN", risk: "high", category: "Conflict", detail: "Houthi maritime disruption" });
 
-    // Supply chain bottlenecks
-    scBottlenecks.forEach(b => {
-      const obj = safeObj(b);
-      const loc = (obj.location || obj.description || '').toLowerCase();
-      if (loc.includes('suez')) pts.push({ coordinates: [32.3, 30.0], label: "SUEZ CANAL", risk: "alert", category: "Supply Chain", detail: obj.description || loc });
-      else if (loc.includes('panama')) pts.push({ coordinates: [-79.5, 9.0], label: "PANAMA CANAL", risk: "alert", category: "Supply Chain", detail: obj.description || loc });
-      else if (loc.includes('strait') || loc.includes('malacca')) pts.push({ coordinates: [101.0, 2.5], label: "MALACCA", risk: "alert", category: "Supply Chain", detail: obj.description || loc });
-      else if (loc.includes('shanghai') || loc.includes('china')) pts.push({ coordinates: [121.5, 31.2], label: "SHANGHAI PORT", risk: "stable", category: "Supply Chain", detail: obj.description || loc });
-    });
-
-    // Market centers
-    if (indices.length > 0) {
-      pts.push({ coordinates: [-74.0, 40.7], label: "NYSE", risk: "stable", category: "Market", detail: `${indices.length} indices tracked` });
-      pts.push({ coordinates: [-0.1, 51.5], label: "LSE", risk: "stable", category: "Market", detail: "London Stock Exchange" });
-      pts.push({ coordinates: [139.7, 35.7], label: "TSE", risk: "stable", category: "Market", detail: "Tokyo Stock Exchange" });
+    // Economic centers tracked by data
+    if (Object.keys(cryptoPrices).length > 0) {
+      pts.push({ coordinates: [-74.0, 40.7], label: "NYSE/WALL ST", risk: "stable", category: "Market", detail: `Fear & Greed: ${fearGreed.value || '—'}` });
+    }
+    if (Object.keys(macro).length > 0) {
+      pts.push({ coordinates: [-77.0, 38.9], label: "FED/DC", risk: "alert", category: "Policy", detail: `Fed Rate: ${safeObj(macro.fed_funds_rate).value || '—'}%` });
     }
 
-    // Predictions
+    // GCC focus (demographics/tourism data)
+    if (Object.keys(demographics).length > 0) {
+      pts.push({ coordinates: [46.7, 24.7], label: "RIYADH", risk: "stable", category: "Demographics", detail: `Saudi pop: ${safeObj(demographics.population)?.value ? (safeObj(demographics.population).value / 1e6).toFixed(1) + 'M' : 'N/A'}` });
+      pts.push({ coordinates: [55.3, 25.2], label: "DUBAI/UAE", risk: "stable", category: "Market", detail: "GCC financial hub" });
+    }
+
+    // Predictions-derived
     predictions.forEach(p => {
       const q = (p.question || '').toLowerCase();
-      if (q.includes('fed ') || q.includes('us ') || q.includes('election')) pts.push({ coordinates: [-77.0, 38.9], label: "US MACRO", detail: `${p.question} (${p.yes_probability?.toFixed(1)}%)`, risk: "alert", category: "Prediction" });
-      if (q.includes('eu ') || q.includes('europe')) pts.push({ coordinates: [4.35, 50.85], label: "EU", detail: `${p.question} (${p.yes_probability?.toFixed(1)}%)`, risk: "stable", category: "Prediction" });
+      if (q.includes('eu') || q.includes('europe')) pts.push({ coordinates: [4.35, 50.85], label: "EU", detail: `${p.question} (${p.yes_probability?.toFixed(1)}%)`, risk: "stable", category: "Prediction" });
     });
 
-    // Always show key monitoring points
-    if (pts.length < 3) {
-      pts.push({ coordinates: [35.0, 31.0], label: "MIDDLE EAST", detail: "Standing geopolitical heat monitor.", risk: "high", category: "Monitor" });
-      pts.push({ coordinates: [120.0, 24.0], label: "TAIWAN STRAIT", detail: "Ongoing maritime surveillance.", risk: "alert", category: "Monitor" });
-      pts.push({ coordinates: [33.0, 48.0], label: "E. EUROPE", detail: "Active conflict zone.", risk: "critical", category: "Monitor" });
-    }
+    // Supply chain choke points
+    pts.push({ coordinates: [32.3, 30.0], label: "SUEZ CANAL", risk: "alert", category: "Supply Chain", detail: "Key shipping corridor" });
+    pts.push({ coordinates: [101.0, 2.5], label: "MALACCA STRAIT", risk: "alert", category: "Supply Chain", detail: "Critical trade route" });
 
-    // Deduplicate by approximate coordinates
-    return pts.filter((value, index, self) => index === self.findIndex((t) => Math.abs(t.coordinates[0] - value.coordinates[0]) < 2 && Math.abs(t.coordinates[1] - value.coordinates[1]) < 2));
-  }, [conflicts, predictions, scBottlenecks, indices]);
+    return pts.filter((value, index, self) => index === self.findIndex((t) => Math.abs(t.coordinates[0] - value.coordinates[0]) < 3 && Math.abs(t.coordinates[1] - value.coordinates[1]) < 3));
+  }, [cryptoPrices, macro, demographics, predictions, fearGreed]);
 
   /* ─── Loading ─── */
   if (loading) {
@@ -361,7 +344,7 @@ export default function WorldIntelligence() {
   /* ─── Render ─── */
   return (
     <div className="min-h-screen bg-[#050508] text-white font-mono overflow-hidden flex flex-col">
-      {/* ─── HEADER ─── */}
+      {/* HEADER */}
       <header className="shrink-0 border-b border-cyan-500/10 bg-black/80 backdrop-blur-xl z-50">
         <div className="flex items-center justify-between px-4 py-2.5">
           <div className="flex items-center gap-3">
@@ -381,9 +364,8 @@ export default function WorldIntelligence() {
               <Clock className="w-3 h-3" />
               <span className="tabular-nums">{format(currentTime, 'HH:mm:ss')} UTC</span>
             </div>
-            {snapshot?.fetched_at && (
-              <span className="hidden md:block text-[9px] text-white/20">Last sweep: {timeAgo(snapshot.fetched_at)}</span>
-            )}
+            {snapshot?.fetched_at && <span className="hidden md:block text-[9px] text-white/20">Sweep: {timeAgo(snapshot.fetched_at)}</span>}
+            {sourcesUsed.length > 0 && <span className="hidden lg:block text-[8px] text-white/15">{sourcesUsed.length} sources</span>}
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
               <span className="text-[9px] font-bold text-emerald-400 tracking-wider">LIVE</span>
@@ -396,22 +378,16 @@ export default function WorldIntelligence() {
         </div>
       </header>
 
-      {/* ─── MARKET TICKER ─── */}
-      <MarketTicker indices={indices} energy={energy} metals={metals} crypto={crypto} currencies={currencies} />
+      {/* TICKER */}
+      <MarketTicker cryptoPrices={cryptoPrices} macro={macro} />
 
-      {/* ─── MAIN LAYOUT ─── */}
+      {/* MAIN LAYOUT */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <nav className="hidden md:flex flex-col w-14 bg-black/60 border-r border-white/5 shrink-0 py-3">
           {categories.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => scrollTo(cat.id)}
-              title={cat.label}
-              className={cn(
-                "flex flex-col items-center justify-center py-3 transition-all relative group",
-                activeCategory === cat.id ? "text-cyan-400" : "text-white/25 hover:text-white/50"
-              )}
+            <button key={cat.id} onClick={() => scrollTo(cat.id)} title={cat.label}
+              className={cn("flex flex-col items-center justify-center py-3 transition-all relative group", activeCategory === cat.id ? "text-cyan-400" : "text-white/25 hover:text-white/50")}
             >
               {activeCategory === cat.id && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-cyan-400 rounded-r shadow-[0_0_8px_rgba(0,255,200,0.5)]" />}
               <cat.icon className="w-4 h-4" />
@@ -420,46 +396,41 @@ export default function WorldIntelligence() {
           ))}
         </nav>
 
-        {/* ─── CONTENT ─── */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto scroll-smooth">
+        {/* CONTENT */}
+        <div className="flex-1 overflow-y-auto scroll-smooth">
           <div className="max-w-[1800px] mx-auto p-4 sm:p-5 space-y-5">
 
-            {/* ─── SECTION: OVERVIEW ─── */}
+            {/* ═══ OVERVIEW ═══ */}
             <section id="section-overview" className="scroll-mt-4 space-y-5">
-              {/* Risk Index Bar */}
-              <RiskIndexBar geopolitical={geopolitical} prices={prices} supplyChain={supplyChain} tech={tech} snapshot={snapshot} />
+              <RiskIndexBar fearGreed={fearGreed} macro={macro} cryptoSignal={cryptoSignal} />
 
-              {/* Map + Brief row */}
               <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-5">
                 <HudPanel title="Global Threat Map" icon={Globe2} color="cyan">
                   <HeatMap2D points={mapPoints} height={480} />
                 </HudPanel>
-
                 <div className="flex flex-col gap-5">
                   <HudPanel title="Intelligence Brief" icon={Activity} color="emerald">
-                    <div className="max-h-[220px] overflow-y-auto pr-1 space-y-0.5 scrollbar-thin">
-                      {briefItems.map((item, i) => {
-                        const text = typeof item === 'string' ? item : JSON.stringify(item);
-                        return <BriefLine key={i} text={text} />;
-                      })}
+                    <div className="max-h-[260px] overflow-y-auto pr-1 space-y-0.5 scrollbar-thin">
+                      {briefItems.map((item, i) => <BriefLine key={i} text={typeof item === 'string' ? item : JSON.stringify(item)} />)}
                     </div>
                   </HudPanel>
 
-                  {/* Region Risk */}
-                  {Object.keys(riskByRegion).length > 0 && (
-                    <HudPanel title="Risk by Region" icon={Layers} color="red" collapsible defaultOpen={true}>
-                      <div className="space-y-1">
-                        {Object.entries(riskByRegion).slice(0, 8).map(([region, data]) => {
-                          const obj = safeObj(data as Json);
-                          const level = (obj.level || obj.risk || '').toString().toLowerCase();
-                          const colorClass = level.includes('critical') || level.includes('extreme') ? 'text-red-400 bg-red-500/10' : level.includes('high') ? 'text-orange-400 bg-orange-500/10' : level.includes('medium') || level.includes('moderate') ? 'text-amber-400 bg-amber-500/10' : 'text-emerald-400 bg-emerald-500/10';
-                          return (
-                            <div key={region} className="flex items-center justify-between py-1.5 px-2 border-b border-white/5 last:border-0 hover:bg-white/[0.02] rounded transition-colors">
-                              <span className="text-[10px] font-mono text-white/50">{region}</span>
-                              <span className={cn("text-[9px] font-mono font-bold uppercase px-2 py-0.5 rounded-full", colorClass)}>{level || 'N/A'}</span>
-                            </div>
-                          );
-                        })}
+                  {/* Fear & Greed Gauge */}
+                  {fearGreed.value !== undefined && (
+                    <HudPanel title="Fear & Greed Index" icon={Activity} color={fearGreed.value <= 45 ? 'red' : fearGreed.value <= 55 ? 'amber' : 'emerald'}>
+                      <div className="text-center py-2">
+                        <div className="text-4xl font-bold font-mono text-white/90 mb-1">{fearGreed.value}</div>
+                        <div className={cn("text-sm font-mono font-bold uppercase tracking-wider", fearGreed.value <= 25 ? 'text-red-400' : fearGreed.value <= 45 ? 'text-orange-400' : fearGreed.value <= 55 ? 'text-amber-400' : fearGreed.value <= 75 ? 'text-emerald-400' : 'text-green-400')}>
+                          {fearGreed.classification || ''}
+                        </div>
+                        {fearGreed.trend && <div className="text-[9px] text-white/30 mt-1">Trend: {fearGreed.trend} {fearGreed.previous_value ? `(prev: ${fearGreed.previous_value})` : ''}</div>}
+                        {fearGreed.signal && <p className="text-[9px] font-mono text-white/40 mt-2 leading-relaxed max-w-sm mx-auto">{fearGreed.signal}</p>}
+                        <div className="w-full h-2 bg-white/5 rounded-full mt-3 overflow-hidden">
+                          <div className={cn("h-full rounded-full transition-all", fearGreed.value <= 25 ? 'bg-red-500' : fearGreed.value <= 45 ? 'bg-orange-500' : fearGreed.value <= 55 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${fearGreed.value}%` }} />
+                        </div>
+                        <div className="flex justify-between text-[7px] text-white/20 mt-1">
+                          <span>EXTREME FEAR</span><span>NEUTRAL</span><span>EXTREME GREED</span>
+                        </div>
                       </div>
                     </HudPanel>
                   )}
@@ -467,176 +438,262 @@ export default function WorldIntelligence() {
               </div>
             </section>
 
-            {/* ─── SECTION: MARKETS ─── */}
+            {/* ═══ MARKETS ═══ */}
             <section id="section-markets" className="scroll-mt-4 space-y-5">
               <div className="flex items-center gap-2 pt-2">
                 <BarChart3 className="w-4 h-4 text-blue-400" />
-                <span className="text-[11px] font-mono text-blue-400 tracking-[0.15em] font-bold uppercase">Markets & Finance</span>
+                <span className="text-[11px] font-mono text-blue-400 tracking-[0.15em] font-bold uppercase">Stock Markets</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-blue-500/20 to-transparent" />
               </div>
 
-              {/* Market Narrative */}
-              {(narrative.summary || narrative.outlook) && (
-                <HudPanel title="Market Narrative" icon={TrendingUp} color="blue" collapsible defaultOpen={true}>
-                  <div className="space-y-2">
-                    {narrative.summary && <p className="text-[11px] font-mono text-white/60 leading-relaxed">{String(narrative.summary)}</p>}
-                    {narrative.outlook && <p className="text-[10px] font-mono text-blue-300/50 leading-relaxed border-l-2 border-blue-400/20 pl-3">{String(narrative.outlook)}</p>}
-                    {narrative.key_drivers && (
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {safeArray(narrative.key_drivers).map((d: any, i: number) => (
-                          <span key={i} className="text-[8px] font-mono text-white/40 bg-white/5 border border-white/5 px-2 py-0.5 rounded-full">{typeof d === 'string' ? d : String(safeObj(d).driver || d)}</span>
-                        ))}
-                      </div>
-                    )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <HudPanel title="Top Gainers" icon={TrendingUp} color="emerald">
+                  {topGainers.length > 0 ? topGainers.map((s, i) => (
+                    <DataRow key={i} label={s.ticker || `#${i+1}`} value={`$${s.price || '—'}`} change={parseFloat(String(s.change_percent || '0').replace('%', '')) || undefined} />
+                  )) : <p className="text-[10px] text-white/20 text-center py-4">No market data yet</p>}
+                </HudPanel>
+
+                <HudPanel title="Top Losers" icon={TrendingUp} color="red">
+                  {topLosers.length > 0 ? topLosers.map((s, i) => (
+                    <DataRow key={i} label={s.ticker || `#${i+1}`} value={`$${s.price || '—'}`} change={parseFloat(String(s.change_percent || '0').replace('%', '')) || undefined} />
+                  )) : <p className="text-[10px] text-white/20 text-center py-4">No market data yet</p>}
+                </HudPanel>
+
+                <HudPanel title="Most Active" icon={BarChart3} color="blue">
+                  {mostActive.length > 0 ? mostActive.map((s, i) => (
+                    <DataRow key={i} label={s.ticker || `#${i+1}`} value={`$${s.price || '—'}`} change={parseFloat(String(s.change_percent || '0').replace('%', '')) || undefined} />
+                  )) : <p className="text-[10px] text-white/20 text-center py-4">No market data yet</p>}
+                </HudPanel>
+              </div>
+
+              {/* Gold */}
+              {goldData.price && (
+                <HudPanel title="Gold (Safe Haven Signal)" icon={Shield} color="amber" collapsible defaultOpen={true}>
+                  <div className="flex items-center gap-6">
+                    <div>
+                      <div className="text-[8px] text-white/30 uppercase">Price</div>
+                      <div className="text-xl font-mono font-bold text-amber-400">${typeof goldData.price === 'number' ? goldData.price.toLocaleString() : goldData.price}</div>
+                    </div>
+                    {goldData.monthly_change_pct && <div>
+                      <div className="text-[8px] text-white/30 uppercase">Monthly Change</div>
+                      <div className={cn("text-lg font-mono font-bold", parseFloat(goldData.monthly_change_pct) > 0 ? 'text-emerald-400' : 'text-red-400')}>{goldData.monthly_change_pct}%</div>
+                    </div>}
+                    {goldData.signal && <div className="flex-1">
+                      <div className="text-[8px] text-white/30 uppercase mb-1">Signal</div>
+                      <div className="text-[10px] font-mono text-amber-300/60">{goldData.signal}</div>
+                    </div>}
                   </div>
                 </HudPanel>
               )}
-
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                <HudPanel title="Indices" icon={BarChart3} color="blue">
-                  {indices.length > 0 ? indices.slice(0, 6).map((item, i) => {
-                    const obj = safeObj(item);
-                    return <DataRow key={i} label={String(obj.name || obj.symbol || `#${i + 1}`)} value={String(obj.price || obj.value || obj.level || '—')} change={parseFloat(obj.change_pct || obj.change || '0') || undefined} />;
-                  }) : <p className="text-[10px] text-white/20 text-center py-4">NO DATA</p>}
-                </HudPanel>
-
-                <HudPanel title="Energy" icon={Flame} color="amber">
-                  {energy.length > 0 ? energy.slice(0, 6).map((item, i) => {
-                    const obj = safeObj(item);
-                    return <DataRow key={i} label={String(obj.name || obj.commodity || `#${i + 1}`)} value={String(obj.price || obj.value || '—')} prefix="$" change={parseFloat(obj.change_pct || obj.change || '0') || undefined} />;
-                  }) : <p className="text-[10px] text-white/20 text-center py-4">NO DATA</p>}
-                </HudPanel>
-
-                <HudPanel title="Metals" icon={Shield} color="emerald">
-                  {metals.length > 0 ? metals.slice(0, 6).map((item, i) => {
-                    const obj = safeObj(item);
-                    return <DataRow key={i} label={String(obj.name || obj.metal || `#${i + 1}`)} value={String(obj.price || obj.value || '—')} prefix="$" change={parseFloat(obj.change_pct || obj.change || '0') || undefined} />;
-                  }) : <p className="text-[10px] text-white/20 text-center py-4">NO DATA</p>}
-                </HudPanel>
-
-                <HudPanel title="Crypto" icon={Zap} color="cyan">
-                  {crypto.length > 0 ? crypto.slice(0, 6).map((item, i) => {
-                    const obj = safeObj(item);
-                    return <DataRow key={i} label={String(obj.name || obj.symbol || `#${i + 1}`)} value={String(obj.price || obj.value || '—')} prefix="$" change={parseFloat(obj.change_pct || obj.change || '0') || undefined} />;
-                  }) : <p className="text-[10px] text-white/20 text-center py-4">NO DATA</p>}
-                </HudPanel>
-
-                <HudPanel title="Currencies" icon={DollarSign} color="purple">
-                  {currencies.length > 0 ? currencies.slice(0, 6).map((item, i) => {
-                    const obj = safeObj(item);
-                    return <DataRow key={i} label={String(obj.name || obj.pair || obj.symbol || `#${i + 1}`)} value={String(obj.rate || obj.price || obj.value || '—')} change={parseFloat(obj.change_pct || obj.change || '0') || undefined} />;
-                  }) : <p className="text-[10px] text-white/20 text-center py-4">NO DATA</p>}
-                </HudPanel>
-              </div>
             </section>
 
-            {/* ─── SECTION: GEOPOLITICS ─── */}
-            <section id="section-geopolitics" className="scroll-mt-4 space-y-5">
+            {/* ═══ CRYPTO ═══ */}
+            <section id="section-crypto" className="scroll-mt-4 space-y-5">
               <div className="flex items-center gap-2 pt-2">
-                <AlertTriangle className="w-4 h-4 text-red-400" />
-                <span className="text-[11px] font-mono text-red-400 tracking-[0.15em] font-bold uppercase">Geopolitical Intelligence</span>
-                <div className="flex-1 h-px bg-gradient-to-r from-red-500/20 to-transparent" />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <HudPanel title="Active Conflicts" icon={Crosshair} color="red" collapsible defaultOpen={true}>
-                  {conflicts.length > 0 ? conflicts.map((c, i) => {
-                    const obj = safeObj(c);
-                    const text = typeof c === 'string' ? c : String(obj.description || obj.name || obj.title || JSON.stringify(c));
-                    return <AlertRow key={i} text={text} severity="high" />;
-                  }) : <p className="text-[10px] text-white/20 text-center py-6">No active conflicts reported</p>}
-                </HudPanel>
-
-                <HudPanel title="Trade Tensions" icon={TrendingUp} color="amber" collapsible defaultOpen={true}>
-                  {tensions.length > 0 ? tensions.map((t, i) => {
-                    const obj = safeObj(t);
-                    const text = typeof t === 'string' ? t : String(obj.description || obj.summary || JSON.stringify(t));
-                    return <AlertRow key={i} text={text} severity="medium" />;
-                  }) : <p className="text-[10px] text-white/20 text-center py-6">No trade tensions reported</p>}
-                </HudPanel>
-              </div>
-            </section>
-
-            {/* ─── SECTION: SUPPLY CHAIN ─── */}
-            <section id="section-supply" className="scroll-mt-4 space-y-5">
-              <div className="flex items-center gap-2 pt-2">
-                <Ship className="w-4 h-4 text-amber-400" />
-                <span className="text-[11px] font-mono text-amber-400 tracking-[0.15em] font-bold uppercase">Supply Chain Monitor</span>
-                <div className="flex-1 h-px bg-gradient-to-r from-amber-500/20 to-transparent" />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <HudPanel title="Risk Alerts" icon={AlertTriangle} color="red" collapsible defaultOpen={true}>
-                  {scAlerts.length > 0 ? scAlerts.map((a, i) => <AlertRow key={i} text={typeof a === 'string' ? a : String(safeObj(a).description || safeObj(a).alert || JSON.stringify(a))} severity="high" />) : <p className="text-[10px] text-white/20 text-center py-6">No supply chain alerts</p>}
-                </HudPanel>
-
-                <HudPanel title="Bottlenecks" icon={Ship} color="amber" collapsible defaultOpen={true}>
-                  {scBottlenecks.length > 0 ? scBottlenecks.map((b, i) => <AlertRow key={i} text={typeof b === 'string' ? b : String(safeObj(b).description || safeObj(b).location || JSON.stringify(b))} />) : <p className="text-[10px] text-white/20 text-center py-6">No bottlenecks detected</p>}
-                </HudPanel>
-              </div>
-            </section>
-
-            {/* ─── SECTION: TECH ─── */}
-            <section id="section-tech" className="scroll-mt-4 space-y-5">
-              <div className="flex items-center gap-2 pt-2">
-                <Cpu className="w-4 h-4 text-cyan-400" />
-                <span className="text-[11px] font-mono text-cyan-400 tracking-[0.15em] font-bold uppercase">Tech & AI Disruption</span>
+                <Zap className="w-4 h-4 text-cyan-400" />
+                <span className="text-[11px] font-mono text-cyan-400 tracking-[0.15em] font-bold uppercase">Crypto Markets</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/20 to-transparent" />
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <HudPanel title="AI Developments" icon={Cpu} color="cyan" collapsible defaultOpen={true}>
-                  {aiDev.length > 0 ? aiDev.map((a, i) => <AlertRow key={i} text={typeof a === 'string' ? a : String(safeObj(a).description || safeObj(a).title || JSON.stringify(a))} />) : <p className="text-[10px] text-white/20 text-center py-6">No AI developments</p>}
-                </HudPanel>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(cryptoPrices).map(([sym, data]) => {
+                  const d = safeObj(data);
+                  const change = parseFloat(d.change_24h_pct || '0');
+                  return (
+                    <div key={sym} className="bg-black/40 border border-white/5 rounded-lg p-4 hover:border-cyan-500/20 transition-colors">
+                      <div className="text-[9px] font-mono text-white/30 uppercase tracking-wider mb-1">{sym}</div>
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-xl font-mono font-bold text-white/90">${parseFloat(d.price || 0).toLocaleString()}</span>
+                        <span className={cn("text-sm font-mono font-bold", change > 0 ? 'text-emerald-400' : change < 0 ? 'text-red-400' : 'text-white/30')}>
+                          {change > 0 ? '+' : ''}{change.toFixed(2)}%
+                        </span>
+                      </div>
+                      {d.volume_24h && <div className="text-[8px] text-white/20 mt-1">Vol: ${parseFloat(d.volume_24h).toLocaleString()}</div>}
+                    </div>
+                  );
+                })}
+              </div>
 
-                <HudPanel title="Emerging Tech" icon={Zap} color="blue" collapsible defaultOpen={true}>
-                  {emergingTech.length > 0 ? emergingTech.map((t, i) => <AlertRow key={i} text={typeof t === 'string' ? t : String(safeObj(t).description || safeObj(t).name || JSON.stringify(t))} />) : <p className="text-[10px] text-white/20 text-center py-6">No emerging tech signals</p>}
-                </HudPanel>
+              {(cryptoSignal || marketBreadth.signal) && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {cryptoSignal && (
+                    <HudPanel title="BTC Dominance" icon={Zap} color="cyan">
+                      <div className="text-center py-2">
+                        <div className="text-2xl font-mono font-bold text-cyan-400">{btcDominance}%</div>
+                        <p className="text-[9px] font-mono text-white/40 mt-2 leading-relaxed">{cryptoSignal}</p>
+                      </div>
+                    </HudPanel>
+                  )}
+                  {marketBreadth.signal && (
+                    <HudPanel title="Market Breadth" icon={BarChart3} color="blue">
+                      <div className="space-y-2 py-2">
+                        <DataRow label="Gainers (>3%)" value={marketBreadth.gainers_above_3pct || 0} />
+                        <DataRow label="Losers (>3%)" value={marketBreadth.losers_above_3pct || 0} />
+                        <div className={cn("text-[10px] font-mono font-bold text-center mt-2 py-1 rounded", marketBreadth.signal?.includes('BULL') ? 'text-emerald-400 bg-emerald-500/10' : marketBreadth.signal?.includes('BEAR') ? 'text-red-400 bg-red-500/10' : 'text-white/40 bg-white/5')}>
+                          {marketBreadth.signal}
+                        </div>
+                      </div>
+                    </HudPanel>
+                  )}
+                  {fearGreed.value !== undefined && (
+                    <HudPanel title="Crypto Sentiment" icon={Activity} color={fearGreed.value <= 45 ? 'red' : 'emerald'}>
+                      <div className="text-center py-2">
+                        <div className="text-2xl font-mono font-bold text-white/90">{fearGreed.value}</div>
+                        <div className="text-[10px] font-mono text-white/40 mt-1">{fearGreed.classification}</div>
+                      </div>
+                    </HudPanel>
+                  )}
+                </div>
+              )}
+            </section>
+
+            {/* ═══ MACRO ═══ */}
+            <section id="section-macro" className="scroll-mt-4 space-y-5">
+              <div className="flex items-center gap-2 pt-2">
+                <TrendingUp className="w-4 h-4 text-purple-400" />
+                <span className="text-[11px] font-mono text-purple-400 tracking-[0.15em] font-bold uppercase">Macro Economics (FRED)</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-purple-500/20 to-transparent" />
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {['fed_funds_rate', 'inflation_cpi', 'unemployment_rate', 'treasury_10yr', 'treasury_2yr', 'usd_eur', 'm2_money_supply'].map(key => {
+                  const d = safeObj(macro[key]);
+                  if (!d.value) return null;
+                  return <MacroIndicator key={key} name={d.name || key} value={d.value} trend={d.trend} change={d.change} />;
+                })}
+                {/* Yield Curve */}
+                {safeObj(macro.yield_curve).spread && (
+                  <div className={cn("bg-white/[0.02] border rounded-lg p-3", safeObj(macro.yield_curve).inverted ? 'border-red-500/20' : 'border-white/5')}>
+                    <div className="text-[8px] font-mono text-white/30 uppercase tracking-wider mb-1">Yield Curve</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-lg font-mono font-bold text-white/90">{safeObj(macro.yield_curve).spread}%</span>
+                      <span className={cn("text-[9px] font-mono font-bold uppercase", safeObj(macro.yield_curve).inverted ? 'text-red-400' : 'text-emerald-400')}>
+                        {safeObj(macro.yield_curve).inverted ? 'INVERTED' : 'NORMAL'}
+                      </span>
+                    </div>
+                    <div className="text-[8px] font-mono text-cyan-400/50 mt-1 leading-relaxed">{safeObj(macro.yield_curve).signal}</div>
+                  </div>
+                )}
               </div>
             </section>
 
-            {/* ─── SECTION: NEWS ─── */}
-            <section id="section-news" className="scroll-mt-4 space-y-5">
+            {/* ═══ DEMOGRAPHICS ═══ */}
+            <section id="section-demographics" className="scroll-mt-4 space-y-5">
               <div className="flex items-center gap-2 pt-2">
-                <Newspaper className="w-4 h-4 text-blue-400" />
-                <span className="text-[11px] font-mono text-blue-400 tracking-[0.15em] font-bold uppercase">Business News Feed</span>
-                <div className="flex-1 h-px bg-gradient-to-r from-blue-500/20 to-transparent" />
+                <Users className="w-4 h-4 text-emerald-400" />
+                <span className="text-[11px] font-mono text-emerald-400 tracking-[0.15em] font-bold uppercase">Demographics & Population</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/20 to-transparent" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {news.length > 0 ? news.map((item, i) => {
-                  const headlines = safeArray(item.headlines);
-                  return (
-                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                      className="bg-black/40 border border-white/5 rounded-lg overflow-hidden hover:border-white/10 transition-all group"
-                    >
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            {item.sector && <span className="text-[8px] font-mono font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full">{item.sector}</span>}
-                            <SentimentBadge sentiment={item.sentiment} />
-                          </div>
-                          {item.fetched_at && <span className="text-[8px] text-white/20 font-mono">{timeAgo(item.fetched_at)}</span>}
+              {demoInsights.length > 0 ? (
+                <HudPanel title="Saudi Arabia Demographics" icon={Users} color="emerald" collapsible defaultOpen={true}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      {demoInsights.map((insight, i) => (
+                        <BriefLine key={i} text={typeof insight === 'string' ? insight : JSON.stringify(insight)} />
+                      ))}
+                    </div>
+                    <div className="space-y-1">
+                      {['population', 'youth_pct', 'working_age_pct', 'female_pct', 'urban_pct', 'gni_per_capita', 'pop_growth'].map(key => {
+                        const d = safeObj(demographics[key]);
+                        if (!d.value) return null;
+                        return <DataRow key={key} label={d.name || key} value={typeof d.value === 'number' && d.value > 100000 ? (d.value / 1e6).toFixed(1) + 'M' : d.value} suffix={key.includes('pct') || key === 'pop_growth' ? '%' : key === 'gni_per_capita' ? '' : ''} prefix={key === 'gni_per_capita' ? '$' : ''} />;
+                      })}
+                    </div>
+                  </div>
+                </HudPanel>
+              ) : <p className="text-[10px] text-white/20 text-center py-4">No demographics data — trigger ayn-pulse-engine</p>}
+
+              {/* GCC Populations */}
+              {Object.keys(safeObj(demographics.gcc_populations)).length > 0 && (
+                <HudPanel title="GCC Population Overview" icon={Globe2} color="blue" collapsible defaultOpen={true}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {Object.entries(safeObj(demographics.gcc_populations)).map(([code, data]) => {
+                      const d = safeObj(data as any);
+                      return (
+                        <div key={code} className="bg-white/[0.02] border border-white/5 rounded p-3">
+                          <div className="text-[8px] text-white/30 uppercase">{d.name || code}</div>
+                          <div className="text-sm font-mono font-bold text-white/80">{d.population}</div>
                         </div>
-                        {item.summary && <p className="text-[11px] text-white/60 leading-relaxed mb-3 line-clamp-3">{item.summary}</p>}
-                        <div className="space-y-1.5">
-                          {headlines.slice(0, 3).map((h, j) => (
-                            <div key={j} className="flex items-start gap-2 pl-2 border-l border-white/10">
-                              <ChevronRight className="w-2.5 h-2.5 text-white/20 mt-0.5 shrink-0" />
-                              <p className="text-[9px] text-white/40 leading-relaxed">
-                                {typeof h === 'string' ? h : String(safeObj(h).title || safeObj(h).headline || JSON.stringify(h))}
-                              </p>
+                      );
+                    })}
+                  </div>
+                </HudPanel>
+              )}
+            </section>
+
+            {/* ═══ TOURISM ═══ */}
+            <section id="section-tourism" className="scroll-mt-4 space-y-5">
+              <div className="flex items-center gap-2 pt-2">
+                <Plane className="w-4 h-4 text-amber-400" />
+                <span className="text-[11px] font-mono text-amber-400 tracking-[0.15em] font-bold uppercase">Tourism & Regional Intel</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-amber-500/20 to-transparent" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {Object.keys(tourism).length > 0 && (
+                  <HudPanel title="Saudi Tourism Data" icon={Plane} color="amber" collapsible defaultOpen={true}>
+                    <div className="space-y-2">
+                      {['international_arrivals', 'tourism_receipts', 'tourism_expenditure'].map(key => {
+                        const d = safeObj(tourism[key]);
+                        if (!d.latest) return null;
+                        const val = safeObj(d.latest).value;
+                        return (
+                          <div key={key} className="flex items-center justify-between py-1.5 border-b border-white/5">
+                            <span className="text-[10px] font-mono text-white/40">{d.name || key}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-mono text-white/80 font-semibold">
+                                {val > 1e9 ? `$${(val / 1e9).toFixed(1)}B` : val > 1e6 ? `${(val / 1e6).toFixed(1)}M` : val?.toLocaleString() || '—'}
+                              </span>
+                              {d.trend && <span className={cn("text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded", d.trend === 'growing' ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10')}>{d.trend}</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </HudPanel>
+                )}
+
+                {institutionalNews.length > 0 && (
+                  <HudPanel title="Institutional Signals" icon={Newspaper} color="blue" collapsible defaultOpen={true}>
+                    <div className="space-y-2">
+                      {institutionalNews.map((item, i) => (
+                        <div key={i} className="py-2 border-b border-white/5 last:border-0">
+                          <div className="text-[10px] font-mono text-white/60 leading-relaxed">{item.title}</div>
+                          {item.description && <p className="text-[9px] text-white/30 mt-1">{item.description}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </HudPanel>
+                )}
+              </div>
+
+              {/* Regional Intel */}
+              {Object.keys(regionalIntel).length > 0 && (
+                <HudPanel title="Regional Market Intelligence" icon={Globe2} color="purple" collapsible defaultOpen={false}>
+                  <div className="space-y-3">
+                    {Object.entries(regionalIntel).map(([key, val]) => {
+                      const section = safeObj(val as any);
+                      const results = safeArray(section.results);
+                      if (results.length === 0) return null;
+                      return (
+                        <div key={key}>
+                          <div className="text-[8px] font-mono text-purple-400/60 uppercase tracking-wider mb-1.5">{section.label || key}</div>
+                          {results.map((r: any, i: number) => (
+                            <div key={i} className="py-1.5 pl-3 border-l border-white/5 mb-1">
+                              <div className="text-[10px] font-mono text-white/50">{r.title}</div>
+                              {r.snippet && <p className="text-[8px] text-white/25 mt-0.5">{r.snippet}</p>}
                             </div>
                           ))}
                         </div>
-                      </div>
-                    </motion.div>
-                  );
-                }) : <p className="text-[10px] text-white/20 col-span-full text-center py-8">NO NEWS DATA</p>}
-              </div>
+                      );
+                    })}
+                  </div>
+                </HudPanel>
+              )}
             </section>
 
-            {/* ─── SECTION: PREDICTIONS ─── */}
+            {/* ═══ PREDICTIONS ═══ */}
             <section id="section-predictions" className="scroll-mt-4 space-y-5 pb-8">
               <div className="flex items-center gap-2 pt-2">
                 <Target className="w-4 h-4 text-purple-400" />
@@ -663,9 +720,18 @@ export default function WorldIntelligence() {
                       );
                     })}
                   </div>
-                ) : <p className="text-[10px] text-white/30 text-center py-6">Prediction engine synchronizing...</p>}
+                ) : <p className="text-[10px] text-white/30 text-center py-6">No prediction data — trigger ayn-pulse-engine</p>}
               </HudPanel>
             </section>
+
+            {/* Source attribution */}
+            {sourcesUsed.length > 0 && (
+              <div className="text-center pb-6">
+                <div className="text-[8px] font-mono text-white/15 uppercase tracking-wider">
+                  Data Sources: {sourcesUsed.join(' · ')}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
