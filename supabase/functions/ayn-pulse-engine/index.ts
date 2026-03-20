@@ -39,7 +39,7 @@ async function fetchFREDData(apiKey: string): Promise<Record<string, unknown>> {
 
   await Promise.all(series.map(async (s) => {
     try {
-      const url = \`https://api.stlouisfed.org/fred/series/observations?series_id=\${s.id}&api_key=\${apiKey}&limit=2&sort_order=desc&file_type=json\`;
+      const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${s.id}&api_key=${apiKey}&limit=2&sort_order=desc&file_type=json`;
       const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
@@ -59,7 +59,7 @@ async function fetchFREDData(apiKey: string): Promise<Record<string, unknown>> {
         };
       }
     } catch (err) {
-      console.error(\`[FRED] Error fetching \${s.id}:\`, err);
+      console.error(`[FRED] Error fetching ${s.id}:`, err);
     }
   }));
 
@@ -80,7 +80,7 @@ async function fetchFREDData(apiKey: string): Promise<Record<string, unknown>> {
 async function fetchAlphaVantageData(apiKey: string): Promise<Record<string, unknown>> {
   const results: Record<string, unknown> = {};
   try {
-    const url = \`https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=\${apiKey}\`;
+    const url = `https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=${apiKey}`;
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
@@ -90,7 +90,7 @@ async function fetchAlphaVantageData(apiKey: string): Promise<Record<string, unk
     }
     
     // Gold Price (Safe Haven Proxy)
-    const goldUrl = \`https://www.alphavantage.co/query?function=COMMODITY&symbol=GOLD&interval=monthly&apikey=\${apiKey}\`;
+    const goldUrl = `https://www.alphavantage.co/query?function=COMMODITY&symbol=GOLD&interval=monthly&apikey=${apiKey}`;
     const goldRes = await fetch(goldUrl);
     if (goldRes.ok) {
       const goldData = await goldRes.json();
@@ -118,13 +118,13 @@ async function fetchPionexData(apiKey: string, apiSecret: string): Promise<Recor
   try {
     const enc = new TextEncoder();
     const ts = Date.now().toString();
-    const qs = \`timestamp=\${ts}\`;
-    const message = \`GET/api/v1/market/tickers?\${qs}\`;
+    const qs = `timestamp=${ts}`;
+    const message = `GET/api/v1/market/tickers?${qs}`;
     const key = await crypto.subtle.importKey('raw', enc.encode(apiSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
     const signature = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-    const res = await fetch(\`https://api.pionex.com/api/v1/market/tickers?\${qs}\`, {
+    const res = await fetch(`https://api.pionex.com/api/v1/market/tickers?${qs}`, {
       headers: { 'PIONEX-KEY': apiKey, 'PIONEX-SIGNATURE': signature }
     });
     if (!res.ok) return results;
@@ -199,7 +199,7 @@ async function fetchSystemicNews(braveApiKey: string): Promise<Record<string, un
   // We fetch news sequentially with a tiny delay to respect Brave rate limits
   for (const region of SIC_REGIONS) {
     try {
-      const url = \`https://api.search.brave.com/res/v1/news/search?q=\${encodeURIComponent(region.keywords)}&count=3&freshness=pd\`;
+      const url = `https://api.search.brave.com/res/v1/news/search?q=${encodeURIComponent(region.keywords)}&count=3&freshness=pd`;
       const res = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Subscription-Token': braveApiKey } });
       if (res.ok) {
         const data = await res.json();
@@ -213,7 +213,7 @@ async function fetchSystemicNews(braveApiKey: string): Promise<Record<string, un
         };
       }
     } catch (e) {
-      console.error(\`[Brave] Failed to fetch news for \${region.id}\`);
+      console.error(`[Brave] Failed to fetch news for ${region.id}`);
     }
     // Rate limit buffer
     await new Promise(r => setTimeout(r, 200));
@@ -231,18 +231,18 @@ async function generateAYNSynthesis(
   // Compress news strings for context limit saving
   const compressedNews = Object.entries(rawIntel.news).map(([id, data]: [string, any]) => {
     const headlines = data.news.map((n:any) => n.title).join(' | ');
-    return \`[\${id}] \${headlines}\`;
+    return `[${id}] ${headlines}`;
   }).join('\n');
 
-  const systemPrompt = \`You are AYN, the supreme global intelligence engine. 
+  const systemPrompt = `You are AYN, the supreme global intelligence engine. 
 You are synthesizing the latest live global data to provide a mission-control dashboard payload.
 Be absolutely ruthless, objective, and precise. Tone: highly professional intelligence briefing.
 
 Input Data:
-Macro: \${JSON.stringify(rawIntel.macro)}
-Crypto/FearGreed: \${JSON.stringify(rawIntel.crypto)} / \${JSON.stringify(rawIntel.fg)}
+Macro: ${JSON.stringify(rawIntel.macro)}
+Crypto/FearGreed: ${JSON.stringify(rawIntel.crypto)} / ${JSON.stringify(rawIntel.fg)}
 Global Headlines (Last 24h):
-\${compressedNews}
+${compressedNews}
 
 OUTPUT STRICTLY AS VALID JSON matching exactly this schema:
 {
@@ -256,13 +256,13 @@ OUTPUT STRICTLY AS VALID JSON matching exactly this schema:
     "CHN": { "economic_posture": "Short summary", "trajectory": "Short summary" },
     // do this for all 15 countries provided in the headlines block
   }
-}\`;
+}`;
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': \`Bearer \${openRouterKey}\`,
+        'Authorization': `Bearer ${openRouterKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://ayn.sa'
       },
@@ -274,7 +274,7 @@ OUTPUT STRICTLY AS VALID JSON matching exactly this schema:
       })
     });
 
-    if (!response.ok) throw new Error(\`OpenRouter error \${response.status}\`);
+    if (!response.ok) throw new Error(`OpenRouter error ${response.status}`);
     const data = await response.json();
     const content = data.choices[0].message.content;
     const parsed = JSON.parse(content);
@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
     };
 
     const duration = Date.now() - startTime;
-    console.log(\`[ayn-pulse-engine] Complete in \${duration}ms. Updating DB.\`);
+    console.log(`[ayn-pulse-engine] Complete in ${duration}ms. Updating DB.`);
 
     // 3. Upsert
     const { error } = await supabase
