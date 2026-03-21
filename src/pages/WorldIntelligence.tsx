@@ -342,14 +342,15 @@ export default function WorldIntelligence() {
 
   const fetchSnapshot = useCallback(async () => {
     try {
-      const res = await fetch(
-        'https://dfkoxuokfkttjhfjcecx.supabase.co/functions/v1/ayn-pulse-engine',
-        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
-      );
-      if (!res.ok) throw new Error(`pulse-engine ${res.status}`);
-      const data = await res.json();
-      if (data && typeof data === 'object' && Object.keys(data).length > 0) {
-        setSnapshot(data as MarketSnapshot);
+      // Read directly from DB — no edge function needed, avoids all CORS/auth issues
+      const { data, error } = await supabase
+        .from('ayn_market_snapshot')
+        .select('snapshot, fetched_at, sources_used')
+        .eq('singleton_key', 1)
+        .single();
+      if (error) throw error;
+      if (data && data.snapshot) {
+        setSnapshot(data as unknown as MarketSnapshot);
       }
     } catch (e) { console.error('fetchSnapshot failed:', e); }
   }, []);
