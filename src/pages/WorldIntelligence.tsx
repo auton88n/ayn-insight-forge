@@ -342,9 +342,16 @@ export default function WorldIntelligence() {
 
   const fetchSnapshot = useCallback(async () => {
     try {
-      const { data } = await supabase.functions.invoke('ayn-pulse-engine', { method: 'GET' });
-      if (data && Object.keys(data).length > 0) setSnapshot(data as MarketSnapshot);
-    } catch {}
+      const res = await fetch(
+        'https://dfkoxuokfkttjhfjcecx.supabase.co/functions/v1/ayn-pulse-engine',
+        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+      );
+      if (!res.ok) throw new Error(`pulse-engine ${res.status}`);
+      const data = await res.json();
+      if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+        setSnapshot(data as MarketSnapshot);
+      }
+    } catch (e) { console.error('fetchSnapshot failed:', e); }
   }, []);
 
   const fetchPredictions = useCallback(async () => {
