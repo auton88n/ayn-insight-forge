@@ -342,7 +342,7 @@ export default function WorldIntelligence() {
         .from('ayn_predictions')
         .select('id,asset,horizon,target_date,baseline_value,predicted_value,predicted_low,predicted_high,predicted_direction,predicted_pct_change,confidence,reasoning')
         .eq('status', 'active')
-        .eq('generated_by', 'ayn_prediction_engine_v8')
+        .eq('generated_by', 'ayn_prediction_engine_v9')
         .order('confidence', { ascending: false })
         .limit(60);
       if (!preds?.length) return;
