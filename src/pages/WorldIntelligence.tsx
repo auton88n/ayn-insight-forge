@@ -37,6 +37,16 @@ interface CountryIntel {
   opportunities?: string[];
 }
 
+interface ConflictPrediction {
+  id: string; title: string; region: string; horizon: string; target_period: string;
+  confidence: number; probability: string; escalation_risk: string | null;
+  financial_trigger: string | null; what_is_happening: string; what_it_means: string;
+  historical_parallel: string; who_wins: string; who_gets_hurt: string;
+  what_to_do_now: string; actionable_move: string | null;
+  conflict_signals: { oil_signal?: string; gold_signal?: string; currency_signal?: string; sanctions_signal?: string } | null;
+  key_drivers: string[]; main_risks: string[]; tags: string[];
+}
+
 function safeArr(v: any): any[] { return Array.isArray(v) ? v : []; }
 function safeObj(v: any): Record<string, any> { return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {}; }
 function timeAgo(d: string | null): string {
@@ -319,7 +329,8 @@ export default function WorldIntelligence() {
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [countryIntel, setCountryIntel] = useState<CountryIntel[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState<{ intel: CountryIntel; sic: any } | null>(null);
+  const [conflictPredictions, setConflictPredictions] = useState<ConflictPrediction[]>([]);
+  const [selectedConflict, setSelectedConflict] = useState<ConflictPrediction | null>(null);
   const [userId, setUserId] = useState<string | undefined>();
   const [activeHorizon, setActiveHorizon] = useState<'1_week' | '1_month' | '1_year'>('1_week');
   const [assetFilter, setAssetFilter] = useState<string>('all');
@@ -373,7 +384,19 @@ export default function WorldIntelligence() {
     } catch (e) { console.error('predictions:', e); }
   }, [userId]);
 
-  const fetchCountryIntel = useCallback(async () => {
+  const fetchConflictPredictions = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from('ayn_world_predictions')
+        .select('id,title,region,horizon,target_period,confidence,probability,escalation_risk,financial_trigger,what_is_happening,what_it_means,historical_parallel,who_wins,who_gets_hurt,what_to_do_now,actionable_move,conflict_signals,key_drivers,main_risks,tags')
+        .eq('domain', 'conflicts')
+        .eq('status', 'active')
+        .order('confidence', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(8);
+      if (data) setConflictPredictions(data as ConflictPrediction[]);
+    } catch (e) { console.error('conflict predictions:', e); }
+  }, []);
     try {
       const { data } = await supabase.from('ayn_country_intelligence')
         .select('country_code,country_name,intelligence_brief,economy,hot_sectors,opportunities').limit(20);
@@ -382,11 +405,11 @@ export default function WorldIntelligence() {
   }, []);
 
   useEffect(() => {
-    Promise.all([fetchSnapshot(), fetchPredictions(), fetchCountryIntel()]).finally(() => setLoading(false));
+    Promise.all([fetchSnapshot(), fetchPredictions(), fetchCountryIntel(), fetchConflictPredictions()]).finally(() => setLoading(false));
     const ch = supabase.channel('wi').on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ayn_market_snapshot' }, p => setSnapshot(p.new as MarketSnapshot)).subscribe();
     const tick = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => { supabase.removeChannel(ch); clearInterval(tick); };
-  }, [fetchSnapshot, fetchPredictions, fetchCountryIntel]);
+  }, [fetchSnapshot, fetchPredictions, fetchCountryIntel, fetchConflictPredictions]);
 
   const handleVote = async (predId: string, vote: 'agree' | 'disagree') => {
     if (!userId || votingId) return;
@@ -710,6 +733,101 @@ export default function WorldIntelligence() {
             </div>
           )}
 
+          {/* ─── CONFLICT & WAR INTELLIGENCE ─── */}
+          {conflictPredictions.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="relative">
+                  <div className="w-4 h-4 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-red-400 font-bold tracking-[0.15em] uppercase">Conflict & War Intelligence</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-red-500/30 to-transparent" />
+                <span className="text-[8px] text-white/18">Driven by financial signals · Updated daily</span>
+              </div>
+              <div className="mb-3 bg-red-500/5 border border-red-500/15 rounded-lg px-4 py-2.5">
+                <p className="text-[10px] font-mono text-red-300/60 leading-relaxed">
+                  <span className="text-red-400 font-bold">Core principle: Money predicts wars.</span> Oil above $90 = Middle East conflict premium. Gold above $3,500 = institutional fear. Currency collapse = regime instability. Sanctions list growing = diplomatic options exhausted. Every prediction below is grounded in live financial data.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {conflictPredictions.map((c) => {
+                  const riskColor = c.escalation_risk === 'critical' ? 'text-red-400 border-red-500/30 bg-red-500/5'
+                    : c.escalation_risk === 'high' ? 'text-orange-400 border-orange-500/30 bg-orange-500/5'
+                    : c.escalation_risk === 'elevated' ? 'text-amber-400 border-amber-500/30 bg-amber-500/5'
+                    : 'text-yellow-400 border-yellow-500/20 bg-yellow-500/4';
+                  const riskBorder = c.escalation_risk === 'critical' ? 'border-red-500/20'
+                    : c.escalation_risk === 'high' ? 'border-orange-500/15'
+                    : c.escalation_risk === 'elevated' ? 'border-amber-500/15'
+                    : 'border-white/6';
+
+                  return (
+                    <motion.button
+                      key={c.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={() => setSelectedConflict(c)}
+                      className={cn('text-left bg-black/60 border rounded-xl overflow-hidden hover:bg-black/70 transition-all group', riskBorder)}
+                    >
+                      {/* Header */}
+                      <div className={cn('flex items-center justify-between px-4 py-2.5 border-b', riskBorder, c.escalation_risk === 'critical' ? 'bg-red-500/5' : c.escalation_risk === 'high' ? 'bg-orange-500/4' : 'bg-amber-500/3')}>
+                        <div className="flex items-center gap-2">
+                          {c.escalation_risk && (
+                            <span className={cn('text-[8px] font-mono font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider', riskColor)}>
+                              {c.escalation_risk}
+                            </span>
+                          )}
+                          <span className="text-[8px] font-mono text-white/25 uppercase">{c.region?.replace('_', ' ')} · {c.target_period}</span>
+                        </div>
+                        <span className="text-[9px] font-mono text-white/25">{c.confidence}% conf</span>
+                      </div>
+
+                      {/* Title */}
+                      <div className="px-4 pt-3 pb-2">
+                        <h3 className="text-[12px] font-mono font-bold text-white/85 leading-snug group-hover:text-white transition-colors">{c.title}</h3>
+                      </div>
+
+                      {/* Financial trigger */}
+                      {c.financial_trigger && (
+                        <div className="px-4 pb-2">
+                          <div className="flex items-start gap-1.5">
+                            <span className="text-[8px] font-mono text-red-400/60 uppercase shrink-0 mt-0.5">$ Signal:</span>
+                            <span className="text-[9px] font-mono text-white/45 leading-relaxed">{c.financial_trigger}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* What's happening preview */}
+                      <div className="px-4 pb-3">
+                        <p className="text-[10px] font-mono text-white/40 leading-relaxed line-clamp-2">{c.what_is_happening}</p>
+                      </div>
+
+                      {/* Money signals row */}
+                      {c.conflict_signals && (
+                        <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                          {c.conflict_signals.oil_signal && (
+                            <span className="text-[8px] font-mono px-2 py-0.5 rounded bg-orange-500/8 border border-orange-500/15 text-orange-300/60">🛢️ Oil</span>
+                          )}
+                          {c.conflict_signals.gold_signal && (
+                            <span className="text-[8px] font-mono px-2 py-0.5 rounded bg-amber-500/8 border border-amber-500/15 text-amber-300/60">🥇 Gold</span>
+                          )}
+                          {c.conflict_signals.currency_signal && (
+                            <span className="text-[8px] font-mono px-2 py-0.5 rounded bg-cyan-500/8 border border-cyan-500/15 text-cyan-300/60">¥ FX</span>
+                          )}
+                          {c.conflict_signals.sanctions_signal && (
+                            <span className="text-[8px] font-mono px-2 py-0.5 rounded bg-purple-500/8 border border-purple-500/15 text-purple-300/60">⚖️ Sanctions</span>
+                          )}
+                          <span className="text-[8px] font-mono text-white/18 ml-auto">Click for full analysis →</span>
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* ─── COUNTRY GRID ─── */}
           {countryIntel.length > 0 && (
             <div>
@@ -772,6 +890,147 @@ export default function WorldIntelligence() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedConflict && (
+          <motion.div
+            initial={{ opacity: 0, x: 440 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 440 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-[500px] bg-[#06060a]/98 backdrop-blur-2xl border-l border-red-500/20 z-[100] flex flex-col shadow-[-20px_0_60px_rgba(0,0,0,0.5)]"
+          >
+            <div className="p-5 border-b border-white/8 shrink-0">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 pr-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                    <span className="text-[9px] font-mono text-red-400/60 uppercase tracking-[0.2em]">Conflict Intelligence</span>
+                    {selectedConflict.escalation_risk && (
+                      <span className={cn('text-[8px] font-mono font-bold px-2 py-0.5 rounded-full border uppercase',
+                        selectedConflict.escalation_risk === 'critical' ? 'text-red-400 border-red-500/40 bg-red-500/10'
+                        : selectedConflict.escalation_risk === 'high' ? 'text-orange-400 border-orange-500/30 bg-orange-500/8'
+                        : 'text-amber-400 border-amber-500/25 bg-amber-500/6')}>
+                        {selectedConflict.escalation_risk}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-lg font-mono font-bold text-white leading-snug">{selectedConflict.title}</h2>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="text-[9px] font-mono text-white/30">{selectedConflict.region?.replace('_', ' ').toUpperCase()}</span>
+                    <span className="text-[9px] font-mono text-white/30">·</span>
+                    <span className="text-[9px] font-mono text-white/30">{selectedConflict.target_period}</span>
+                    <span className="text-[9px] font-mono text-white/30">·</span>
+                    <span className="text-[9px] font-mono text-white/50 font-bold">{selectedConflict.confidence}% confidence</span>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedConflict(null)} className="p-2 rounded-lg hover:bg-white/6 text-white/35 hover:text-white transition-colors text-xl font-mono shrink-0">×</button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin">
+              {/* Financial trigger */}
+              {selectedConflict.financial_trigger && (
+                <div className="bg-red-500/8 border border-red-500/20 rounded-xl p-4">
+                  <div className="text-[8px] font-mono text-red-400/70 uppercase tracking-wider mb-2">💰 Financial Signal Driving This</div>
+                  <p className="text-[11px] font-mono text-red-200/75 leading-relaxed font-bold">{selectedConflict.financial_trigger}</p>
+                </div>
+              )}
+
+              {/* Money signals breakdown */}
+              {selectedConflict.conflict_signals && (
+                <div>
+                  <div className="text-[8px] font-mono text-white/25 uppercase tracking-wider mb-3">What the Markets Are Saying</div>
+                  <div className="space-y-2">
+                    {[
+                      { key: 'oil_signal', label: '🛢️ Oil Signal', color: 'text-orange-300/70 bg-orange-500/5 border-orange-500/15' },
+                      { key: 'gold_signal', label: '🥇 Gold Signal', color: 'text-amber-300/70 bg-amber-500/5 border-amber-500/15' },
+                      { key: 'currency_signal', label: '¥ Currency Signal', color: 'text-cyan-300/70 bg-cyan-500/5 border-cyan-500/15' },
+                      { key: 'sanctions_signal', label: '⚖️ Sanctions Signal', color: 'text-purple-300/70 bg-purple-500/5 border-purple-500/15' },
+                    ].filter(s => selectedConflict.conflict_signals?.[s.key as keyof typeof selectedConflict.conflict_signals]).map(s => (
+                      <div key={s.key} className={cn('px-3 py-2.5 rounded-lg border', s.color)}>
+                        <div className="text-[8px] font-mono font-bold mb-1 opacity-70">{s.label}</div>
+                        <p className="text-[10px] font-mono leading-relaxed">{selectedConflict.conflict_signals?.[s.key as keyof typeof selectedConflict.conflict_signals]}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* What's happening */}
+              <div>
+                <div className="text-[8px] font-mono text-white/25 uppercase tracking-wider mb-2">What's Happening Now</div>
+                <p className="text-[11px] font-mono text-white/60 leading-relaxed">{selectedConflict.what_is_happening}</p>
+              </div>
+
+              {/* What it means */}
+              <div>
+                <div className="text-[8px] font-mono text-white/25 uppercase tracking-wider mb-2">What This Leads To</div>
+                <p className="text-[11px] font-mono text-white/60 leading-relaxed">{selectedConflict.what_it_means}</p>
+              </div>
+
+              {/* Historical parallel */}
+              {selectedConflict.historical_parallel && (
+                <div className="bg-purple-500/5 border border-purple-500/12 rounded-xl p-4">
+                  <div className="text-[8px] font-mono text-purple-400/60 uppercase tracking-wider mb-2">📖 Historical Parallel</div>
+                  <p className="text-[10px] font-mono text-purple-200/55 leading-relaxed">{selectedConflict.historical_parallel}</p>
+                </div>
+              )}
+
+              {/* Who wins / who loses */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-emerald-500/5 border border-emerald-500/12 rounded-xl p-3">
+                  <div className="text-[8px] font-mono text-emerald-400/60 uppercase tracking-wider mb-2">✅ Who Wins</div>
+                  <p className="text-[10px] font-mono text-emerald-200/55 leading-relaxed">{selectedConflict.who_wins}</p>
+                </div>
+                <div className="bg-red-500/5 border border-red-500/12 rounded-xl p-3">
+                  <div className="text-[8px] font-mono text-red-400/60 uppercase tracking-wider mb-2">❌ Who Gets Hurt</div>
+                  <p className="text-[10px] font-mono text-red-200/55 leading-relaxed">{selectedConflict.who_gets_hurt}</p>
+                </div>
+              </div>
+
+              {/* Actionable move */}
+              {(selectedConflict.actionable_move || selectedConflict.what_to_do_now) && (
+                <div className="bg-cyan-500/6 border border-cyan-500/18 rounded-xl p-4">
+                  <div className="text-[8px] font-mono text-cyan-400/60 uppercase tracking-wider mb-2">⚡ Your Move Now</div>
+                  {selectedConflict.actionable_move && (
+                    <p className="text-[11px] font-mono text-cyan-200/80 font-bold leading-relaxed mb-2">{selectedConflict.actionable_move}</p>
+                  )}
+                  {selectedConflict.what_to_do_now && (
+                    <p className="text-[10px] font-mono text-cyan-200/50 leading-relaxed">{selectedConflict.what_to_do_now}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Key drivers + risks */}
+              <div className="grid grid-cols-2 gap-3">
+                {safeArr(selectedConflict.key_drivers).length > 0 && (
+                  <div>
+                    <div className="text-[8px] font-mono text-white/25 uppercase tracking-wider mb-2">Key Drivers</div>
+                    <div className="space-y-1">
+                      {safeArr(selectedConflict.key_drivers).map((d: string, i: number) => (
+                        <div key={i} className="flex items-start gap-1.5 text-[9px] font-mono text-white/40">
+                          <span className="text-white/20 shrink-0">›</span>{d}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {safeArr(selectedConflict.main_risks).length > 0 && (
+                  <div>
+                    <div className="text-[8px] font-mono text-white/25 uppercase tracking-wider mb-2">What Makes This Wrong</div>
+                    <div className="space-y-1">
+                      {safeArr(selectedConflict.main_risks).map((r: string, i: number) => (
+                        <div key={i} className="flex items-start gap-1.5 text-[9px] font-mono text-white/40">
+                          <span className="text-red-400/40 shrink-0">!</span>{r}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {selectedCountry && (
