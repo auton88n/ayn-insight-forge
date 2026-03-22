@@ -56,6 +56,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const WorldIntelligence = lazy(() => import("./pages/WorldIntelligence"));
 const AdminCustomOrders = lazy(() => import("./pages/AdminCustomOrders"));
+const ClientSign = lazy(() => import("./pages/ClientSign"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
