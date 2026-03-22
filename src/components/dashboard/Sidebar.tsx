@@ -293,10 +293,10 @@ export const Sidebar = ({
   useEffect(() => {
     if (isTutorialProfileStep) {
       setProfilePopoverOpen(true);
-    } else if (profilePopoverOpen) {
+    } else {
       setProfilePopoverOpen(false);
     }
-  }, [isTutorialProfileStep, profilePopoverOpen]);
+  }, [isTutorialProfileStep]);
   const formatCompactTime = (date: Date): string => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
