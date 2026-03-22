@@ -78,6 +78,8 @@ export default function AdminCustomOrders() {
   const [editingOrder, setEditingOrder] = useState<CustomOrder | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+  const [sendingReceipt, setSendingReceipt] = useState<string | null>(null);
+  const [markingPaid, setMarkingPaid] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
   const [signingId, setSigningId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -199,6 +201,32 @@ export default function AdminCustomOrders() {
     } finally { setSendingEmail(null); }
   };
 
+  const handleSendReceipt = async (orderId: string) => {
+    setSendingReceipt(orderId);
+    try {
+      const { error } = await supabase.functions.invoke('send-receipt-email', { body: { orderId } });
+      if (error) throw error;
+      toast({ title: '✓ Receipt sent', description: 'Payment receipt emailed to client' });
+      fetchOrders();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally { setSendingReceipt(null); }
+  };
+
+  const handleMarkPaid = async (orderId: string) => {
+    setMarkingPaid(orderId);
+    try {
+      const { error } = await supabase.from('custom_orders').update({
+        status: 'paid', paid_at: new Date().toISOString(),
+      }).eq('id', orderId);
+      if (error) throw error;
+      toast({ title: '✓ Marked as paid' });
+      fetchOrders();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally { setMarkingPaid(null); }
+  };
+
   // Signature pad
   const initCanvas = () => {
     const c = canvasRef.current; if (!c) return;
@@ -314,6 +342,7 @@ export default function AdminCustomOrders() {
                   <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">Client</th>
                   <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
                   <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell">Email</th>
                   <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Signatures</th>
                   <th className="px-4 py-2.5"></th>
                 </tr>
@@ -321,6 +350,7 @@ export default function AdminCustomOrders() {
               <tbody className="divide-y divide-border">
                 {filtered.map(o => {
                   const s = STATUS[o.status] || STATUS.draft;
+                  const openCount = o.email_open_count || 0;
                   return (
                     <tr key={o.id} className="hover:bg-muted/30 transition-colors group">
                       <td className="px-4 py-3">
@@ -333,6 +363,7 @@ export default function AdminCustomOrders() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="font-bold text-foreground">{new Intl.NumberFormat('en-SA',{style:'currency',currency:o.currency||'SAR'}).format(Number(o.total_amount))}</div>
+                        {o.paid_at && <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">✓ Paid</div>}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold', s.color)}>
@@ -340,6 +371,24 @@ export default function AdminCustomOrders() {
                           {s.label}
                         </span>
                       </td>
+                      {/* Email tracking column */}
+                      <td className="px-4 py-3 text-center hidden lg:table-cell">
+                        {o.email_sent_at ? (
+                          <div className="space-y-0.5">
+                            <div className={cn('text-[10px] font-semibold', openCount > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground')}>
+                              {openCount > 0 ? `👁 Opened ${openCount}×` : '📤 Sent'}
+                            </div>
+                            {o.email_opened_at && (
+                              <div className="text-[9px] text-muted-foreground">
+                                {new Date(o.email_opened_at).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/40">—</span>
+                        )}
+                      </td>
+                      {/* Signatures */}
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <span title="AYN" className={cn('w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold', o.admin_signature_url ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'border-border text-muted-foreground')}>A</span>
@@ -353,9 +402,21 @@ export default function AdminCustomOrders() {
                             {generatingPdf === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           </button>
                           <button onClick={() => { setSigningId(o.id); setPanel('sign'); setTimeout(initCanvas, 100); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Sign"><PenTool className="w-3.5 h-3.5" /></button>
-                          <button onClick={() => handleSendEmail(o.id)} disabled={sendingEmail === o.id} className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-muted-foreground hover:text-blue-600" title="Send Email">
+                          <button onClick={() => handleSendEmail(o.id)} disabled={sendingEmail === o.id} className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-muted-foreground hover:text-blue-600" title="Send Contract Email">
                             {sendingEmail === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                           </button>
+                          {/* Mark as Paid */}
+                          {o.status !== 'paid' && o.status !== 'completed' && (
+                            <button onClick={() => handleMarkPaid(o.id)} disabled={markingPaid === o.id} className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-muted-foreground hover:text-emerald-600" title="Mark as Paid">
+                              {markingPaid === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
+                          {/* Send Receipt */}
+                          {(o.status === 'paid' || o.status === 'completed') && (
+                            <button onClick={() => handleSendReceipt(o.id)} disabled={sendingReceipt === o.id} className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors text-muted-foreground hover:text-emerald-600" title="Send Receipt & PDF">
+                              {sendingReceipt === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <DollarSign className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
                           <button onClick={() => handleDelete(o.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       </td>
