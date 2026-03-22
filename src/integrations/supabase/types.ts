@@ -2590,6 +2590,111 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_orders: {
+        Row: {
+          admin_signature_url: string | null
+          admin_signed_at: string | null
+          after_sale_services: string | null
+          client_signature_url: string | null
+          client_signed_at: string | null
+          company_address: string | null
+          company_email: string
+          company_name: string
+          company_phone: string | null
+          contact_person: string
+          contract_pdf_url: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          delivery_timeline: string | null
+          discount_percent: number | null
+          email_opened_at: string | null
+          email_sent_at: string | null
+          id: string
+          notes: string | null
+          order_description: string | null
+          order_title: string
+          privacy_notes: string | null
+          services: Json
+          status: string
+          stripe_payment_id: string | null
+          stripe_payment_link: string | null
+          subtotal: number
+          tax_percent: number | null
+          terms_and_conditions: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          admin_signature_url?: string | null
+          admin_signed_at?: string | null
+          after_sale_services?: string | null
+          client_signature_url?: string | null
+          client_signed_at?: string | null
+          company_address?: string | null
+          company_email: string
+          company_name: string
+          company_phone?: string | null
+          contact_person: string
+          contract_pdf_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          delivery_timeline?: string | null
+          discount_percent?: number | null
+          email_opened_at?: string | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_description?: string | null
+          order_title: string
+          privacy_notes?: string | null
+          services?: Json
+          status?: string
+          stripe_payment_id?: string | null
+          stripe_payment_link?: string | null
+          subtotal?: number
+          tax_percent?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          admin_signature_url?: string | null
+          admin_signed_at?: string | null
+          after_sale_services?: string | null
+          client_signature_url?: string | null
+          client_signed_at?: string | null
+          company_address?: string | null
+          company_email?: string
+          company_name?: string
+          company_phone?: string | null
+          contact_person?: string
+          contract_pdf_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          delivery_timeline?: string | null
+          discount_percent?: number | null
+          email_opened_at?: string | null
+          email_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          order_description?: string | null
+          order_title?: string
+          privacy_notes?: string | null
+          services?: Json
+          status?: string
+          stripe_payment_id?: string | null
+          stripe_payment_link?: string | null
+          subtotal?: number
+          tax_percent?: number | null
+          terms_and_conditions?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       device_fingerprints: {
         Row: {
           created_at: string
