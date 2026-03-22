@@ -289,13 +289,12 @@ export const Sidebar = ({
     </>
   ), [userName, userEmail, hasDutyAccess, isAdmin, isSigningOut, subscriptionTier, onAdminPanelClick, onLogout, onStartTutorial, navigate]);
 
-  // Control profile popover during tutorial
+  // Control profile popover during tutorial only
   useEffect(() => {
     if (isTutorialProfileStep) {
       setProfilePopoverOpen(true);
-    } else {
-      setProfilePopoverOpen(false);
     }
+    // Do NOT close here — let the user control it normally
   }, [isTutorialProfileStep]);
   const formatCompactTime = (date: Date): string => {
     const now = new Date();
