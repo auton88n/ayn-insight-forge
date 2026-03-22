@@ -134,7 +134,6 @@ export const Sidebar = ({
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [profilePopoverOpen, setProfilePopoverOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [showSupportWidget, setShowSupportWidget] = useState(false);
@@ -186,10 +185,7 @@ export const Sidebar = ({
       <div className="p-2 space-y-0.5">
         {subscriptionTier === 'free' && (
           <Button 
-            onClick={() => {
-              setProfilePopoverOpen(false);
-              navigate('/pricing');
-            }} 
+            onClick={() => navigate('/pricing')} 
             variant="ghost" 
             className="w-full justify-start h-11 px-3 gap-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 border border-purple-500/20 transition-colors duration-150"
           >
@@ -219,7 +215,6 @@ export const Sidebar = ({
         </Button>
         
         <Button onClick={() => {
-          setProfilePopoverOpen(false);
           onStartTutorial?.();
         }} variant="ghost" className="w-full justify-start h-11 px-3 gap-3 rounded-xl hover:bg-muted/60 transition-colors duration-150">
           <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -232,7 +227,6 @@ export const Sidebar = ({
         </Button>
         
         <Button onClick={() => {
-          setProfilePopoverOpen(false);
           setShowSupportWidget(true);
         }} variant="ghost" className="w-full justify-start h-11 px-3 gap-3 rounded-xl hover:bg-muted/60 transition-colors duration-150">
           <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center">
@@ -265,7 +259,6 @@ export const Sidebar = ({
         <Button
           onClick={async () => {
             setIsSigningOut(true);
-            setProfilePopoverOpen(false);
             try {
               await onLogout();
             } catch (error) {
