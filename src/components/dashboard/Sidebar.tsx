@@ -289,13 +289,7 @@ export const Sidebar = ({
     </>
   ), [userName, userEmail, hasDutyAccess, isAdmin, isSigningOut, subscriptionTier, onAdminPanelClick, onLogout, onStartTutorial, navigate]);
 
-  // Control profile popover during tutorial only
-  useEffect(() => {
-    if (isTutorialProfileStep) {
-      setProfilePopoverOpen(true);
-    }
-    // Do NOT close here — let the user control it normally
-  }, [isTutorialProfileStep]);
+
   const formatCompactTime = (date: Date): string => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -556,7 +550,7 @@ return <SidebarMenuItem key={chat.sessionId} className={cn("relative", index > 0
         
         {/* User Profile - Mobile: Sheet, Desktop: Popover */}
         {isMobile ? (
-          <Sheet open={profilePopoverOpen} onOpenChange={setProfilePopoverOpen}>
+          <Sheet>
             <SheetTrigger asChild>
               <ProfileTriggerButton userName={userName} userEmail={userEmail} userAvatar={userAvatar} />
             </SheetTrigger>
@@ -568,7 +562,7 @@ return <SidebarMenuItem key={chat.sessionId} className={cn("relative", index > 0
             </SheetContent>
           </Sheet>
         ) : (
-          <Popover open={profilePopoverOpen} onOpenChange={setProfilePopoverOpen}>
+          <Popover>
             <PopoverTrigger asChild>
               <ProfileTriggerButton userName={userName} userEmail={userEmail} userAvatar={userAvatar} />
             </PopoverTrigger>
