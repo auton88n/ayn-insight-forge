@@ -8,68 +8,38 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import {
   ArrowLeft, Plus, Send, FileText, Trash2, Eye, Edit2,
-  DollarSign, Building2, Clock, CheckCircle, XCircle, Loader2,
-  Download, PenTool, Search
+  DollarSign, Building2, Clock, CheckCircle, XCircle,
+  Loader2, Download, PenTool, Search, X, Minus
 } from 'lucide-react';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface ServiceItem {
-  name: string;
-  description: string;
-  price: number;
-  quantity: number;
-}
+interface ServiceItem { name: string; description: string; price: number; quantity: number; }
 
 interface CustomOrder {
-  id: string;
-  company_name: string;
-  company_email: string;
-  contact_person: string;
-  company_phone: string | null;
-  company_address: string | null;
-  order_title: string;
-  order_description: string | null;
-  services: ServiceItem[];
-  subtotal: number;
-  discount_percent: number;
-  tax_percent: number;
-  total_amount: number;
-  currency: string;
-  terms_and_conditions: string | null;
-  privacy_notes: string | null;
-  after_sale_services: string | null;
-  delivery_timeline: string | null;
-  admin_signature_url: string | null;
-  client_signature_url: string | null;
-  admin_signed_at: string | null;
-  client_signed_at: string | null;
-  stripe_payment_link: string | null;
-  stripe_payment_id: string | null;
-  contract_pdf_url: string | null;
-  status: string;
-  email_sent_at: string | null;
-  created_at: string;
-  updated_at: string;
-  notes: string | null;
+  id: string; company_name: string; company_email: string; contact_person: string;
+  company_phone: string | null; company_address: string | null;
+  order_title: string; order_description: string | null;
+  services: ServiceItem[]; subtotal: number; discount_percent: number;
+  tax_percent: number; total_amount: number; currency: string;
+  terms_and_conditions: string | null; privacy_notes: string | null;
+  after_sale_services: string | null; delivery_timeline: string | null;
+  admin_signature_url: string | null; client_signature_url: string | null;
+  admin_signed_at: string | null; client_signed_at: string | null;
+  stripe_payment_link: string | null; contract_pdf_url: string | null;
+  status: string; email_sent_at: string | null;
+  created_at: string; notes: string | null;
 }
 
 const DEFAULT_TERMS = `1. Payment is due upon receipt of this agreement.
-2. Services will commence within 5 business days of payment confirmation.
+2. Services commence within 5 business days of payment confirmation.
 3. This agreement is valid for 30 days from the date of issue.
-4. Any modifications to the scope of work must be agreed upon in writing.
-5. AYN reserves the right to assign qualified team members to the project.
-6. Client agrees to provide necessary access, information, and feedback in a timely manner.
-7. Confidential information shared during the project will be protected per our Privacy Policy.
-8. Either party may terminate this agreement with 15 days written notice.`;
+4. Scope modifications must be agreed upon in writing.
+5. AYN reserves the right to assign qualified team members.
+6. Client agrees to provide necessary access and feedback in a timely manner.
+7. Confidential information is protected per our Privacy Policy.
+8. Either party may terminate with 15 days written notice.`;
 
-const DEFAULT_PRIVACY = `Your data is protected under our Privacy Policy. All information shared during the course of this agreement will be treated as confidential and will not be disclosed to third parties without your explicit consent. Data will be processed in accordance with applicable data protection regulations.`;
+const DEFAULT_PRIVACY = `Your data is protected under our Privacy Policy. All information shared during this agreement is confidential and will not be disclosed to third parties without explicit consent. Data is processed in accordance with applicable data protection regulations.`;
 
 const DEFAULT_AFTER_SALE = `• 30-day post-delivery support included
 • Bug fixes and minor adjustments at no additional cost for 30 days
@@ -77,679 +47,468 @@ const DEFAULT_AFTER_SALE = `• 30-day post-delivery support included
 • Documentation and training materials provided
 • Extended support packages available upon request`;
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Clock }> = {
-  draft: { label: 'Draft', color: 'bg-muted text-muted-foreground', icon: Edit2 },
-  sent: { label: 'Sent', color: 'bg-blue-500/15 text-blue-600 dark:text-blue-400', icon: Send },
-  viewed: { label: 'Viewed', color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', icon: Eye },
-  signed: { label: 'Signed', color: 'bg-purple-500/15 text-purple-600 dark:text-purple-400', icon: PenTool },
-  paid: { label: 'Paid', color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', icon: CheckCircle },
-  completed: { label: 'Completed', color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', icon: CheckCircle },
-  cancelled: { label: 'Cancelled', color: 'bg-destructive/15 text-destructive', icon: XCircle },
+const STATUS: Record<string, { label: string; color: string; dot: string }> = {
+  draft:     { label: 'Draft',     color: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',           dot: 'bg-zinc-400' },
+  sent:      { label: 'Sent',      color: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',         dot: 'bg-blue-500' },
+  viewed:    { label: 'Viewed',    color: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',     dot: 'bg-amber-500' },
+  signed:    { label: 'Signed',    color: 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', dot: 'bg-purple-500' },
+  paid:      { label: 'Paid',      color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  completed: { label: 'Completed', color: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', dot: 'bg-emerald-500' },
+  cancelled: { label: 'Cancelled', color: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400',            dot: 'bg-red-500' },
 };
+
+const CURRENCIES = ['SAR', 'USD', 'AED', 'EUR', 'GBP'];
+
+const emptyForm = () => ({
+  company_name: '', company_email: '', contact_person: '',
+  company_phone: '', company_address: '', order_title: '',
+  order_description: '', services: [{ name: '', description: '', price: 0, quantity: 1 }] as ServiceItem[],
+  discount_percent: 0, tax_percent: 15, currency: 'SAR',
+  terms_and_conditions: DEFAULT_TERMS, privacy_notes: DEFAULT_PRIVACY,
+  after_sale_services: DEFAULT_AFTER_SALE, delivery_timeline: '',
+  stripe_payment_link: '', notes: '',
+});
 
 export default function AdminCustomOrders() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [orders, setOrders] = useState<CustomOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const [panel, setPanel] = useState<'none' | 'form' | 'sign'>('none');
   const [editingOrder, setEditingOrder] = useState<CustomOrder | null>(null);
   const [saving, setSaving] = useState(false);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [showSignPad, setShowSignPad] = useState(false);
-  const [signingOrderId, setSigningOrderId] = useState<string | null>(null);
+  const [signingId, setSigningId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [form, setForm] = useState(emptyForm());
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isDrawingRef = useRef(false);
-
-  // Form state
-  const [form, setForm] = useState({
-    company_name: '',
-    company_email: '',
-    contact_person: '',
-    company_phone: '',
-    company_address: '',
-    order_title: '',
-    order_description: '',
-    services: [{ name: '', description: '', price: 0, quantity: 1 }] as ServiceItem[],
-    discount_percent: 0,
-    tax_percent: 15,
-    currency: 'SAR',
-    terms_and_conditions: DEFAULT_TERMS,
-    privacy_notes: DEFAULT_PRIVACY,
-    after_sale_services: DEFAULT_AFTER_SALE,
-    delivery_timeline: '',
-    stripe_payment_link: '',
-    notes: '',
-  });
+  const isDrawing = useRef(false);
 
   const fetchOrders = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('custom_orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('custom_orders').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       setOrders((data || []) as unknown as CustomOrder[]);
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally { setLoading(false); }
   }, [toast]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  const calculateTotals = (services: ServiceItem[], discount: number, tax: number) => {
-    const subtotal = services.reduce((sum, s) => sum + (s.price * (s.quantity || 1)), 0);
-    const discountAmount = subtotal * (discount / 100);
-    const afterDiscount = subtotal - discountAmount;
-    const taxAmount = afterDiscount * (tax / 100);
-    const total = afterDiscount + taxAmount;
-    return { subtotal, total: Math.round(total * 100) / 100 };
+  const calc = (svcs: ServiceItem[], disc: number, tax: number) => {
+    const sub = svcs.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
+    const after = sub - sub * disc / 100;
+    return { subtotal: sub, total: Math.round((after + after * tax / 100) * 100) / 100 };
+  };
+
+  const fmt = (n: number, cur = form.currency) =>
+    new Intl.NumberFormat('en-SA', { style: 'currency', currency: cur }).format(n);
+
+  const openNew = () => { setForm(emptyForm()); setEditingOrder(null); setPanel('form'); };
+  const openEdit = (o: CustomOrder) => {
+    setEditingOrder(o);
+    setForm({
+      company_name: o.company_name, company_email: o.company_email,
+      contact_person: o.contact_person, company_phone: o.company_phone || '',
+      company_address: o.company_address || '', order_title: o.order_title,
+      order_description: o.order_description || '',
+      services: o.services?.length ? o.services : [{ name:'', description:'', price:0, quantity:1 }],
+      discount_percent: Number(o.discount_percent) || 0, tax_percent: Number(o.tax_percent) || 15,
+      currency: o.currency || 'SAR', terms_and_conditions: o.terms_and_conditions || DEFAULT_TERMS,
+      privacy_notes: o.privacy_notes || DEFAULT_PRIVACY, after_sale_services: o.after_sale_services || DEFAULT_AFTER_SALE,
+      delivery_timeline: o.delivery_timeline || '', stripe_payment_link: o.stripe_payment_link || '',
+      notes: o.notes || '',
+    });
+    setPanel('form');
   };
 
   const handleSave = async () => {
     if (!form.company_name || !form.company_email || !form.contact_person || !form.order_title) {
-      toast({ title: 'Missing Fields', description: 'Please fill all required fields', variant: 'destructive' });
-      return;
+      toast({ title: 'Missing fields', description: 'Fill all required fields', variant: 'destructive' }); return;
     }
-    if (form.services.length === 0 || !form.services[0].name) {
-      toast({ title: 'Missing Services', description: 'Add at least one service', variant: 'destructive' });
-      return;
+    if (!form.services[0]?.name) {
+      toast({ title: 'Add at least one service', variant: 'destructive' }); return;
     }
-
     setSaving(true);
     try {
-      const { subtotal, total } = calculateTotals(form.services, form.discount_percent, form.tax_percent);
+      const { subtotal, total } = calc(form.services, form.discount_percent, form.tax_percent);
       const { data: { user } } = await supabase.auth.getUser();
-
-      const orderData = {
-        company_name: form.company_name,
-        company_email: form.company_email,
-        contact_person: form.contact_person,
-        company_phone: form.company_phone || null,
-        company_address: form.company_address || null,
-        order_title: form.order_title,
+      const payload = {
+        company_name: form.company_name, company_email: form.company_email,
+        contact_person: form.contact_person, company_phone: form.company_phone || null,
+        company_address: form.company_address || null, order_title: form.order_title,
         order_description: form.order_description || null,
-        services: form.services as unknown as any,
-        subtotal,
-        discount_percent: form.discount_percent,
-        tax_percent: form.tax_percent,
-        total_amount: total,
-        currency: form.currency,
+        services: form.services as unknown as any, subtotal,
+        discount_percent: form.discount_percent, tax_percent: form.tax_percent,
+        total_amount: total, currency: form.currency,
         terms_and_conditions: form.terms_and_conditions || null,
         privacy_notes: form.privacy_notes || null,
         after_sale_services: form.after_sale_services || null,
         delivery_timeline: form.delivery_timeline || null,
         stripe_payment_link: form.stripe_payment_link || null,
-        notes: form.notes || null,
-        created_by: user?.id || null,
+        notes: form.notes || null, created_by: user?.id || null,
       };
-
       if (editingOrder) {
-        const { error } = await supabase
-          .from('custom_orders')
-          .update(orderData)
-          .eq('id', editingOrder.id);
+        const { error } = await supabase.from('custom_orders').update(payload).eq('id', editingOrder.id);
         if (error) throw error;
-        toast({ title: 'Order Updated' });
+        toast({ title: '✓ Order updated' });
       } else {
-        const { error } = await supabase
-          .from('custom_orders')
-          .insert(orderData);
+        const { error } = await supabase.from('custom_orders').insert(payload);
         if (error) throw error;
-        toast({ title: 'Order Created' });
+        toast({ title: '✓ Order created' });
       }
-
-      setShowForm(false);
-      setEditingOrder(null);
-      resetForm();
-      fetchOrders();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const resetForm = () => {
-    setForm({
-      company_name: '', company_email: '', contact_person: '',
-      company_phone: '', company_address: '', order_title: '',
-      order_description: '', services: [{ name: '', description: '', price: 0, quantity: 1 }],
-      discount_percent: 0, tax_percent: 15, currency: 'SAR',
-      terms_and_conditions: DEFAULT_TERMS, privacy_notes: DEFAULT_PRIVACY,
-      after_sale_services: DEFAULT_AFTER_SALE, delivery_timeline: '',
-      stripe_payment_link: '', notes: '',
-    });
-  };
-
-  const handleEdit = (order: CustomOrder) => {
-    setEditingOrder(order);
-    setForm({
-      company_name: order.company_name,
-      company_email: order.company_email,
-      contact_person: order.contact_person,
-      company_phone: order.company_phone || '',
-      company_address: order.company_address || '',
-      order_title: order.order_title,
-      order_description: order.order_description || '',
-      services: order.services?.length ? order.services : [{ name: '', description: '', price: 0, quantity: 1 }],
-      discount_percent: Number(order.discount_percent) || 0,
-      tax_percent: Number(order.tax_percent) || 15,
-      currency: order.currency || 'SAR',
-      terms_and_conditions: order.terms_and_conditions || DEFAULT_TERMS,
-      privacy_notes: order.privacy_notes || DEFAULT_PRIVACY,
-      after_sale_services: order.after_sale_services || DEFAULT_AFTER_SALE,
-      delivery_timeline: order.delivery_timeline || '',
-      stripe_payment_link: order.stripe_payment_link || '',
-      notes: order.notes || '',
-    });
-    setShowForm(true);
+      setPanel('none'); setEditingOrder(null); fetchOrders();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this order?')) return;
-    try {
-      const { error } = await supabase.from('custom_orders').delete().eq('id', id);
-      if (error) throw error;
-      toast({ title: 'Order Deleted' });
-      fetchOrders();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    }
+    if (!confirm('Delete this order permanently?')) return;
+    const { error } = await supabase.from('custom_orders').delete().eq('id', id);
+    if (error) toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    else { toast({ title: '✓ Deleted' }); fetchOrders(); }
   };
 
   const handleGeneratePdf = async (orderId: string) => {
     setGeneratingPdf(orderId);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-contract-pdf', {
-        body: { orderId }
-      });
+      const { data, error } = await supabase.functions.invoke('generate-contract-pdf', { body: { orderId } });
       if (error) throw error;
       if (!data?.html) throw new Error('No HTML returned');
-
-      // Open HTML in new window for printing/PDF
       const w = window.open('', '_blank');
-      if (w) {
-        w.document.write(data.html);
-        w.document.close();
-        setTimeout(() => w.print(), 500);
-      }
-      toast({ title: 'Contract Generated', description: 'Print or save as PDF from the new window' });
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setGeneratingPdf(null);
-    }
+      if (w) { w.document.write(data.html); w.document.close(); setTimeout(() => w.print(), 600); }
+      toast({ title: '✓ Contract opened', description: 'Use browser Print → Save as PDF' });
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally { setGeneratingPdf(null); }
   };
 
   const handleSendEmail = async (orderId: string) => {
     setSendingEmail(orderId);
     try {
-      const { data, error } = await supabase.functions.invoke('send-contract-email', {
-        body: { orderId }
-      });
+      const { error } = await supabase.functions.invoke('send-contract-email', { body: { orderId } });
       if (error) throw error;
-      toast({ title: 'Email Sent', description: 'Contract and payment link sent to client' });
+      toast({ title: '✓ Email sent', description: 'Agreement sent to client' });
       fetchOrders();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    } finally {
-      setSendingEmail(null);
-    }
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally { setSendingEmail(null); }
   };
 
   // Signature pad
   const initCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    canvas.width = canvas.offsetWidth * 2;
-    canvas.height = canvas.offsetHeight * 2;
-    ctx.scale(2, 2);
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext('2d'); if (!ctx) return;
+    c.width = c.offsetWidth * 2; c.height = c.offsetHeight * 2;
+    ctx.scale(2, 2); ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.lineCap = 'round';
   };
-
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    isDrawingRef.current = true;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  const startDraw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    isDrawing.current = true;
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext('2d'); if (!ctx) return;
+    const r = c.getBoundingClientRect();
+    ctx.beginPath(); ctx.moveTo(e.clientX - r.left, e.clientY - r.top);
   };
-
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawingRef.current) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-    ctx.stroke();
+    if (!isDrawing.current) return;
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext('2d'); if (!ctx) return;
+    const r = c.getBoundingClientRect();
+    ctx.lineTo(e.clientX - r.left, e.clientY - r.top); ctx.stroke();
   };
-
-  const stopDrawing = () => { isDrawingRef.current = false; };
+  const stopDraw = () => { isDrawing.current = false; };
+  const clearCanvas = () => {
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext('2d'); if (!ctx) return;
+    ctx.clearRect(0, 0, c.width, c.height);
+  };
 
   const handleAdminSign = async () => {
-    if (!canvasRef.current || !signingOrderId) return;
+    if (!canvasRef.current || !signingId) return;
     const dataUrl = canvasRef.current.toDataURL('image/png');
-    
     try {
-      // Upload signature to storage
       const blob = await fetch(dataUrl).then(r => r.blob());
-      const path = `signatures/admin_${signingOrderId}_${Date.now()}.png`;
-      const { error: uploadErr } = await supabase.storage.from('generated-files').upload(path, blob, { contentType: 'image/png' });
-      if (uploadErr) throw uploadErr;
-
+      const path = `signatures/admin_${signingId}_${Date.now()}.png`;
+      const { error: upErr } = await supabase.storage.from('generated-files').upload(path, blob, { contentType: 'image/png' });
+      if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from('generated-files').getPublicUrl(path);
-
-      await supabase.from('custom_orders').update({
-        admin_signature_url: urlData.publicUrl,
-        admin_signed_at: new Date().toISOString(),
-      }).eq('id', signingOrderId);
-
-      toast({ title: 'Signed', description: 'Admin signature applied' });
-      setShowSignPad(false);
-      setSigningOrderId(null);
-      fetchOrders();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message, variant: 'destructive' });
-    }
+      await supabase.from('custom_orders').update({ admin_signature_url: urlData.publicUrl, admin_signed_at: new Date().toISOString() }).eq('id', signingId);
+      toast({ title: '✓ Signature applied' });
+      setPanel('none'); setSigningId(null); fetchOrders();
+    } catch (e: any) { toast({ title: 'Error', description: e.message, variant: 'destructive' }); }
   };
 
-  const addService = () => {
-    setForm(f => ({ ...f, services: [...f.services, { name: '', description: '', price: 0, quantity: 1 }] }));
-  };
-
-  const removeService = (idx: number) => {
-    setForm(f => ({ ...f, services: f.services.filter((_, i) => i !== idx) }));
-  };
-
-  const updateService = (idx: number, field: keyof ServiceItem, value: string | number) => {
-    setForm(f => ({
-      ...f,
-      services: f.services.map((s, i) => i === idx ? { ...s, [field]: value } : s),
-    }));
-  };
-
-  const filteredOrders = orders.filter(o => {
-    const matchesSearch = !searchQuery ||
-      o.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.order_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.contact_person.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  const filtered = orders.filter(o => {
+    const q = search.toLowerCase();
+    return (!q || o.company_name.toLowerCase().includes(q) || o.order_title.toLowerCase().includes(q) || o.contact_person.toLowerCase().includes(q))
+      && (statusFilter === 'all' || o.status === statusFilter);
   });
 
-  const formatCurrency = (amount: number, currency = 'SAR') => {
-    return new Intl.NumberFormat('en-SA', { style: 'currency', currency }).format(amount);
-  };
+  const { subtotal: prevSub, total: prevTotal } = calc(form.services, form.discount_percent, form.tax_percent);
 
-  const { subtotal: previewSubtotal, total: previewTotal } = calculateTotals(form.services, form.discount_percent, form.tax_percent);
+  // ── Field helpers
+  const F = (label: string, required = false) => (
+    <span className="text-xs font-medium text-foreground/70">{label}{required && <span className="text-red-500 ml-0.5">*</span>}</span>
+  );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
+    <div className="min-h-screen bg-background flex flex-col">
+
+      {/* ── TOP BAR ── */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
+        <div className="max-w-6xl mx-auto px-5 py-3.5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/')} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+              <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+            </button>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Custom Orders</h1>
-              <p className="text-xs text-muted-foreground">Create contracts, attach payment links, send to clients</p>
+              <h1 className="text-base font-bold text-foreground leading-tight">Custom Orders</h1>
+              <p className="text-[11px] text-muted-foreground">Contracts, signatures & payments</p>
             </div>
           </div>
-          <Button onClick={() => { resetForm(); setEditingOrder(null); setShowForm(true); }} className="gap-2">
-            <Plus className="w-4 h-4" /> New Order
+          <Button onClick={openNew} size="sm" className="gap-1.5 h-8 px-3 text-xs font-semibold">
+            <Plus className="w-3.5 h-3.5" /> New Order
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search orders..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+      <div className="max-w-6xl mx-auto px-5 py-5 flex-1 w-full">
+
+        {/* ── FILTERS ── */}
+        <div className="flex flex-wrap gap-2.5 mb-5">
+          <div className="relative flex-1 min-w-[180px] max-w-xs">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search orders…" className="pl-8 h-8 text-xs" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-32 h-8 text-xs">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="viewed">Viewed</SelectItem>
-              <SelectItem value="signed">Signed</SelectItem>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              {Object.entries(STATUS).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
             </SelectContent>
           </Select>
-          <div className="text-sm text-muted-foreground">
-            {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''}
-          </div>
+          <span className="text-xs text-muted-foreground self-center">{filtered.length} order{filtered.length !== 1 ? 's' : ''}</span>
         </div>
-      </div>
 
-      {/* Orders List */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8">
+        {/* ── ORDERS TABLE ── */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredOrders.length === 0 ? (
+          <div className="flex justify-center py-20"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20">
-            <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground">No orders found</p>
-            <Button onClick={() => { resetForm(); setEditingOrder(null); setShowForm(true); }} variant="outline" className="mt-4 gap-2">
-              <Plus className="w-4 h-4" /> Create First Order
-            </Button>
+            <FileText className="w-10 h-10 text-muted-foreground/25 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground mb-4">No orders yet</p>
+            <Button onClick={openNew} variant="outline" size="sm" className="gap-1.5"><Plus className="w-3.5 h-3.5" /> Create First Order</Button>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {filteredOrders.map(order => {
-              const sc = STATUS_CONFIG[order.status] || STATUS_CONFIG.draft;
-              const StatusIcon = sc.icon;
-              return (
-                <div key={order.id} className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-foreground truncate">{order.order_title}</h3>
-                        <Badge className={cn('text-[10px] gap-1', sc.color)}>
-                          <StatusIcon className="w-3 h-3" />
-                          {sc.label}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Building2 className="w-3.5 h-3.5" />
-                          {order.company_name}
+          <div className="border border-border rounded-xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50 border-b border-border">
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Order</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">Client</th>
+                  <th className="text-right px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Amount</th>
+                  <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="text-center px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Signatures</th>
+                  <th className="px-4 py-2.5"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map(o => {
+                  const s = STATUS[o.status] || STATUS.draft;
+                  return (
+                    <tr key={o.id} className="hover:bg-muted/30 transition-colors group">
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-foreground text-sm leading-tight">{o.order_title}</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">{new Date(o.created_at).toLocaleDateString()}</div>
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <div className="text-sm font-medium text-foreground">{o.company_name}</div>
+                        <div className="text-[11px] text-muted-foreground">{o.contact_person}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="font-bold text-foreground">{new Intl.NumberFormat('en-SA',{style:'currency',currency:o.currency||'SAR'}).format(Number(o.total_amount))}</div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold', s.color)}>
+                          <span className={cn('w-1.5 h-1.5 rounded-full', s.dot)} />
+                          {s.label}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-3.5 h-3.5" />
-                          {formatCurrency(Number(order.total_amount), order.currency)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          {new Date(order.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                        <span>{order.contact_person}</span>
-                        <span>•</span>
-                        <span>{order.company_email}</span>
-                        {order.admin_signed_at && (
-                          <>
-                            <span>•</span>
-                            <span className="text-emerald-600 dark:text-emerald-400">✓ Admin signed</span>
-                          </>
-                        )}
-                        {order.email_sent_at && (
-                          <>
-                            <span>•</span>
-                            <span className="text-blue-600 dark:text-blue-400">✉ Emailed {new Date(order.email_sent_at).toLocaleDateString()}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <Button size="sm" variant="ghost" onClick={() => handleEdit(order)} title="Edit">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm" variant="ghost"
-                        onClick={() => { setSigningOrderId(order.id); setShowSignPad(true); setTimeout(initCanvas, 100); }}
-                        title="Sign"
-                        disabled={!!order.admin_signed_at}
-                      >
-                        <PenTool className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm" variant="ghost"
-                        onClick={() => handleGeneratePdf(order.id)}
-                        disabled={generatingPdf === order.id}
-                        title="Generate PDF"
-                      >
-                        {generatingPdf === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        size="sm" variant="ghost"
-                        onClick={() => handleSendEmail(order.id)}
-                        disabled={sendingEmail === order.id}
-                        title="Send to client"
-                      >
-                        {sendingEmail === order.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleDelete(order.id)} title="Delete" className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span title="AYN" className={cn('w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold', o.admin_signature_url ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'border-border text-muted-foreground')}>A</span>
+                          <span title={o.contact_person} className={cn('w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold', o.client_signature_url ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'border-border text-muted-foreground')}>{o.contact_person[0]}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
+                          <button onClick={() => openEdit(o)} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleGeneratePdf(o.id)} disabled={generatingPdf === o.id} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Generate PDF">
+                            {generatingPdf === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                          </button>
+                          <button onClick={() => { setSigningId(o.id); setPanel('sign'); setTimeout(initCanvas, 100); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Sign"><PenTool className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleSendEmail(o.id)} disabled={sendingEmail === o.id} className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-muted-foreground hover:text-blue-600" title="Send Email">
+                            {sendingEmail === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                          </button>
+                          <button onClick={() => handleDelete(o.id)} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-muted-foreground hover:text-red-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {/* Create/Edit Order Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] p-0">
-          <DialogHeader className="p-6 pb-0">
-            <DialogTitle>{editingOrder ? 'Edit Order' : 'New Custom Order'}</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[70vh] p-6 pt-4">
-            <div className="space-y-6">
-              {/* Company Info */}
+      {/* ── FORM PANEL ── */}
+      {panel === 'form' && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={() => setPanel('none')} />
+          <div className="w-full max-w-2xl bg-background border-l border-border flex flex-col h-full shadow-2xl">
+            {/* Panel header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
               <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Company Information</h3>
+                <h2 className="text-base font-bold text-foreground">{editingOrder ? 'Edit Order' : 'New Order'}</h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Fill in the contract details below</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPanel('none')} className="h-8 text-xs">Cancel</Button>
+                <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 text-xs gap-1.5">
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  {editingOrder ? 'Update' : 'Create'}
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+
+              {/* CLIENT */}
+              <div>
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Client Details</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input placeholder="Company Name *" value={form.company_name} onChange={e => setForm(f => ({ ...f, company_name: e.target.value }))} />
-                  <Input placeholder="Contact Person *" value={form.contact_person} onChange={e => setForm(f => ({ ...f, contact_person: e.target.value }))} />
-                  <Input placeholder="Company Email *" type="email" value={form.company_email} onChange={e => setForm(f => ({ ...f, company_email: e.target.value }))} />
-                  <Input placeholder="Phone" value={form.company_phone} onChange={e => setForm(f => ({ ...f, company_phone: e.target.value }))} />
-                  <Input placeholder="Address" className="col-span-2" value={form.company_address} onChange={e => setForm(f => ({ ...f, company_address: e.target.value }))} />
+                  <div className="col-span-2 space-y-1">{F('Company Name', true)}<Input value={form.company_name} onChange={e => setForm(f => ({...f, company_name: e.target.value}))} placeholder="Acme Corp" className="h-8 text-sm" /></div>
+                  <div className="space-y-1">{F('Contact Person', true)}<Input value={form.contact_person} onChange={e => setForm(f => ({...f, contact_person: e.target.value}))} placeholder="John Smith" className="h-8 text-sm" /></div>
+                  <div className="space-y-1">{F('Email', true)}<Input type="email" value={form.company_email} onChange={e => setForm(f => ({...f, company_email: e.target.value}))} placeholder="john@acme.com" className="h-8 text-sm" /></div>
+                  <div className="space-y-1">{F('Phone')}<Input value={form.company_phone} onChange={e => setForm(f => ({...f, company_phone: e.target.value}))} placeholder="+966 5X XXX XXXX" className="h-8 text-sm" /></div>
+                  <div className="space-y-1">{F('Address')}<Input value={form.company_address} onChange={e => setForm(f => ({...f, company_address: e.target.value}))} placeholder="City, Country" className="h-8 text-sm" /></div>
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Order Details */}
+              {/* ORDER */}
               <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Order Details</h3>
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Order Details</h3>
                 <div className="space-y-3">
-                  <Input placeholder="Order Title *" value={form.order_title} onChange={e => setForm(f => ({ ...f, order_title: e.target.value }))} />
-                  <textarea
-                    placeholder="Order Description"
-                    value={form.order_description}
-                    onChange={e => setForm(f => ({ ...f, order_description: e.target.value }))}
-                    className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                  />
+                  <div className="space-y-1">{F('Order / Project Title', true)}<Input value={form.order_title} onChange={e => setForm(f => ({...f, order_title: e.target.value}))} placeholder="AI Integration Package" className="h-8 text-sm" /></div>
+                  <div className="space-y-1">{F('Brief Description')}<textarea value={form.order_description} onChange={e => setForm(f => ({...f, order_description: e.target.value}))} placeholder="Short description of the engagement…" rows={2} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring" /></div>
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Services */}
+              {/* SERVICES */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">Services & Pricing</h3>
-                  <Button size="sm" variant="outline" onClick={addService} className="gap-1 text-xs">
-                    <Plus className="w-3 h-3" /> Add Service
-                  </Button>
+                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Services</h3>
+                  <button onClick={() => setForm(f => ({...f, services: [...f.services, {name:'',description:'',price:0,quantity:1}]}))} className="text-[11px] text-primary font-semibold hover:underline flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add
+                  </button>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {form.services.map((s, i) => (
-                    <div key={i} className="flex gap-2 items-start">
-                      <Input placeholder="Service Name" value={s.name} onChange={e => updateService(i, 'name', e.target.value)} className="flex-1" />
-                      <Input placeholder="Description" value={s.description} onChange={e => updateService(i, 'description', e.target.value)} className="flex-1" />
-                      <Input type="number" placeholder="Price" value={s.price || ''} onChange={e => updateService(i, 'price', Number(e.target.value))} className="w-28" />
-                      <Input type="number" placeholder="Qty" value={s.quantity || ''} onChange={e => updateService(i, 'quantity', Number(e.target.value))} className="w-20" />
-                      {form.services.length > 1 && (
-                        <Button size="icon" variant="ghost" onClick={() => removeService(i)} className="text-destructive shrink-0">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+                    <div key={i} className="border border-border rounded-lg p-3 space-y-2 bg-muted/20">
+                      <div className="flex gap-2">
+                        <Input value={s.name} onChange={e => setForm(f => ({...f, services: f.services.map((x,j) => j===i ? {...x,name:e.target.value} : x)}))} placeholder="Service name *" className="h-7 text-xs flex-1" />
+                        {form.services.length > 1 && (
+                          <button onClick={() => setForm(f => ({...f, services: f.services.filter((_,j) => j!==i)}))} className="p-1 text-muted-foreground hover:text-red-500 transition-colors"><Minus className="w-3.5 h-3.5" /></button>
+                        )}
+                      </div>
+                      <Input value={s.description} onChange={e => setForm(f => ({...f, services: f.services.map((x,j) => j===i ? {...x,description:e.target.value} : x)}))} placeholder="Description (shown in contract)" className="h-7 text-xs" />
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-0.5"><span className="text-[10px] text-muted-foreground">Unit Price</span><Input type="number" value={s.price} onChange={e => setForm(f => ({...f, services: f.services.map((x,j) => j===i ? {...x,price:Number(e.target.value)} : x)}))} className="h-7 text-xs" /></div>
+                        <div className="w-20 space-y-0.5"><span className="text-[10px] text-muted-foreground">Qty</span><Input type="number" value={s.quantity} onChange={e => setForm(f => ({...f, services: f.services.map((x,j) => j===i ? {...x,quantity:Number(e.target.value)} : x)}))} className="h-7 text-xs" /></div>
+                        <div className="w-24 space-y-0.5"><span className="text-[10px] text-muted-foreground">Total</span><div className="h-7 flex items-center px-2 rounded-md bg-muted text-xs font-semibold">{fmt(s.price*(s.quantity||1))}</div></div>
+                      </div>
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-3 gap-3 mt-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Discount %</label>
-                    <Input type="number" value={form.discount_percent || ''} onChange={e => setForm(f => ({ ...f, discount_percent: Number(e.target.value) }))} />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Tax/VAT %</label>
-                    <Input type="number" value={form.tax_percent || ''} onChange={e => setForm(f => ({ ...f, tax_percent: Number(e.target.value) }))} />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Currency</label>
-                    <Select value={form.currency} onValueChange={v => setForm(f => ({ ...f, currency: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="SAR">SAR</SelectItem>
-                        <SelectItem value="USD">USD</SelectItem>
-                        <SelectItem value="EUR">EUR</SelectItem>
-                        <SelectItem value="GBP">GBP</SelectItem>
-                        <SelectItem value="CAD">CAD</SelectItem>
-                      </SelectContent>
+                <div className="mt-3 flex gap-3 justify-end items-center flex-wrap">
+                  <div className="flex gap-3 items-center">
+                    <div className="space-y-0.5 text-right"><span className="text-[10px] text-muted-foreground">Discount %</span><Input type="number" value={form.discount_percent} onChange={e => setForm(f => ({...f, discount_percent: Number(e.target.value)}))} className="h-7 text-xs w-16" /></div>
+                    <div className="space-y-0.5 text-right"><span className="text-[10px] text-muted-foreground">VAT %</span><Input type="number" value={form.tax_percent} onChange={e => setForm(f => ({...f, tax_percent: Number(e.target.value)}))} className="h-7 text-xs w-16" /></div>
+                    <Select value={form.currency} onValueChange={v => setForm(f => ({...f, currency:v}))}>
+                      <SelectTrigger className="h-7 w-20 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>{CURRENCIES.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div className="mt-3 p-3 bg-muted/50 rounded-lg text-right space-y-1">
-                  <div className="text-sm text-muted-foreground">Subtotal: {formatCurrency(previewSubtotal, form.currency)}</div>
-                  {form.discount_percent > 0 && (
-                    <div className="text-sm text-destructive">Discount: -{formatCurrency(previewSubtotal * form.discount_percent / 100, form.currency)}</div>
-                  )}
-                  <div className="text-lg font-bold text-foreground">Total: {formatCurrency(previewTotal, form.currency)}</div>
+                  <div className="bg-foreground text-background rounded-lg px-4 py-2 text-right">
+                    <div className="text-[10px] opacity-60 uppercase tracking-wider">Total</div>
+                    <div className="font-bold text-base leading-tight">{fmt(prevTotal)}</div>
+                  </div>
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Stripe Payment Link */}
+              {/* PAYMENT */}
               <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Payment Link (Stripe)</h3>
-                <Input
-                  placeholder="https://buy.stripe.com/..."
-                  value={form.stripe_payment_link}
-                  onChange={e => setForm(f => ({ ...f, stripe_payment_link: e.target.value }))}
-                />
-                <p className="text-xs text-muted-foreground mt-1">Paste the Stripe payment link for this order</p>
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Payment</h3>
+                <div className="space-y-1">{F('Stripe Payment Link')}<Input value={form.stripe_payment_link} onChange={e => setForm(f => ({...f, stripe_payment_link: e.target.value}))} placeholder="https://buy.stripe.com/…" className="h-8 text-sm" /></div>
               </div>
 
-              <Separator />
-
-              {/* Terms */}
+              {/* DELIVERY */}
               <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Terms & Conditions</h3>
-                <textarea
-                  value={form.terms_and_conditions}
-                  onChange={e => setForm(f => ({ ...f, terms_and_conditions: e.target.value }))}
-                  className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y font-mono"
-                />
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Timeline & Support</h3>
+                <div className="space-y-3">
+                  <div className="space-y-1">{F('Delivery Timeline')}<Input value={form.delivery_timeline} onChange={e => setForm(f => ({...f, delivery_timeline: e.target.value}))} placeholder="e.g. 4–6 weeks from kickoff" className="h-8 text-sm" /></div>
+                  <div className="space-y-1">{F('After-Sale Services')}<textarea value={form.after_sale_services} onChange={e => setForm(f => ({...f, after_sale_services: e.target.value}))} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring" /></div>
+                </div>
               </div>
 
-              {/* Privacy */}
+              {/* TERMS */}
               <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Privacy & Data Protection</h3>
-                <textarea
-                  value={form.privacy_notes}
-                  onChange={e => setForm(f => ({ ...f, privacy_notes: e.target.value }))}
-                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                />
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Legal</h3>
+                <div className="space-y-3">
+                  <div className="space-y-1">{F('Terms & Conditions')}<textarea value={form.terms_and_conditions} onChange={e => setForm(f => ({...f, terms_and_conditions: e.target.value}))} rows={4} className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-ring font-mono" /></div>
+                  <div className="space-y-1">{F('Privacy & Data Protection')}<textarea value={form.privacy_notes} onChange={e => setForm(f => ({...f, privacy_notes: e.target.value}))} rows={3} className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-ring font-mono" /></div>
+                  <div className="space-y-1">{F('Internal Notes')}<textarea value={form.notes} onChange={e => setForm(f => ({...f, notes: e.target.value}))} placeholder="Notes for internal use only (not shown in contract)" rows={2} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-ring" /></div>
+                </div>
               </div>
 
-              {/* After Sale */}
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">After-Sale Services</h3>
-                <textarea
-                  value={form.after_sale_services}
-                  onChange={e => setForm(f => ({ ...f, after_sale_services: e.target.value }))}
-                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                />
-              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Timeline */}
+      {/* ── SIGN PANEL ── */}
+      {panel === 'sign' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setPanel('none'); setSigningId(null); }} />
+          <div className="relative bg-background rounded-2xl border border-border shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Delivery Timeline</h3>
-                <textarea
-                  value={form.delivery_timeline}
-                  onChange={e => setForm(f => ({ ...f, delivery_timeline: e.target.value }))}
-                  className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                  placeholder="e.g., Phase 1: 2 weeks, Phase 2: 4 weeks..."
-                />
+                <h2 className="text-base font-bold">Admin Signature</h2>
+                <p className="text-[11px] text-muted-foreground">Draw your signature below</p>
               </div>
-
-              {/* Notes */}
-              <div>
-                <h3 className="text-sm font-semibold text-foreground mb-3">Internal Notes</h3>
-                <textarea
-                  value={form.notes}
-                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                  placeholder="Internal notes (not shown to client)"
-                />
+              <button onClick={() => { setPanel('none'); setSigningId(null); }} className="p-1.5 rounded-lg hover:bg-muted"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="p-6">
+              <div className="border-2 border-dashed border-border rounded-xl overflow-hidden bg-white cursor-crosshair" style={{height: 160}}>
+                <canvas ref={canvasRef} className="w-full h-full" style={{touchAction:'none'}}
+                  onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw} />
+              </div>
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" size="sm" onClick={clearCanvas} className="text-xs">Clear</Button>
+                <Button size="sm" onClick={handleAdminSign} className="flex-1 text-xs">Apply Signature</Button>
               </div>
             </div>
-          </ScrollArea>
-          <DialogFooter className="p-6 pt-0">
-            <Button variant="outline" onClick={() => { setShowForm(false); setEditingOrder(null); }}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-              {editingOrder ? 'Update Order' : 'Create Order'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Signature Pad Dialog */}
-      <Dialog open={showSignPad} onOpenChange={setShowSignPad}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Admin Signature</DialogTitle>
-          </DialogHeader>
-          <div className="border border-border rounded-lg bg-white overflow-hidden" style={{ touchAction: 'none' }}>
-            <canvas
-              ref={canvasRef}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
-              className="w-full cursor-crosshair"
-              style={{ height: 200 }}
-            />
           </div>
-          <p className="text-xs text-muted-foreground text-center">Draw your signature above</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { initCanvas(); }}>Clear</Button>
-            <Button onClick={handleAdminSign} className="gap-2">
-              <PenTool className="w-4 h-4" /> Apply Signature
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
+
     </div>
   );
 }
