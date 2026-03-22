@@ -117,6 +117,7 @@ const AnimatedRoutes = () => {
       <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
       <Route path="/world-intelligence" element={<Suspense fallback={<PageLoader />}><WorldIntelligence /></Suspense>} />
       <Route path="/admin/custom-orders" element={<Suspense fallback={<PageLoader />}><AdminCustomOrders /></Suspense>} />
+      <Route path="/sign/:token" element={<Suspense fallback={<PageLoader />}><ClientSign /></Suspense>} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
     </Routes>

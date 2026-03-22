@@ -390,9 +390,25 @@ export default function AdminCustomOrders() {
                       </td>
                       {/* Signatures */}
                       <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <span title="AYN" className={cn('w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold', o.admin_signature_url ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'border-border text-muted-foreground')}>A</span>
-                          <span title={o.contact_person} className={cn('w-6 h-6 rounded-full border-2 flex items-center justify-center text-[9px] font-bold', o.client_signature_url ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'border-border text-muted-foreground')}>{o.contact_person[0]}</span>
+                        <div className="flex flex-col items-center gap-1.5">
+                          {/* AYN signature */}
+                          {o.admin_signature_url ? (
+                            <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                              <span className="text-[10px] font-semibold">✓ Signed</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setSigningId(o.id); setPanel('sign'); setTimeout(initCanvas, 100); }}
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-[10px] font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                            >
+                              <PenTool className="w-2.5 h-2.5" />
+                              Sign
+                            </button>
+                          )}
+                          {/* Client signature */}
+                          <div className={cn('text-[9px] font-medium', o.client_signature_url ? 'text-emerald-500' : 'text-muted-foreground/40')}>
+                            {o.client_signature_url ? '✓ Client' : 'Client pending'}
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -401,7 +417,7 @@ export default function AdminCustomOrders() {
                           <button onClick={() => handleGeneratePdf(o.id)} disabled={generatingPdf === o.id} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Generate PDF">
                             {generatingPdf === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                           </button>
-                          <button onClick={() => { setSigningId(o.id); setPanel('sign'); setTimeout(initCanvas, 100); }} className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground" title="Sign"><PenTool className="w-3.5 h-3.5" /></button>
+
                           <button onClick={() => handleSendEmail(o.id)} disabled={sendingEmail === o.id} className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors text-muted-foreground hover:text-blue-600" title="Send Contract Email">
                             {sendingEmail === o.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                           </button>
