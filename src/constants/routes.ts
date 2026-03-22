@@ -15,6 +15,7 @@ export const ROUTES = {
   ADMIN: '/admin',
   RESET_PASSWORD: '/reset-password',
   WORLD_INTELLIGENCE: '/world-intelligence',
+  ADMIN_CUSTOM_ORDERS: '/admin/custom-orders',
   APPROVAL_RESULT: '/approval-result',
   SUBSCRIPTION_SUCCESS: '/subscription-success',
   SUBSCRIPTION_CANCELED: '/subscription-canceled',
