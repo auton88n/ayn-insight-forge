@@ -65,11 +65,10 @@ export const TutorialPage = ({
 
   const Illustration = illustrations[step.id] || MeetAynIllustration;
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
-      <motion.div
+      {isOpen && <motion.div
+        key="tutorial-page"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -178,7 +177,7 @@ export const TutorialPage = ({
             </div>
           </div>
         </motion.div>
-      </motion.div>
+      </motion.div>}
     </AnimatePresence>
   );
 };
