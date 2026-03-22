@@ -405,6 +405,8 @@ export default function WorldIntelligence() {
       if (data) setConflictPredictions(data as ConflictPrediction[]);
     } catch (e) { console.error('conflict predictions:', e); }
   }, []);
+
+  const fetchCountryIntel = useCallback(async () => {
     try {
       const { data } = await supabase.from('ayn_country_intelligence')
         .select('country_code,country_name,intelligence_brief,economy,hot_sectors,opportunities').limit(20);
