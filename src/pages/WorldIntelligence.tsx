@@ -335,6 +335,7 @@ export default function WorldIntelligence() {
   const [activeHorizon, setActiveHorizon] = useState<'1_week' | '1_month' | '1_year'>('1_week');
   const [assetFilter, setAssetFilter] = useState<string>('all');
   const [votingId, setVotingId] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<{ intel: CountryIntel; sic: Record<string, any> } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
@@ -385,9 +386,11 @@ export default function WorldIntelligence() {
         predicted_low: Number(p.predicted_low),
         predicted_high: Number(p.predicted_high),
         predicted_pct_change: Number(p.predicted_pct_change),
+        predicted_direction: (p.predicted_direction || 'sideways') as 'up' | 'down' | 'sideways',
+        confidence: Number(p.confidence || 50),
         agree_count: vMap[p.id]?.agree_count || 0,
         disagree_count: vMap[p.id]?.disagree_count || 0,
-        user_vote: userVoteMap[p.id] || null,
+        user_vote: (userVoteMap[p.id] || null) as 'agree' | 'disagree' | null,
       })));
     } catch (e) { console.error('predictions:', e); }
   }, [userId]);

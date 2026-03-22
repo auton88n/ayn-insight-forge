@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { Plus, LogOut, Trash2, Settings, X, MessageSquare, Search, Star, Shield, Brain, ChevronDown, GraduationCap, Loader2, Volume2, VolumeX, Headphones, Sparkles, AlertTriangle, Calculator, Monitor, ClipboardCheck, BarChart3, Activity } from 'lucide-react';
+import { Plus, LogOut, Trash2, Settings, X, MessageSquare, Search, Star, Shield, Brain, ChevronDown, GraduationCap, Loader2, Volume2, VolumeX, Headphones, Sparkles, AlertTriangle, Calculator, Monitor, ClipboardCheck, BarChart3, Activity, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -409,6 +409,32 @@ export const Sidebar = ({
             </button>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Custom Orders Button - Admin Only */}
+        {isAdmin && (
+          <SidebarGroup className="flex-shrink-0 px-4 pb-3">
+            <SidebarGroupContent>
+              <button
+                onClick={() => navigate('/admin/custom-orders')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl",
+                  "bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10",
+                  "border border-violet-500/20 hover:border-violet-500/40",
+                  "hover:from-violet-500/15 hover:to-fuchsia-500/15",
+                  "transition-all duration-300 group"
+                )}
+              >
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-md shadow-violet-500/20">
+                  <FileText className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-xs font-semibold text-foreground">Custom Orders</p>
+                  <p className="text-[10px] text-muted-foreground">Contracts & payments</p>
+                </div>
+              </button>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {/* Search Input */}
         <div className="px-4 pb-3 flex-shrink-0">
