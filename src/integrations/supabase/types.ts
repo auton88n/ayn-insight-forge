@@ -1185,6 +1185,38 @@ export type Database = {
         }
         Relationships: []
       }
+      ayn_prediction_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          prediction_id: string
+          user_id: string
+          vote: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          prediction_id: string
+          user_id: string
+          vote: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          prediction_id?: string
+          user_id?: string
+          vote?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ayn_prediction_votes_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "ayn_predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ayn_predictions: {
         Row: {
           asset: string
@@ -1610,9 +1642,13 @@ export type Database = {
       }
       ayn_world_predictions: {
         Row: {
+          actionable_move: string | null
           confidence: number | null
+          conflict_signals: Json | null
           created_at: string
           domain: string
+          escalation_risk: string | null
+          financial_trigger: string | null
           historical_parallel: string
           horizon: string
           id: string
@@ -1633,9 +1669,13 @@ export type Database = {
           who_wins: string
         }
         Insert: {
+          actionable_move?: string | null
           confidence?: number | null
+          conflict_signals?: Json | null
           created_at?: string
           domain: string
+          escalation_risk?: string | null
+          financial_trigger?: string | null
           historical_parallel: string
           horizon: string
           id?: string
@@ -1656,9 +1696,13 @@ export type Database = {
           who_wins: string
         }
         Update: {
+          actionable_move?: string | null
           confidence?: number | null
+          conflict_signals?: Json | null
           created_at?: string
           domain?: string
+          escalation_risk?: string | null
+          financial_trigger?: string | null
           historical_parallel?: string
           horizon?: string
           id?: string
@@ -4971,7 +5015,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ayn_prediction_vote_counts: {
+        Row: {
+          agree_count: number | null
+          disagree_count: number | null
+          prediction_id: string | null
+          total_votes: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ayn_prediction_votes_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "ayn_predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       add_bonus_credits: {
