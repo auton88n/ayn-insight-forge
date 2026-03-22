@@ -387,6 +387,7 @@ export default function WorldIntelligence() {
         predicted_high: Number(p.predicted_high),
         predicted_pct_change: Number(p.predicted_pct_change),
         predicted_direction: (p.predicted_direction || 'sideways') as 'up' | 'down' | 'sideways',
+        confidence: Number(p.confidence || 50),
         agree_count: vMap[p.id]?.agree_count || 0,
         disagree_count: vMap[p.id]?.disagree_count || 0,
         user_vote: (userVoteMap[p.id] || null) as 'agree' | 'disagree' | null,
