@@ -335,6 +335,7 @@ export default function WorldIntelligence() {
   const [activeHorizon, setActiveHorizon] = useState<'1_week' | '1_month' | '1_year'>('1_week');
   const [assetFilter, setAssetFilter] = useState<string>('all');
   const [votingId, setVotingId] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<{ intel: CountryIntel; sic: Record<string, any> } | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id));
