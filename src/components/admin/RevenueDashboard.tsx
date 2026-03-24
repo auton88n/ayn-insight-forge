@@ -8,15 +8,21 @@ import {
   DollarSign, 
   TrendingUp, 
   Users, 
-  AlertCircle, 
-  CreditCard, 
   Activity,
   ArrowUpRight,
-  ArrowDownRight,
   Download
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+
+export const SUBSCRIPTION_PRICES: Record<string, number> = {
+  free: 0,
+  starter: 20,
+  pro: 49,
+  business: 99,
+  enterprise: 0,
+  unlimited: 0,
+};
 
 interface RevenueMetrics {
   mrr: number;
@@ -48,7 +54,6 @@ export const RevenueDashboard = () => {
   const [plans, setPlans] = useState<PlanDistribution[]>([]);
   const [users, setUsers] = useState<UserRevenue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [stripeConnected, setStripeConnected] = useState(true); // Default true, we'll check later
 
   useEffect(() => {
     fetchRevenueData();
@@ -57,41 +62,93 @@ export const RevenueDashboard = () => {
   const fetchRevenueData = async () => {
     setIsLoading(true);
     try {
-      // In a real scenario, this would fetch from 'subscriptions' or a specialized Edge Function
-      // For this implementation, we simulate the aggregation that would normally come from the backend
+      // Fetch actual subscriptions and joined profiles
       const { data: subsData, error } = await supabase
-        .from('profiles')
-        .select('id, user_id, company_name'); // Placeholder for actual subscription view
+        .from('user_subscriptions')
+        .select(`
+          id,
+          user_id,
+          subscription_tier,
+          status,
+          created_at,
+          current_period_end,
+          profiles:user_id (
+            company_name,
+            contact_person
+          )
+        `);
       
-      // Simulate Stripe integration check
-      setStripeConnected(false); // To fulfill the prompt "Shows Stripe-not-connected warning"
+      if (error) throw error;
 
-      // Mock data fulfilling the exact prompt requirements
+      let totalMrr = 0;
+      let paidCount = 0;
+      let churnRiskCount = 0;
+
+      const planMap: Record<string, { users: number; revenue: number }> = {
+        starter: { users: 0, revenue: 0 },
+        pro: { users: 0, revenue: 0 },
+        business: { users: 0, revenue: 0 },
+      };
+
+      const realUsers: UserRevenue[] = [];
+
+      subsData?.forEach((sub: any) => {
+        const tier = (sub.subscription_tier || 'free').toLowerCase();
+        const price = SUBSCRIPTION_PRICES[tier] || 0;
+        
+        let health: 'good' | 'at_risk' | 'churned' = 'good';
+        
+        // Determine health based on status and period end
+        if (sub.status === 'canceled' || sub.status === 'unpaid') {
+          health = 'churned';
+        } else if (sub.status === 'past_due') {
+          health = 'at_risk';
+          churnRiskCount++;
+        }
+
+        // Only count active/trialing paid tiers towards MRR
+        if (price > 0 && (sub.status === 'active' || sub.status === 'trialing')) {
+          totalMrr += price;
+          paidCount++;
+          
+          if (planMap[tier]) {
+            planMap[tier].users++;
+            planMap[tier].revenue += price;
+          }
+        }
+
+        // Add to user list if they are on a paid plan or have a status worth tracking
+        if (tier !== 'free' || sub.status !== 'active') {
+          const profile = Array.isArray(sub.profiles) ? sub.profiles[0] : sub.profiles;
+          const displayEmail = profile?.company_name || profile?.contact_person || sub.user_id.substring(0, 8);
+          
+          realUsers.push({
+            id: sub.user_id,
+            email: displayEmail,
+            plan: tier,
+            mrr: price,
+            status: (sub.status as any) || 'active',
+            health,
+            joinDate: sub.created_at || new Date().toISOString()
+          });
+        }
+      });
+
       setMetrics({
-        mrr: 12450.00,
-        arr: 149400.00,
-        paidUsers: 142,
-        churnRisk: 12, // 12 users at risk
-        mrrGrowth: 14.5
+        mrr: totalMrr,
+        arr: totalMrr * 12,
+        paidUsers: paidCount,
+        churnRisk: churnRiskCount,
+        mrrGrowth: 0 // Cannot compute historically without a snapshots table
       });
 
       setPlans([
-        { name: 'Basic', users: 85, revenue: 1615, color: '#3b82f6' }, // Blue
-        { name: 'Pro', users: 42, revenue: 4158, color: '#8b5cf6' },   // Purple
-        { name: 'Enterprise', users: 15, revenue: 6677, color: '#10b981' } // Emerald
+        { name: 'Starter', users: planMap.starter.users, revenue: planMap.starter.revenue, color: '#3b82f6' },
+        { name: 'Pro', users: planMap.pro.users, revenue: planMap.pro.revenue, color: '#8b5cf6' },
+        { name: 'Business', users: planMap.business.users, revenue: planMap.business.revenue, color: '#10b981' }
       ]);
 
-      const mockUsers: UserRevenue[] = Array.from({ length: 20 }).map((_, i) => ({
-        id: `usr_${i}`,
-        email: `client${i}@example.com`,
-        plan: i % 5 === 0 ? 'Enterprise' : i % 2 === 0 ? 'Pro' : 'Basic',
-        mrr: i % 5 === 0 ? 499 : i % 2 === 0 ? 99 : 19,
-        status: i === 7 ? 'past_due' : i === 12 ? 'canceled' : 'active',
-        health: i === 7 || i === 4 ? 'at_risk' : i === 12 ? 'churned' : 'good',
-        joinDate: new Date(Date.now() - Math.random() * 10000000000).toISOString()
-      }));
-
-      setUsers(mockUsers.sort((a, b) => b.mrr - a.mrr));
+      setUsers(realUsers.sort((a, b) => b.mrr - a.mrr));
     } catch (err) {
       console.error("Error fetching revenue data", err);
     } finally {
@@ -118,7 +175,7 @@ export const RevenueDashboard = () => {
       case 'past_due': return <span className="flex items-center gap-1.5 text-xs text-amber-500"><div className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Past Due</span>;
       case 'canceled': return <span className="flex items-center gap-1.5 text-xs text-red-500"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> Canceled</span>;
       case 'trialing': return <span className="flex items-center gap-1.5 text-xs text-blue-500"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Trialing</span>;
-      default: return null;
+      default: return <span className="lowercase text-xs text-muted-foreground">{status}</span>;
     }
   };
 
@@ -141,26 +198,6 @@ export const RevenueDashboard = () => {
           </Button>
         </div>
       </div>
-
-      {/* Stripe Warning */}
-      {!stripeConnected && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }} 
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3"
-        >
-          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-semibold text-amber-500">Stripe Integration Not Connected</h4>
-            <p className="text-sm text-amber-500/80 mt-1">
-              Live revenue tracking requires a secure connection to Stripe. Historical estimates are currently shown. Please configure your Stripe API keys in System Settings to enable live webhooks and automated metered billing.
-            </p>
-          </div>
-          <Button variant="outline" size="sm" className="ml-auto bg-amber-500 text-white border-none hover:bg-amber-600">
-            Connect Stripe
-          </Button>
-        </motion.div>
-      )}
 
       {/* KPI Cards */}
       {metrics && (

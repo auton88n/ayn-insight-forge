@@ -50,42 +50,40 @@ export const ConversationViewer = () => {
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
     try {
-      // In a real scenario, this would be a specialized RPC or Edge Function to get aggregated counts
-      // For this UI implementation, we'll fetch profiles and simulate the aggregation
-      const { data: profiles, error: profileErr } = await supabase
-        .from('profiles')
-        .select('user_id, company_name');
+      // Fetch users and their message usage from user_ai_limits joined with profiles
+      const { data: limitsData, error: limitsErr } = await supabase
+        .from('user_ai_limits')
+        .select(`
+          user_id,
+          current_monthly_messages,
+          updated_at,
+          profiles:user_id (
+            company_name,
+            contact_person
+          )
+        `)
+        .order('current_monthly_messages', { ascending: false });
         
-      if (profileErr) throw profileErr;
+      if (limitsErr) throw limitsErr;
 
-      // Mock user list fulfilling "Left panel lists all users with message counts"
-      const mockUsers: ChatUser[] = (profiles || []).map((p, i) => ({
-        user_id: p.user_id,
-        email: `user_${i}@example.com`,
-        company_name: p.company_name,
-        message_count: Math.floor(Math.random() * 500) + 1,
-        last_message_at: new Date(Date.now() - Math.random() * 864000000).toISOString(),
-        isActive: Math.random() > 0.5
-      })).sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime());
+      const realUsers: ChatUser[] = (limitsData || []).map((limit: any, i) => {
+        const profile = Array.isArray(limit.profiles) ? limit.profiles[0] : limit.profiles;
+        const displayEmail = profile?.company_name || profile?.contact_person || limit.user_id.substring(0, 8);
+        
+        return {
+          user_id: limit.user_id,
+          email: displayEmail,
+          company_name: profile?.company_name || null,
+          message_count: limit.current_monthly_messages || 0,
+          last_message_at: limit.updated_at || new Date().toISOString(),
+          isActive: (limit.current_monthly_messages || 0) > 0 // simple active heuristic
+        };
+      });
 
-      // If no profiles exist, generate dummy data
-      if (mockUsers.length === 0) {
-        for(let i=0; i<15; i++) {
-          mockUsers.push({
-            user_id: `mock_${i}`,
-            email: `client_${i}@company.com`,
-            company_name: `Company ${i}`,
-            message_count: Math.floor(Math.random() * 800) + 5,
-            last_message_at: new Date(Date.now() - Math.random() * 864000000).toISOString(),
-            isActive: i % 3 === 0
-          });
-        }
-      }
-
-      setUsers(mockUsers);
-      setFilteredUsers(mockUsers);
-      if (mockUsers.length > 0 && !selectedUser) {
-        handleSelectUser(mockUsers[0]);
+      setUsers(realUsers);
+      setFilteredUsers(realUsers);
+      if (realUsers.length > 0 && !selectedUser) {
+        handleSelectUser(realUsers[0]);
       }
     } catch (err) {
       console.error('Error fetching chat users:', err);
@@ -110,33 +108,7 @@ export const ConversationViewer = () => {
       if (data && data.length > 0) {
         setMessages(data as Message[]);
       } else {
-        // Mock chat history fulfilling "rendered as a proper chat UI"
-        setMessages([
-          {
-            id: 'm1',
-            content: 'Hello, how can I help you today?',
-            role: 'assistant',
-            created_at: new Date(Date.now() - 3600000).toISOString()
-          },
-          {
-            id: 'm2',
-            content: "I'm looking for a report on Global Risk Indexes.",
-            role: 'user',
-            created_at: new Date(Date.now() - 3500000).toISOString()
-          },
-          {
-            id: 'm3',
-            content: 'I have compiled the latest Global Risk Index data highlighting top volatility sectors. Would you prefer a high-level summary or a detailed CSV breakdown?',
-            role: 'assistant',
-            created_at: new Date(Date.now() - 3490000).toISOString()
-          },
-          {
-            id: 'm4',
-            content: 'High level summary please.',
-            role: 'user',
-            created_at: new Date(Date.now() - 3400000).toISOString()
-          }
-        ]);
+        setMessages([]); // No mock fallback - keep it real
       }
     } catch (err) {
       console.error('Error fetching messages:', err);

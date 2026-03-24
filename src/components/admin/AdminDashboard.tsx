@@ -136,22 +136,37 @@ export const AdminDashboard = ({ systemMetrics, allUsers }: AdminDashboardProps)
 
   const recentUsers = allUsers.slice(0, 10);
 
-  // Generate mock growth data (in a real app, this would be grouped by the backend)
+  // Generate real growth data from allUsers created_at dates
+  const today = new Date();
   const growthData = Array.from({ length: 12 }).map((_, i) => {
     const isCumulative = growthView === 'cumulative';
-    const baseVal = 10 + Math.floor(i * 2.5) + Math.floor(Math.random() * 15);
+    // i=11 is current week, i=0 is 11 weeks ago
+    const weeksAgo = 11 - i;
+    const weekStart = subDays(today, (weeksAgo + 1) * 7);
+    const weekEnd = subDays(today, weeksAgo * 7);
+    
+    let signups = 0;
+    if (isCumulative) {
+      signups = allUsers.filter(u => isBefore(new Date(u.created_at), weekEnd)).length;
+    } else {
+      signups = allUsers.filter(u => {
+        const d = new Date(u.created_at);
+        return d >= weekStart && d < weekEnd;
+      }).length;
+    }
+
     return {
       name: `Wk ${i + 1}`,
-      signups: isCumulative ? baseVal * (i + 1) : baseVal,
+      signups: signups,
     };
   });
 
-  // Calculate Churn Alerts (inactive > 14 days)
-  // Since we don't have a reliable last_login in this mock payload, we use created_at as a proxy
-  const fourteenDaysAgo = subDays(new Date(), 14);
-  const churnAlerts = allUsers.filter(u => 
-    u.is_active && isBefore(new Date(u.created_at), fourteenDaysAgo)
-  ).slice(0, 4);
+  // Calculate actual Churn Alerts based on 0 usage this month for users older than 14 days
+  const churnAlerts = allUsers.filter(u => {
+    const joinedDaysAgo = (Date.now() - new Date(u.created_at).getTime()) / (1000 * 60 * 60 * 24);
+    const isInactive = joinedDaysAgo > 14 && (u.current_month_usage === 0 || u.current_month_usage === null);
+    return isInactive;
+  }).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()).slice(0, 5);
 
   return (
     <motion.div
