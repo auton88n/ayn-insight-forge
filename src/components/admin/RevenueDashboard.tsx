@@ -62,7 +62,7 @@ export const RevenueDashboard = () => {
   const fetchRevenueData = async () => {
     setIsLoading(true);
     try {
-      // Fetch actual subscriptions and joined profiles
+      // Fetch actual subscriptions
       const { data: subsData, error } = await supabase
         .from('user_subscriptions')
         .select(`
@@ -71,14 +71,27 @@ export const RevenueDashboard = () => {
           subscription_tier,
           status,
           created_at,
-          current_period_end,
-          profiles:user_id (
-            company_name,
-            contact_person
-          )
+          current_period_end
         `);
       
       if (error) throw error;
+      
+      // Fetch corresponding profiles manually to avoid Foreign Key PostgREST crashes
+      const userIds = subsData?.map((s: any) => s.user_id).filter(Boolean) || [];
+      const profilesMap: Record<string, any> = {};
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, company_name, contact_person')
+          .in('user_id', userIds);
+          
+        if (profilesData) {
+          profilesData.forEach(p => {
+            profilesMap[p.user_id] = p;
+          });
+        }
+      }
 
       let totalMrr = 0;
       let paidCount = 0;
@@ -119,7 +132,7 @@ export const RevenueDashboard = () => {
 
         // Add to user list if they are on a paid plan or have a status worth tracking
         if (tier !== 'free' || sub.status !== 'active') {
-          const profile = Array.isArray(sub.profiles) ? sub.profiles[0] : sub.profiles;
+          const profile = profilesMap[sub.user_id];
           const displayEmail = profile?.company_name || profile?.contact_person || sub.user_id.substring(0, 8);
           
           realUsers.push({

@@ -50,24 +50,37 @@ export const ConversationViewer = () => {
   const fetchUsers = async () => {
     setIsLoadingUsers(true);
     try {
-      // Fetch users and their message usage from user_ai_limits joined with profiles
+      // Fetch users and their message usage from user_ai_limits
       const { data: limitsData, error: limitsErr } = await supabase
         .from('user_ai_limits')
         .select(`
           user_id,
           current_monthly_messages,
-          updated_at,
-          profiles:user_id (
-            company_name,
-            contact_person
-          )
+          updated_at
         `)
         .order('current_monthly_messages', { ascending: false });
         
       if (limitsErr) throw limitsErr;
+      
+      // Fetch corresponding profiles manually to avoid Foreign Key PostgREST crashes
+      const userIds = limitsData?.map((l: any) => l.user_id).filter(Boolean) || [];
+      const profilesMap: Record<string, any> = {};
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, company_name, contact_person')
+          .in('user_id', userIds);
+          
+        if (profilesData) {
+          profilesData.forEach(p => {
+            profilesMap[p.user_id] = p;
+          });
+        }
+      }
 
       const realUsers: ChatUser[] = (limitsData || []).map((limit: any, i) => {
-        const profile = Array.isArray(limit.profiles) ? limit.profiles[0] : limit.profiles;
+        const profile = profilesMap[limit.user_id];
         const displayEmail = profile?.company_name || profile?.contact_person || limit.user_id.substring(0, 8);
         
         return {
