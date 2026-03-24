@@ -12,6 +12,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { AdminSidebar, AdminTabId } from '@/components/admin/AdminSidebar';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { UserManagement } from '@/components/admin/UserManagement';
+import { ErrorMonitor } from '@/components/admin/ErrorMonitor';
+import { RevenueDashboard } from '@/components/admin/RevenueDashboard';
+import { ConversationViewer } from '@/components/admin/ConversationViewer';
+import { EmailBroadcast } from '@/components/admin/EmailBroadcast';
 import { RateLimitMonitoring } from '@/components/admin/RateLimitMonitoring';
 import { SystemSettings } from '@/components/admin/SystemSettings';
 import { ApplicationManagement, ServiceApplication } from '@/components/admin/ApplicationManagement';
@@ -433,6 +437,10 @@ export const AdminPanel = ({
                 >
                   <ErrorBoundary>
                     {activeTab === 'overview' && <AdminDashboard systemMetrics={systemMetrics} allUsers={allUsers} />}
+                    {activeTab === 'errors' && <ErrorMonitor />}
+                    {activeTab === 'revenue' && <RevenueDashboard />}
+                    {activeTab === 'conversations' && <ConversationViewer />}
+                    {activeTab === 'email_broadcast' && <EmailBroadcast />}
                     {activeTab === 'google-analytics' && <GoogleAnalytics />}
                     {activeTab === 'applications' && <ApplicationManagement session={session} applications={applications} onRefresh={fetchData} />}
                     {activeTab === 'support' && <SupportManagement />}

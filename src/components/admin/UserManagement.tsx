@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { UserDetailModal } from './UserDetailModal';
 
 interface Profile {
   company_name: string | null;
@@ -85,6 +86,7 @@ export const UserManagement = ({ session, allUsers, onRefresh }: UserManagementP
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [userRoles, setUserRoles] = useState<Map<string, string>>(new Map());
   const [changingRole, setChangingRole] = useState<string | null>(null);
+  const [selectedUserDetail, setSelectedUserDetail] = useState<AccessGrantWithProfile | null>(null);
 
   // Fetch user roles on mount
   const fetchUserRoles = useCallback(async () => {
@@ -395,6 +397,11 @@ export const UserManagement = ({ session, allUsers, onRefresh }: UserManagementP
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSelectedUserDetail(user)}>
+                <User className="w-4 h-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               {user.is_active ? (
                 <DropdownMenuItem onClick={() => handleDeactivate(user.user_id)}>
                   <UserX className="w-4 h-4 mr-2" />
@@ -592,6 +599,12 @@ export const UserManagement = ({ session, allUsers, onRefresh }: UserManagementP
           </ScrollArea>
         </CardContent>
       </Card>
+      
+      <UserDetailModal 
+        user={selectedUserDetail} 
+        isOpen={!!selectedUserDetail} 
+        onClose={() => setSelectedUserDetail(null)} 
+      />
     </>
   );
 };

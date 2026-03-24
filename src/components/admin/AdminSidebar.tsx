@@ -14,6 +14,8 @@ import {
   FlaskConical,
   ChevronLeft,
   ChevronsRight,
+  AlertTriangle,
+  Mail,
   CreditCard,
   Gift,
   Sparkles,
@@ -30,6 +32,10 @@ import { cn } from '@/lib/utils';
 
 export type AdminTabId = 
   | 'overview' 
+  | 'errors'
+  | 'revenue'
+  | 'conversations'
+  | 'email_broadcast'
   | 'google-analytics' 
   | 'applications' 
   | 'support' 
@@ -62,6 +68,10 @@ interface AdminSection {
 
 const mainSections: AdminSection[] = [
   { id: 'overview', title: 'Overview', shortTitle: 'Ovr', icon: LayoutDashboard, gradient: 'from-blue-500 to-cyan-500', adminOnly: true },
+  { id: 'revenue', title: 'Revenue', shortTitle: 'Rev', icon: DollarSign, gradient: 'from-emerald-500 to-teal-500', adminOnly: true },
+  { id: 'conversations', title: 'Conversations', shortTitle: 'Chat', icon: MessageSquare, gradient: 'from-indigo-500 to-violet-500', adminOnly: true },
+  { id: 'email_broadcast', title: 'Broadcasts', shortTitle: 'Mail', icon: Mail, gradient: 'from-amber-500 to-orange-500', adminOnly: true },
+  { id: 'errors', title: 'Error Monitor', shortTitle: 'Err', icon: AlertTriangle, gradient: 'from-red-500 to-rose-600', adminOnly: true },
   { id: 'google-analytics', title: 'Analytics', shortTitle: 'Ana', icon: LineChart, gradient: 'from-green-500 to-emerald-500', adminOnly: true },
   { id: 'applications', title: 'Applications', shortTitle: 'App', icon: FileText, gradient: 'from-amber-500 to-orange-500', adminOnly: false, hasBadge: true },
   { id: 'support', title: 'Support', shortTitle: 'Sup', icon: MessageSquare, gradient: 'from-purple-500 to-pink-500', adminOnly: false },
